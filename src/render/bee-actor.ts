@@ -89,10 +89,16 @@ export class BeeActor extends Actor {
       return false;
     }
     const isForageJob =
-      job.kind === "foragePollen" || job.kind === "forageNectar" || job.kind === "forageWater";
+      job.kind === "foragePollen" ||
+      job.kind === "forageNectar" ||
+      job.kind === "forageWater";
     if (!isForageJob) {
       return false;
     }
-    return job.foragePhase === "outbound" || job.foragePhase === "return" || job.foragePhase === "wait";
+    return (
+      job.foragePhase === "outbound" ||
+      job.foragePhase === "return" ||
+      job.foragePhase === "wait"
+    );
   }
 }

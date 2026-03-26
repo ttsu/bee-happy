@@ -140,9 +140,7 @@ const larvaeFeedingProgress = (st: InstanceType<typeof CellStateComponent>): num
     return 0;
   }
   const delivered =
-    pollenTotal -
-    st.larvaePollenRemaining +
-    (nectarTotal - st.larvaeNectarRemaining);
+    pollenTotal - st.larvaePollenRemaining + (nectarTotal - st.larvaeNectarRemaining);
   return Math.min(1, Math.max(0, delivered / total));
 };
 
@@ -202,7 +200,13 @@ const drawCellStorageLabels = (
     ctx.translate(center.x, center.y);
     const offsetY = lines.length === 1 ? 0 : -(CELL_STOCK_LINE_PX / 2);
     for (let i = 0; i < lines.length; i++) {
-      cellStockFont.render(ctx, lines[i]!, cellStockFont.color, 0, offsetY + i * CELL_STOCK_LINE_PX);
+      cellStockFont.render(
+        ctx,
+        lines[i]!,
+        cellStockFont.color,
+        0,
+        offsetY + i * CELL_STOCK_LINE_PX,
+      );
     }
     ctx.restore();
   }
@@ -267,7 +271,12 @@ export const drawHiveCells = (
     for (let i = 0; i < 6; i++) {
       const a = corners[i]!;
       const b = corners[(i + 1) % 6]!;
-      ctx.drawLine(vec(a[0], a[1]), vec(b[0], b[1]), ELIGIBLE_BUILD_OUTLINE, ELIGIBLE_BUILD_STROKE_PX);
+      ctx.drawLine(
+        vec(a[0], a[1]),
+        vec(b[0], b[1]),
+        ELIGIBLE_BUILD_OUTLINE,
+        ELIGIBLE_BUILD_STROKE_PX,
+      );
     }
   }
 

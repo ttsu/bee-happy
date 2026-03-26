@@ -1,6 +1,11 @@
 import { hexNeighbors } from "../grid/hex-grid";
 import type { HiveCoord } from "../grid/hive-levels";
-import { hiveKey, isLevelInBounds, parseHiveKey, verticalNeighbor } from "../grid/hive-levels";
+import {
+  hiveKey,
+  isLevelInBounds,
+  parseHiveKey,
+  verticalNeighbor,
+} from "../grid/hive-levels";
 import type { CellStateComponent } from "./ecs/components/colony-components";
 
 export interface CellLookup {

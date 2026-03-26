@@ -24,7 +24,10 @@ export const nectarCellReadyForHoneyProcessing = (st: CellStateComponent): boole
 /**
  * Cell nectar usable for feeding (not while the cell holds honey).
  */
-export const nectarCellHasNectarForFeeding = (st: CellStateComponent, minNectar: number): boolean =>
+export const nectarCellHasNectarForFeeding = (
+  st: CellStateComponent,
+  minNectar: number,
+): boolean =>
   st.built &&
   st.cellType === "nectar" &&
   st.honeyStored <= HONEY_EPS &&
@@ -33,5 +36,8 @@ export const nectarCellHasNectarForFeeding = (st: CellStateComponent, minNectar:
 /**
  * Cell honey usable for feeding (larvae or adults).
  */
-export const nectarCellHasHoneyForFeeding = (st: CellStateComponent, minHoney: number): boolean =>
+export const nectarCellHasHoneyForFeeding = (
+  st: CellStateComponent,
+  minHoney: number,
+): boolean =>
   st.built && st.cellType === "nectar" && st.honeyStored >= minHoney - HONEY_EPS;
