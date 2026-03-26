@@ -191,11 +191,7 @@ const drawCellStorageLabels = (
   if (st.cellType === "nectar") {
     const lines: string[] = [];
     if (st.honeyStored > HONEY_LABEL_EPS) {
-      const h =
-        Math.abs(st.honeyStored - Math.round(st.honeyStored)) < 1e-4
-          ? Math.round(st.honeyStored)
-          : Math.round(st.honeyStored * 10) / 10;
-      lines.push(`H ${h}/${COLONY.honeyCellCapacity}`);
+      lines.push(`H ${Math.round(st.honeyStored)}/${COLONY.honeyCellCapacity}`);
     } else {
       lines.push(`N ${Math.round(st.nectarStored)}/${COLONY.nectarCellCapacity}`);
     }

@@ -49,10 +49,7 @@ const findNearestPollenCellWithStock = (
   return best;
 };
 
-const levelHasLarvaeNectarOrHoneySupply = (
-  colony: ColonyRuntime,
-  level: number,
-): boolean => {
+const levelHasLarvaeNectarSupply = (colony: ColonyRuntime, level: number): boolean => {
   for (const [, ent] of colony.cellsByKey) {
     const c = ent.get(CellCoordComponent)!;
     const cellSt = ent.get(CellStateComponent)!;
@@ -62,7 +59,18 @@ const levelHasLarvaeNectarOrHoneySupply = (
     if (nectarCellHasNectarForFeeding(cellSt, 1)) {
       return true;
     }
-    if (nectarCellHasHoneyForFeeding(cellSt, COLONY.larvaeHoneyPerPortion)) {
+  }
+  return false;
+};
+
+const levelHasLarvaeHoneySupply = (colony: ColonyRuntime, level: number): boolean => {
+  for (const [, ent] of colony.cellsByKey) {
+    const c = ent.get(CellCoordComponent)!;
+    const cellSt = ent.get(CellStateComponent)!;
+    if (c.level !== level || !cellSt.built || cellSt.cellType !== "nectar") {
+      continue;
+    }
+    if (nectarCellHasHoneyForFeeding(cellSt, COLONY.larvaeFeedHoneyCost)) {
       return true;
     }
   }
@@ -70,13 +78,16 @@ const levelHasLarvaeNectarOrHoneySupply = (
 };
 
 /**
- * Nearest nectar cell for one larvae portion: prefer picking up nectar; otherwise honey (¼ unit per portion).
+ * Nearest nectar cell for one larvae portion: prefer nectar; otherwise one honey load (integer cost, 4× portions).
  */
 const findNearestLarvaeNectarOrHoneyPickup = (
   colony: ColonyRuntime,
   level: number,
   from: HexCoord,
+  larvaeNectarRemaining: number,
 ): { coord: HiveCoord; kind: "nectar" | "honey" } | null => {
+  const allowHoney =
+    larvaeNectarRemaining >= COLONY.honeyNutrientMultiplier;
   let bestN: HiveCoord | null = null;
   let bestNd = Infinity;
   let bestH: HiveCoord | null = null;
@@ -93,7 +104,8 @@ const findNearestLarvaeNectarOrHoneyPickup = (
       bestN = { q: c.q, r: c.r, level: c.level };
     }
     if (
-      nectarCellHasHoneyForFeeding(cellSt, COLONY.larvaeHoneyPerPortion) &&
+      allowHoney &&
+      nectarCellHasHoneyForFeeding(cellSt, COLONY.larvaeFeedHoneyCost) &&
       d < bestHd
     ) {
       bestHd = d;
@@ -132,7 +144,13 @@ export const canSpawnFeedLarvaeJob = (
     }
   }
   if (st.larvaeNectarRemaining > 0) {
-    if (levelHasLarvaeNectarOrHoneySupply(colony, coord.level)) {
+    if (levelHasLarvaeNectarSupply(colony, coord.level)) {
+      return true;
+    }
+    if (
+      st.larvaeNectarRemaining >= COLONY.honeyNutrientMultiplier &&
+      levelHasLarvaeHoneySupply(colony, coord.level)
+    ) {
       return true;
     }
   }
@@ -212,10 +230,15 @@ export const planFeedLarvaeLeg = (
     if (st.larvaeNectarRemaining <= 0) {
       return false;
     }
-    const pick = findNearestLarvaeNectarOrHoneyPickup(colony, level, {
-      q: startHex.q,
-      r: startHex.r,
-    });
+    const pick = findNearestLarvaeNectarOrHoneyPickup(
+      colony,
+      level,
+      {
+        q: startHex.q,
+        r: startHex.r,
+      },
+      st.larvaeNectarRemaining,
+    );
     if (!pick) {
       return false;
     }
@@ -425,14 +448,14 @@ export const processFeedLarvaeJobs = (
         const pickupSt = colony.getCellAt(hk)?.get(CellStateComponent);
         if (
           !pickupSt ||
-          !nectarCellHasHoneyForFeeding(pickupSt, COLONY.larvaeHoneyPerPortion)
+          !nectarCellHasHoneyForFeeding(pickupSt, COLONY.larvaeFeedHoneyCost)
         ) {
           job.pathPoints = [];
           job.feedLarvaePhase = "toPickup";
           job.feedLarvaePhaseTimerMs = 0;
           continue;
         }
-        pickupSt.honeyStored -= COLONY.larvaeHoneyPerPortion;
+        pickupSt.honeyStored -= COLONY.larvaeFeedHoneyCost;
         job.carryPayload = "honey";
         bee.get(BeeCarryComponent)!.carry = "honey";
       } else {
@@ -460,11 +483,13 @@ export const processFeedLarvaeJobs = (
       }
       if (job.feedCargoKind === "pollen") {
         st.larvaePollenRemaining = Math.max(0, st.larvaePollenRemaining - 1);
-      } else if (
-        job.feedCargoKind === "nectar" ||
-        job.feedCargoKind === "honey"
-      ) {
+      } else if (job.feedCargoKind === "nectar") {
         st.larvaeNectarRemaining = Math.max(0, st.larvaeNectarRemaining - 1);
+      } else if (job.feedCargoKind === "honey") {
+        st.larvaeNectarRemaining = Math.max(
+          0,
+          st.larvaeNectarRemaining - COLONY.honeyNutrientMultiplier,
+        );
       }
       job.carryPayload = "none";
       bee.get(BeeCarryComponent)!.carry = "none";

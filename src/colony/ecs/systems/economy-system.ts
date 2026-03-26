@@ -80,7 +80,10 @@ export class EconomySystem extends System {
       }
     }
 
-    if (res.colonyNectar < 8 && !hasJobKind(this.world, "forageNectar")) {
+    if (
+      res.colonyNectar < COLONY.colonyNectarForageThreshold &&
+      !hasJobKind(this.world, "forageNectar")
+    ) {
       const cell = this.findNectarCellForDeposit();
       if (cell) {
         const c = cell.get(CellCoordComponent)!;

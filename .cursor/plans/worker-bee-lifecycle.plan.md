@@ -34,7 +34,7 @@ Bee-days use the same **1–2 / 3–11 / 12–17 / 18–21 / 22–50** boundarie
 | Nurse               | 3–11     | `feedLarvae`, `**feedQueen`**                                     |
 | Builder / processor | 12–17    | `buildCell`, `honeyProcess`                                       |
 | Guard               | 18–21    | `guardHive` (new; MVP patrol/timer at entrance)                   |
-| Forager             | 22–50    | `foragePollen`, `forageNectar`, `forageWater`, `**waterDeliver**` |
+| Forager             | 22–50    | `foragePollen`, `forageNectar`, `forageWater`, `**waterDeliver`** |
 
 
 `**adultFeed` (revised):** Allowed for **all worker stages** (hunger is not stage-gated). Behavior is defined below as **self-feeding** only.
@@ -125,7 +125,7 @@ flowchart TB
 
 Show a **colony calendar day** on the main HUD so time progression is visible at a glance.
 
-- **Definition:** A **global** counter on the colony controller (not per-bee age). Advance `**colonyElapsedMs`** each frame by simulation `elapsed`, same clock as other systems. Let `**msPerBeeDay` = `COLONY.workerLifespanMs / 50**`. Display **1-based day**: `currentColonyDay = Math.floor(colonyElapsedMs / msPerBeeDay) + 1` (tunable label, e.g. “Day 12”). This keeps one “bee-day” unit consistent with worker lifespan scaling.
+- **Definition:** A **global** counter on the colony controller (not per-bee age). Advance `**colonyElapsedMs`** each frame by simulation `elapsed`, same clock as other systems. Let `**msPerBeeDay` = `COLONY.workerLifespanMs / 50`**. Display **1-based day**: `currentColonyDay = Math.floor(colonyElapsedMs / msPerBeeDay) + 1` (tunable label, e.g. “Day 12”). This keeps one “bee-day” unit consistent with worker lifespan scaling.
 - **Wire-up:** Add `currentColonyDay` (or `colonyDay`) to `[ColonyUiSnapshot](src/colony/events/colony-events.ts)` and populate it in `[ColonyRuntime.getUiSnapshot](src/colony/colony-runtime.ts)` / throttled emit path. Mirror the field in `[src/schemas/colony-snapshot.ts](src/schemas/colony-snapshot.ts)`. Extend `[defaultSnapshot](src/ui/app.tsx)` and render a line in the `.hud-card` (e.g. next to level or below the title).
 - **Edge cases:** Day increments while the game is running (pause/menu not in scope unless you add engine pause later). No cap required; optional “Season” grouping can be a later enhancement.
 

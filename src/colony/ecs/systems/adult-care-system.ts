@@ -132,8 +132,8 @@ export class AdultCareSystem extends System {
     if (worker.pos.sub(target.pos).size > 38) {
       return;
     }
-    if (res.colonyNectar >= 0.4) {
-      res.colonyNectar -= 0.4;
+    if (res.colonyNectar >= COLONY.adultFeedColonyNectarCost) {
+      res.colonyNectar -= COLONY.adultFeedColonyNectarCost;
     } else if (this.tryConsumeCellNectar()) {
       /* consumed stored nectar */
     } else if (this.tryConsumeCellHoney()) {
@@ -175,8 +175,8 @@ export class AdultCareSystem extends System {
   private tryConsumeCellNectar(): boolean {
     for (const [, e] of this.colony.cellsByKey) {
       const st = e.get(CellStateComponent)!;
-      if (nectarCellHasNectarForFeeding(st, 0.5)) {
-        st.nectarStored -= 0.5;
+      if (nectarCellHasNectarForFeeding(st, COLONY.adultFeedCellNectarCost)) {
+        st.nectarStored -= COLONY.adultFeedCellNectarCost;
         return true;
       }
     }
@@ -186,8 +186,8 @@ export class AdultCareSystem extends System {
   private tryConsumeCellHoney(): boolean {
     for (const [, e] of this.colony.cellsByKey) {
       const st = e.get(CellStateComponent)!;
-      if (nectarCellHasHoneyForFeeding(st, COLONY.adultHoneyPerFeed)) {
-        st.honeyStored -= COLONY.adultHoneyPerFeed;
+      if (nectarCellHasHoneyForFeeding(st, COLONY.adultFeedHoneyCost)) {
+        st.honeyStored -= COLONY.adultFeedHoneyCost;
         return true;
       }
     }
@@ -210,8 +210,8 @@ export class AdultCareSystem extends System {
         continue;
       }
       const st = cell.get(CellStateComponent)!;
-      if (nectarCellHasNectarForFeeding(st, 0.5)) {
-        st.nectarStored -= 0.5;
+      if (nectarCellHasNectarForFeeding(st, COLONY.adultFeedCellNectarCost)) {
+        st.nectarStored -= COLONY.adultFeedCellNectarCost;
         st.honeyProcessingDirty = true;
         this.colony.events.emit({
           type: "HoneyProcessingInterrupted",
