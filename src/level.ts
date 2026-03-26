@@ -98,6 +98,11 @@ export class MyLevel extends Scene {
   }
 
   override onPostDraw(ctx: ExcaliburGraphicsContext, _elapsed: number): void {
+    // Custom draw runs in screen space unless the camera transform is applied; match world actors.
+    ctx.save();
+    ctx.resetTransform();
+    this.camera.draw(ctx);
     drawHiveCells(ctx, this.colony);
+    ctx.restore();
   }
 }
