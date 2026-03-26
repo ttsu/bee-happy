@@ -53,21 +53,31 @@ const shortJobLabel = (job: JobComponent): string => {
       return "clean";
     case "foragePollen":
     case "forageNectar":
-    case "forageWater":
+    case "forageWater": {
+      // Include what we are foraging so it's easy to read at a glance.
+      // (We keep the label short for HUD readability.)
+      let forageLabel: "pollen" | "nectar" | "water" = "water";
+      if (job.kind === "foragePollen") {
+        forageLabel = "pollen";
+      } else if (job.kind === "forageNectar") {
+        forageLabel = "nectar";
+      }
+
       switch (job.foragePhase) {
         case "outbound":
-          return "forage";
+          return `forage ${forageLabel}`;
         case "wait":
-          return "wait";
+          return `wait ${forageLabel}`;
         case "return":
-          return "return";
+          return `return ${forageLabel}`;
         case "depositing":
-          return "deposit";
+          return `deposit ${forageLabel}`;
         case "capacityWait":
-          return "hold";
+          return `hold ${forageLabel}`;
         default:
-          return "forage";
+          return `forage ${forageLabel}`;
       }
+    }
     case "depositPollen":
     case "depositNectar":
     case "depositWater":

@@ -2,6 +2,7 @@ import { System, SystemPriority, SystemType, vec, type World } from "excalibur";
 import {
   BeeCarryComponent,
   BeeLevelComponent,
+  BeeNeedsComponent,
   BeeRoleComponent,
   BeeWorkComponent,
   CellCoordComponent,
@@ -243,11 +244,10 @@ export class EconomySystem extends System {
     if (!bee) {
       return;
     }
-    const hiveReturn = hexToWorld({ q: 0, r: 0 }, COLONY.hexSize);
     const out = vec(job.scratchX, job.scratchY);
 
     if (job.kind === "forageWater") {
-      this.updateWaterForage(ent, job, bee, hiveReturn, elapsed);
+      this.updateWaterForage(ent, job, bee, elapsed);
       return;
     }
 
@@ -263,20 +263,38 @@ export class EconomySystem extends System {
     } else if (job.foragePhase === "wait") {
       job.forageWaitMs -= elapsed;
       if (job.forageWaitMs <= 0) {
-        job.foragePhase = "return";
         if (job.kind === "foragePollen") {
           job.carryPayload = "pollen";
         } else {
           job.carryPayload = "nectar";
         }
+        // Select a deposit cell now, so the bee flies directly there.
+        this.beginDepositPhase(job, bee);
       }
     } else if (job.foragePhase === "return") {
       const step = COLONY.beeSpeed * 1.2 * elapsed;
-      const to = hiveReturn.sub(bee.pos);
-      if (to.size < 18) {
-        this.beginDepositPhase(job, bee);
+      const key = job.depositTargetKey;
+      if (key) {
+        const cellEnt = this.colony.getCellAt(key);
+        if (!cellEnt) {
+          // Fallback for stale target keys.
+          job.depositTargetKey = null;
+          this.beginDepositPhase(job, bee);
+          return;
+        }
+        const coord = cellEnt.get(CellCoordComponent)!;
+        const dest = hexToWorld({ q: coord.q, r: coord.r }, COLONY.hexSize);
+        const to = dest.sub(bee.pos);
+        if (to.size < 18) {
+          job.foragePhase = "depositing";
+        } else {
+          bee.pos = bee.pos.add(to.normalize().scale(step));
+        }
       } else {
-        bee.pos = bee.pos.add(to.normalize().scale(step));
+        // If we entered `return` without a target, don't fly to the hive center first.
+        // Instead, pick a deposit target now (or capacity-wait).
+        this.beginDepositPhase(job, bee);
+        return;
       }
     } else if (job.foragePhase === "capacityWait") {
       job.forageCapacityPollMs -= elapsed;
@@ -330,7 +348,6 @@ export class EconomySystem extends System {
     ent: import("excalibur").Entity,
     job: JobComponent,
     bee: import("excalibur").Actor,
-    deposit: import("excalibur").Vector,
     elapsed: number,
   ): void {
     const out = vec(job.scratchX, job.scratchY);
@@ -348,11 +365,65 @@ export class EconomySystem extends System {
       if (job.forageWaitMs <= 0) {
         job.foragePhase = "return";
         job.carryPayload = "water";
+
+        // Pick a thirsty target once per return-leg, then keep flying toward it.
+        const thirstyActors = this.colony.scene.actors.filter((a) => {
+          const needs = a.get(BeeNeedsComponent);
+          return (
+            a.id !== bee.id &&
+            (needs ? needs.thirst > COLONY.thirstCareThreshold : false)
+          );
+        });
+        const candidates =
+          thirstyActors.length > 0
+            ? thirstyActors
+            : this.colony.scene.actors.filter(
+                (a) => a.id !== bee.id && a.get(BeeNeedsComponent),
+              );
+
+        let best: import("excalibur").Actor | null = null;
+        if (thirstyActors.length > 0) {
+          // Nearest thirsty wins.
+          let bestD = Infinity;
+          for (const a of candidates) {
+            const d = a.pos.sub(bee.pos).size;
+            if (d < bestD) {
+              bestD = d;
+              best = a;
+            }
+          }
+        } else {
+          // No one is above threshold: highest thirst wins.
+          let bestT = -Infinity;
+          for (const a of candidates) {
+            const n = a.get(BeeNeedsComponent)!;
+            if (n.thirst > bestT) {
+              bestT = n.thirst;
+              best = a;
+            }
+          }
+        }
+        job.adultFeedTargetBeeId = best?.id ?? null;
       }
     } else if (job.foragePhase === "return") {
       const step = COLONY.beeSpeed * 1.2 * elapsed;
-      const to = deposit.sub(bee.pos);
+      const target = job.adultFeedTargetBeeId
+        ? this.colony.scene.actors.find((a) => a.id === job.adultFeedTargetBeeId)
+        : undefined;
+
+      if (!target) {
+        // Nothing to deliver to; finish safely.
+        bee.get(BeeCarryComponent)!.carry = "none";
+        job.status = "done";
+        releaseJob(this.world, job);
+        ent.kill();
+        return;
+      }
+
+      const to = target.pos.sub(bee.pos);
       if (to.size < 18) {
+        const n = target.get(BeeNeedsComponent)!;
+        n.thirst = Math.max(0, n.thirst - COLONY.thirstRelief);
         bee.get(BeeCarryComponent)!.carry = "none";
         job.status = "done";
         releaseJob(this.world, job);

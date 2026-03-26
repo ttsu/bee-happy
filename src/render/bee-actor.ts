@@ -97,6 +97,7 @@ export class BeeActor extends Actor {
     }
     return (
       job.foragePhase === "outbound" ||
+      job.foragePhase === "depositing" ||
       job.foragePhase === "return" ||
       job.foragePhase === "wait"
     );

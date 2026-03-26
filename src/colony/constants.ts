@@ -43,9 +43,15 @@ export const COLONY = {
   /** Recovery per feeding/drink. */
   hungerRelief: 45,
   thirstRelief: 50,
-  /** Threshold to open adult feeding job. */
-  hungerCareThreshold: 55,
-  thirstCareThreshold: 55,
+  /**
+   * Threshold to open adult care jobs.
+   *
+   * These intentionally sit below the {@link happyHungerMax}/{@link happyThirstMax}
+   * cutoffs so bees start prioritizing feeding/hydrating before they are considered
+   * "unhappy" in the UI.
+   */
+  hungerCareThreshold: 33,
+  thirstCareThreshold: 33,
   /** Forage timings. */
   forageTravelMs: 2_500,
   forageWaitMs: 1_800,
