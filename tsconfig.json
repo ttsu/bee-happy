@@ -4,6 +4,7 @@
     "useDefineForClassFields": true,
     "module": "ESNext",
     "lib": ["ESNext", "DOM"],
+    "jsx": "react-jsx",
     "moduleResolution": "Node",
     "strict": true,
     "skipLibCheck": true,

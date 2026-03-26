@@ -6,10 +6,14 @@
   "scripts": {
     "dev": "vite",
     "start": "vite",
-    "build": "tsc && vite build",
+    "format": "prettier --write .",
+    "lint": "prettier --check .",
+    "build": "npm run lint && tsc && vite build",
     "serve": "vite preview",
     "test": "npm run build && npx playwright test",
-    "test:integration-update": "npx playwright test --update-snapshots"
+    "test:integration-update": "npx playwright test --update-snapshots",
+    "commitlint": "commitlint",
+    "prepare": "husky"
   },
   "repository": {},
   "keywords": [
@@ -23,11 +27,21 @@
   "bugs": {},
   "homepage": "",
   "dependencies": {
-    "excalibur": "0.32.0"
+    "excalibur": "0.32.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.5.0",
+    "@commitlint/config-conventional": "^20.5.0",
     "@playwright/test": "^1.49.1",
     "@types/node": "^22.10.2",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^4.3.4",
+    "husky": "^9.1.7",
+    "prettier": "^3.8.1",
     "typescript": "5.9.3",
     "vite": "6.4.1"
   }
