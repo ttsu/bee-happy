@@ -9,12 +9,14 @@ import { COLONY } from "./constants";
 import { ColonyEventBus, type ColonyUiSnapshot } from "./events/colony-events";
 import {
   ActiveLevelComponent,
+  BeeAgeComponent,
   BeeLevelComponent,
   BeeNeedsComponent,
   BeeRoleComponent,
   CellCoordComponent,
   CellStateComponent,
   ColonyResourcesComponent,
+  ColonyTimeComponent,
   JobComponent,
   QueenTimerComponent,
   type BeeRole,
@@ -29,6 +31,8 @@ import { IdleWanderSystem } from "./ecs/systems/idle-wander-system";
 import { JobAssignmentSystem } from "./ecs/systems/job-assignment-system";
 import { LevelSystem } from "./ecs/systems/level-system";
 import { MovementSystem } from "./ecs/systems/movement-system";
+import { WorkerLifecycleSystem } from "./ecs/systems/worker-lifecycle-system";
+import { GuardSystem } from "./ecs/systems/guard-system";
 
 /**
  * Central registry and helpers for hive cells, jobs, and colony controller ECS entities.
@@ -55,6 +59,7 @@ export class ColonyRuntime {
         new ActiveLevelComponent(),
         new ColonyResourcesComponent(),
         new QueenTimerComponent(),
+        new ColonyTimeComponent(),
       ],
     });
     this.controllerEntity.addTag("colonyController");
@@ -69,6 +74,7 @@ export class ColonyRuntime {
     this.seedLevelZero();
 
     world.add(new LevelSystem(world, this));
+    world.add(new WorkerLifecycleSystem(world, this));
     world.add(new JobAssignmentSystem(world, this));
     world.add(new MovementSystem(world, this));
     world.add(new IdleWanderSystem(world, this));
@@ -76,6 +82,7 @@ export class ColonyRuntime {
     world.add(new BroodSystem(world, this));
     world.add(new EconomySystem(world, this));
     world.add(new AdultCareSystem(world, this));
+    world.add(new GuardSystem(world, this));
   }
 
   get resources(): ColonyResourcesComponent {
@@ -289,6 +296,9 @@ export class ColonyRuntime {
         broodOccupied += 1;
       }
     }
+    const time = this.controllerEntity.get(ColonyTimeComponent)!;
+    const msPerBeeDay = COLONY.workerLifespanMs / 50;
+    const currentColonyDay = Math.floor(time.colonyElapsedMs / msPerBeeDay) + 1;
     return {
       beesTotal: workers + queens,
       workers,
@@ -306,6 +316,7 @@ export class ColonyRuntime {
       wax: res.wax,
       transitionOverlay: this.transitionOverlay,
       pendingCellTypeKey: this.pendingCellTypeKey,
+      currentColonyDay,
     };
   }
 
@@ -350,7 +361,17 @@ export class ColonyRuntime {
       });
     }
     this.spawnBee("queen", 0, { q: 0, r: 0 });
-    this.spawnBee("worker", 0, { q: 0, r: 1 });
-    this.spawnBee("worker", 0, { q: 1, r: -1 });
+    const msPerDay = COLONY.workerLifespanMs / 50;
+    const spread =
+      COLONY.bootstrapWorkerAgeMaxDays - COLONY.bootstrapWorkerAgeMinDays + 1;
+    for (const hex of [
+      { q: 0, r: 1 },
+      { q: 1, r: -1 },
+    ] as const) {
+      const w = this.spawnBee("worker", 0, hex);
+      const dayRoll =
+        COLONY.bootstrapWorkerAgeMinDays + Math.floor(Math.random() * spread);
+      w.get(BeeAgeComponent)!.ageMs = (dayRoll - 1) * msPerDay;
+    }
   }
 }

@@ -23,6 +23,7 @@ import { buildWalkableKeysForLevel } from "../../pathfinding/hex-path";
 import {
   beeIsEligibleForOpenJobs,
   computeOpenJobAssignmentSlots,
+  workerActorHasAssignableOpenJob,
 } from "../job-eligibility";
 
 const clearIdleMotion = (w: BeeWorkComponent): void => {
@@ -102,6 +103,7 @@ export class IdleWanderSystem extends System {
   override update(elapsed: number): void {
     const slots = computeOpenJobAssignmentSlots(this.jobs.entities);
     const builtByLevel = this.colony.builtByLevel();
+    const jobEntities = this.jobs.entities;
 
     for (const actor of this.colony.scene.actors) {
       const w = actor.get(BeeWorkComponent);
@@ -118,7 +120,14 @@ export class IdleWanderSystem extends System {
         clearIdleMotion(w);
         continue;
       }
-      if (beeIsEligibleForOpenJobs(role.role, slots)) {
+      if (role.role === "queen" && beeIsEligibleForOpenJobs(role.role, slots)) {
+        clearIdleMotion(w);
+        continue;
+      }
+      if (
+        role.role === "worker" &&
+        workerActorHasAssignableOpenJob(actor, jobEntities)
+      ) {
         clearIdleMotion(w);
         continue;
       }

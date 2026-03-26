@@ -9,7 +9,7 @@ isProject: false
 
 ## Purpose
 
-Add worker age over **50 bee-days**, five lifecycle stages, and **stage-gated job assignment**. This revision incorporates **queen feeding as its own job**, **self-feeding workers** (replacing worker-to-worker `adultFeed` semantics), **water delivery by foragers only**, and a **three-phase forage + deposit + wait** flow for pollen and nectar.
+Add worker age over **50 bee-days**, five lifecycle stages, and **stage-preferred job prioritization** (soft bias, not a hard restriction). This revision incorporates **queen feeding as its own job**, **self-feeding workers** (replacing worker-to-worker `adultFeed` semantics), **water delivery by foragers only**, and a **three-phase forage + deposit + wait** flow for pollen and nectar.
 
 ---
 
@@ -28,7 +28,7 @@ Add worker age over **50 bee-days**, five lifecycle stages, and **stage-gated jo
 Bee-days use the same **1–2 / 3–11 / 12–17 / 18–21 / 22–50** boundaries as biology. **Ms per bee-day** = `COLONY.workerLifespanMs / 50` (tunable; e.g. ~4 min total life → ~4.8 s per day).
 
 
-| Stage               | Bee days | Allowed jobs (workers)                                            |
+| Stage               | Bee days | Preferred jobs (workers)                                        |
 | ------------------- | -------- | ----------------------------------------------------------------- |
 | Cleaning            | 1–2      | `cleanBrood`                                                      |
 | Nurse               | 3–11     | `feedLarvae`, `**feedQueen`**                                     |
@@ -37,7 +37,7 @@ Bee-days use the same **1–2 / 3–11 / 12–17 / 18–21 / 22–50** boundarie
 | Forager             | 22–50    | `foragePollen`, `forageNectar`, `forageWater`, `**waterDeliver`** |
 
 
-`**adultFeed` (revised):** Allowed for **all worker stages** (hunger is not stage-gated). Behavior is defined below as **self-feeding** only.
+`**adultFeed` (revised):** Available to **all worker stages** (hunger is not stage-gated). Stage preference biases assignment order rather than preventing self-feeding.
 
 **Queen:** Still only `layEgg` when/if that job is used; no change to queen role table except new worker job `feedQueen` targeting her.
 

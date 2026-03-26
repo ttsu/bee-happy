@@ -86,8 +86,7 @@ const findNearestLarvaeNectarOrHoneyPickup = (
   from: HexCoord,
   larvaeNectarRemaining: number,
 ): { coord: HiveCoord; kind: "nectar" | "honey" } | null => {
-  const allowHoney =
-    larvaeNectarRemaining >= COLONY.honeyNutrientMultiplier;
+  const allowHoney = larvaeNectarRemaining >= COLONY.honeyNutrientMultiplier;
   let bestN: HiveCoord | null = null;
   let bestNd = Infinity;
   let bestH: HiveCoord | null = null;
@@ -346,6 +345,16 @@ export const processFeedLarvaeJobs = (
   onBroodFullyFed: (cellKey: string) => void,
   elapsed: number,
 ): void => {
+  const releaseAndReopenFeedJob = (job: JobComponent): void => {
+    job.feedLarvaePhase = "toPickup";
+    job.feedLarvaePhaseTimerMs = 0;
+    job.feedCargoKind = "none";
+    job.carryPayload = "none";
+    job.pathPoints = [];
+    job.status = "open";
+    releaseJob(world, job);
+  };
+
   for (const je of world.entities) {
     const job = je.get(JobComponent);
     if (!job || job.kind !== "feedLarvae" || job.status === "done") {
@@ -362,6 +371,12 @@ export const processFeedLarvaeJobs = (
       continue;
     }
     const st = cellEnt.get(CellStateComponent)!;
+    if (st.stage !== "larvae") {
+      job.status = "done";
+      releaseJob(world, job);
+      je.kill();
+      continue;
+    }
 
     const beeId = job.reservedBeeIds[0];
     const bee = beeId ? findActorById(beeId) : undefined;
@@ -370,7 +385,10 @@ export const processFeedLarvaeJobs = (
     }
 
     if (job.feedLarvaePhase === "toPickup" && job.pathPoints.length === 0) {
-      planFeedLarvaeLeg(colony, job, bee);
+      const ok = planFeedLarvaeLeg(colony, job, bee);
+      if (!ok) {
+        releaseAndReopenFeedJob(job);
+      }
       continue;
     }
     if (
@@ -415,9 +433,7 @@ export const processFeedLarvaeJobs = (
         const pollenEnt = colony.getCellAt(pk);
         const pollenSt = pollenEnt?.get(CellStateComponent);
         if (!pollenSt || pollenSt.pollenStored < COLONY.pollenPerFeedUnit) {
-          job.pathPoints = [];
-          job.feedLarvaePhase = "toPickup";
-          job.feedLarvaePhaseTimerMs = 0;
+          releaseAndReopenFeedJob(job);
           continue;
         }
         pollenSt.pollenStored -= COLONY.pollenPerFeedUnit;
@@ -431,9 +447,7 @@ export const processFeedLarvaeJobs = (
         });
         const pickupSt = colony.getCellAt(nk)?.get(CellStateComponent);
         if (!pickupSt || !nectarCellHasNectarForFeeding(pickupSt, 1)) {
-          job.pathPoints = [];
-          job.feedLarvaePhase = "toPickup";
-          job.feedLarvaePhaseTimerMs = 0;
+          releaseAndReopenFeedJob(job);
           continue;
         }
         pickupSt.nectarStored -= 1;
@@ -450,9 +464,7 @@ export const processFeedLarvaeJobs = (
           !pickupSt ||
           !nectarCellHasHoneyForFeeding(pickupSt, COLONY.larvaeFeedHoneyCost)
         ) {
-          job.pathPoints = [];
-          job.feedLarvaePhase = "toPickup";
-          job.feedLarvaePhaseTimerMs = 0;
+          releaseAndReopenFeedJob(job);
           continue;
         }
         pickupSt.honeyStored -= COLONY.larvaeFeedHoneyCost;
@@ -503,8 +515,7 @@ export const processFeedLarvaeJobs = (
         releaseJob(world, job);
         je.kill();
       } else if (!planFeedLarvaeLeg(colony, job, bee)) {
-        job.feedLarvaePhase = "toPickup";
-        job.pathPoints = [];
+        releaseAndReopenFeedJob(job);
       }
     }
   }

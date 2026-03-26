@@ -16,6 +16,7 @@ const defaultSnapshot: ColonyUiSnapshot = {
   wax: 0,
   transitionOverlay: 0,
   pendingCellTypeKey: null,
+  currentColonyDay: 1,
 };
 
 /**
@@ -61,6 +62,7 @@ export const App = () => {
             Brood: {snap.broodOccupied}/{snap.broodTotal}
           </div>
           <div>Level: {snap.activeLevel}</div>
+          <div>Day: {snap.currentColonyDay}</div>
         </div>
       </div>
       <div

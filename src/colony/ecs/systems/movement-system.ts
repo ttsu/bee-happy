@@ -1,9 +1,4 @@
-import {
-  System,
-  SystemPriority,
-  SystemType,
-  type World,
-} from "excalibur";
+import { System, SystemPriority, SystemType, type World } from "excalibur";
 import { asActor } from "../../actor-utils";
 import {
   BeeLevelComponent,
@@ -63,7 +58,30 @@ export class MovementSystem extends System {
       ) {
         continue;
       }
-      if (job.kind === "adultFeed" || job.kind === "waterDeliver") {
+      const selfFeedPath =
+        job.kind === "adultFeed" &&
+        job.adultFeedTargetBeeId === actor.id &&
+        job.pathPoints.length > 0;
+      if (selfFeedPath) {
+        this.followPath(actor, w, job, elapsed);
+        continue;
+      }
+      if (job.kind === "waterDeliver") {
+        const target = job.adultFeedTargetBeeId
+          ? findActorById(this.world, job.adultFeedTargetBeeId)
+          : undefined;
+        if (target) {
+          const to = target.pos.sub(actor.pos);
+          const step = COLONY.beeSpeed * elapsed;
+          if (to.size > step + 2) {
+            actor.pos = actor.pos.add(to.normalize().scale(step));
+          } else {
+            actor.pos = target.pos.clone();
+          }
+        }
+        continue;
+      }
+      if (job.kind === "feedQueen") {
         const target = job.adultFeedTargetBeeId
           ? findActorById(this.world, job.adultFeedTargetBeeId)
           : undefined;
@@ -81,27 +99,36 @@ export class MovementSystem extends System {
       if (!job.pathPoints.length) {
         continue;
       }
-      const idx = Math.min(w.pathIndex, job.pathPoints.length - 1);
-      const target = job.pathPoints[idx]!;
-      const to = target.sub(actor.pos);
-      const dist = to.size;
-      const step = COLONY.beeSpeed * elapsed;
-      if (dist <= step + 2) {
-        actor.pos = target.clone();
-        if (w.pathIndex < job.pathPoints.length - 1) {
-          w.pathIndex += 1;
-        }
-      } else {
-        actor.pos = actor.pos.add(to.normalize().scale(step));
+      this.followPath(actor, w, job, elapsed);
+    }
+  }
+
+  private followPath(
+    actor: import("excalibur").Actor,
+    w: BeeWorkComponent,
+    job: JobComponent,
+    elapsed: number,
+  ): void {
+    const idx = Math.min(w.pathIndex, job.pathPoints.length - 1);
+    const target = job.pathPoints[idx]!;
+    const to = target.sub(actor.pos);
+    const dist = to.size;
+    const step = COLONY.beeSpeed * elapsed;
+    if (dist <= step + 2) {
+      actor.pos = target.clone();
+      if (w.pathIndex < job.pathPoints.length - 1) {
+        w.pathIndex += 1;
       }
-      const lvl = actor.get(BeeLevelComponent)!;
-      if (lvl.level !== job.targetLevel) {
-        lvl.level = job.targetLevel;
-      }
-      const cellCenter = hexToWorld({ q: job.targetQ, r: job.targetR }, COLONY.hexSize);
-      if (actor.pos.sub(cellCenter).size < COLONY.buildReachPx * 0.4) {
-        lvl.level = job.targetLevel;
-      }
+    } else {
+      actor.pos = actor.pos.add(to.normalize().scale(step));
+    }
+    const lvl = actor.get(BeeLevelComponent)!;
+    if (lvl.level !== job.targetLevel) {
+      lvl.level = job.targetLevel;
+    }
+    const cellCenter = hexToWorld({ q: job.targetQ, r: job.targetR }, COLONY.hexSize);
+    if (actor.pos.sub(cellCenter).size < COLONY.buildReachPx * 0.4) {
+      lvl.level = job.targetLevel;
     }
   }
 }

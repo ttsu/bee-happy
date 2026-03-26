@@ -1,5 +1,7 @@
 import { System, SystemPriority, SystemType, type Query, type World } from "excalibur";
+import { asActor } from "../../actor-utils";
 import {
+  BeeAgeComponent,
   BeeLevelComponent,
   BeeRoleComponent,
   BeeWorkComponent,
@@ -10,8 +12,16 @@ import { COLONY } from "../../constants";
 import type { ColonyRuntime } from "../../colony-runtime";
 import type { HiveCoord } from "../../../grid/hive-levels";
 import { hexToWorld, worldToHex } from "../../../grid/hex-grid";
-import { isBeeAssignableToJobKind } from "../job-eligibility";
+import {
+  isBeeAssignableToJobKind,
+  isWorkerEligibleForJobKind,
+  workerJobPreferenceDistanceBonusPx,
+} from "../job-eligibility";
 import { planFeedLarvaeLeg } from "../../feed-larvae-path";
+import { beeStartHiveCoord, findNearestSelfFeedTarget } from "../../self-feed-target";
+
+const findActorById = (colony: ColonyRuntime, id: number) =>
+  asActor(colony.scene.actors.find((a) => a.id === id));
 
 /**
  * Reserves workers (and queen for lay-egg) for open jobs and assigns shared paths.
@@ -29,6 +39,33 @@ export class JobAssignmentSystem extends System {
     this.jobs = world.query([JobComponent]);
   }
 
+  /**
+   * World position used to sort which bee is nearest to the job.
+   */
+  private resolveJobAnchorWorld(job: JobComponent): import("excalibur").Vector {
+    if (job.kind === "waterDeliver" || job.kind === "feedQueen") {
+      const id = job.adultFeedTargetBeeId;
+      if (id != null) {
+        const t = findActorById(this.colony, id);
+        if (t) {
+          return t.pos;
+        }
+      }
+    }
+    if (job.kind === "adultFeed" && job.adultFeedTargetBeeId != null) {
+      const self = findActorById(this.colony, job.adultFeedTargetBeeId);
+      if (self) {
+        const lvl = self.get(BeeLevelComponent)!.level;
+        const pick = findNearestSelfFeedTarget(this.colony, self.pos, lvl);
+        if (pick) {
+          return hexToWorld({ q: pick.coord.q, r: pick.coord.r }, COLONY.hexSize);
+        }
+        return self.pos;
+      }
+    }
+    return hexToWorld({ q: job.targetQ, r: job.targetR }, COLONY.hexSize);
+  }
+
   override update(_elapsed: number): void {
     const jobEntities = this.jobs.entities
       .filter((e) => e.get(JobComponent)!.status !== "done")
@@ -40,31 +77,82 @@ export class JobAssignmentSystem extends System {
       if (still <= 0) {
         continue;
       }
-      const targetWorld = hexToWorld(
-        { q: job.targetQ, r: job.targetR },
-        COLONY.hexSize,
-      );
+      const anchor = this.resolveJobAnchorWorld(job);
       const goal: HiveCoord = {
         q: job.targetQ,
         r: job.targetR,
         level: job.targetLevel,
       };
-      const candidates = this.colony.scene.actors.filter((a) =>
-        isBeeAssignableToJobKind(a.get(BeeRoleComponent)!.role, job.kind),
-      );
+      const candidates = this.colony.scene.actors.filter((a) => {
+        const role = a.get(BeeRoleComponent)!.role;
+        if (!isBeeAssignableToJobKind(role, job.kind)) {
+          return false;
+        }
+        if (role === "worker") {
+          const age = a.get(BeeAgeComponent);
+          if (!age) {
+            return false;
+          }
+          if (!isWorkerEligibleForJobKind(age.ageMs, job.kind)) {
+            return false;
+          }
+        }
+        if (job.kind === "adultFeed" && job.adultFeedTargetBeeId !== a.id) {
+          return false;
+        }
+        return true;
+      });
       const sorted = candidates
         .filter((a) => {
           const w = a.get(BeeWorkComponent)!;
           return w.availability === "available" && !w.currentJobEntityId;
         })
         .sort((a, b) => {
-          const da = a.pos.sub(targetWorld).size;
-          const db = b.pos.sub(targetWorld).size;
-          return da - db;
+          const da = a.pos.sub(anchor).size;
+          const db = b.pos.sub(anchor).size;
+          const ba = a.get(BeeAgeComponent);
+          const bb = b.get(BeeAgeComponent);
+          const scoreA =
+            da - (ba ? workerJobPreferenceDistanceBonusPx(ba.ageMs, job.kind) : 0);
+          const scoreB =
+            db - (bb ? workerJobPreferenceDistanceBonusPx(bb.ageMs, job.kind) : 0);
+          return scoreA - scoreB;
         });
       for (let i = 0; i < still && i < sorted.length; i++) {
         const bee = sorted[i]!;
         const w = bee.get(BeeWorkComponent)!;
+
+        if (job.kind === "adultFeed") {
+          const lvl = bee.get(BeeLevelComponent)!.level;
+          const pick = findNearestSelfFeedTarget(this.colony, bee.pos, lvl);
+          if (!pick) {
+            continue;
+          }
+          const start = beeStartHiveCoord(bee.pos, lvl);
+          const path = findHexPathWorldPoints(
+            start,
+            pick.coord,
+            COLONY.hexSize,
+            this.colony.builtByLevel(),
+          );
+          if (!path.length) {
+            continue;
+          }
+          job.targetQ = pick.coord.q;
+          job.targetR = pick.coord.r;
+          job.targetLevel = pick.coord.level;
+          job.selfFeedCellKey = pick.key;
+          job.pathPoints = path;
+          w.availability = "busy";
+          w.currentJobEntityId = je.id;
+          w.pathIndex = 0;
+          w.idleWanderTarget = null;
+          w.idleWanderPauseRemainingMs = 0;
+          job.reservedBeeIds.push(bee.id);
+          job.status = "active";
+          continue;
+        }
+
         w.availability = "busy";
         w.currentJobEntityId = je.id;
         w.pathIndex = 0;
@@ -76,8 +164,8 @@ export class JobAssignmentSystem extends System {
           job.kind === "foragePollen" ||
           job.kind === "forageNectar" ||
           job.kind === "forageWater" ||
-          job.kind === "adultFeed" ||
-          job.kind === "waterDeliver"
+          job.kind === "waterDeliver" ||
+          job.kind === "feedQueen"
         ) {
           job.pathPoints = [];
           continue;

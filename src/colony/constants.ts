@@ -103,4 +103,23 @@ export const COLONY = {
   feedLarvaeCollectMs: 2_800,
   /** Time at the brood cell to deposit one load (ms). */
   feedLarvaeDepositMs: 2_600,
+  /** Total adult worker lifespan in ms (50 bee-days). */
+  workerLifespanMs: 240_000,
+  /** Seeded workers start between these bee-days (forager-capable). */
+  bootstrapWorkerAgeMinDays: 22,
+  bootstrapWorkerAgeMaxDays: 40,
+  /** Timed interaction for nurse feeding the queen. */
+  feedQueenDurationMs: 1_400,
+  /** Pollen storage units consumed per self-feed when using pollen cells. */
+  adultFeedPollenCost: 2,
+  /** Radius for self-feed and guard completion (world px). */
+  selfFeedWorkRadiusPx: 28,
+  /** Guard job: must stay near entrance this long (ms). */
+  guardHiveDurationMs: 4_000,
+  /** When foraging has no deposit capacity, re-check interval (ms). */
+  forageCapacityPollIntervalMs: 500,
+  /** Payload units applied when depositing after pollen forage. */
+  foragePollenDepositAmount: 12,
+  /** Payload units applied when depositing after nectar forage. */
+  forageNectarDepositAmount: 10,
 } as const;

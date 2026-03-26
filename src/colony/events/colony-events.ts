@@ -28,6 +28,8 @@ export interface ColonyUiSnapshot {
   readonly wax: number;
   readonly transitionOverlay: number;
   readonly pendingCellTypeKey: string | null;
+  /** 1-based colony calendar day (same scale as worker bee-days). */
+  readonly currentColonyDay: number;
 }
 
 type Listener = (e: ColonyEvent) => void;

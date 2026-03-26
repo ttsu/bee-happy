@@ -1,10 +1,13 @@
 import { Color, Font, vec, type ExcaliburGraphicsContext, type World } from "excalibur";
 import type { ColonyRuntime } from "../colony/colony-runtime";
 import {
+  BeeAgeComponent,
   BeeLevelComponent,
+  BeeRoleComponent,
   BeeWorkComponent,
   JobComponent,
 } from "../colony/ecs/components/colony-components";
+import { getBeeDayOneBased } from "../colony/worker-lifecycle";
 
 const findJobEntity = (world: World, id: number) =>
   world.entities.find((e) => e.id === id);
@@ -44,6 +47,8 @@ const shortJobLabel = (job: JobComponent): string => {
         case "depositing":
           return "deposit";
       }
+    case "feedQueen":
+      return "jelly";
     case "cleanBrood":
       return "clean";
     case "foragePollen":
@@ -56,6 +61,10 @@ const shortJobLabel = (job: JobComponent): string => {
           return "wait";
         case "return":
           return "return";
+        case "depositing":
+          return "deposit";
+        case "capacityWait":
+          return "hold";
         default:
           return "forage";
       }
@@ -65,8 +74,10 @@ const shortJobLabel = (job: JobComponent): string => {
       return "deposit";
     case "honeyProcess":
       return "honey";
+    case "guardHive":
+      return "guard";
     case "adultFeed":
-      return "tend";
+      return "eat";
     case "waterDeliver":
       return "water";
     default:
@@ -86,6 +97,8 @@ export const drawBeeJobLabels = (
   for (const actor of colony.scene.actors) {
     const w = actor.get(BeeWorkComponent);
     const lvl = actor.get(BeeLevelComponent);
+    const role = actor.get(BeeRoleComponent);
+    const age = actor.get(BeeAgeComponent);
     if (!w || !lvl || lvl.level !== active) {
       continue;
     }
@@ -97,9 +110,11 @@ export const drawBeeJobLabels = (
         text = shortJobLabel(job);
       }
     }
+    if (role?.role === "worker" && age) {
+      const d = Math.min(50, getBeeDayOneBased(age.ageMs));
+      text = `${text} d${d}`;
+    }
     const pos = actor.pos.add(LABEL_OFFSET);
-    // Font.render applies translate(x,y) then draws at coordinates that include x,y again.
-    // Pass world coords only via ctx.translate; use 0,0 like Text._drawImage does.
     ctx.save();
     ctx.translate(pos.x, pos.y);
     labelFont.render(ctx, text, labelFont.color, 0, 0);

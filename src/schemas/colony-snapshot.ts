@@ -15,6 +15,7 @@ export const colonyUiSnapshotSchema = z.object({
   wax: z.number(),
   transitionOverlay: z.number(),
   pendingCellTypeKey: z.string().nullable(),
+  currentColonyDay: z.number(),
 });
 
 export type ColonyUiSnapshotZ = z.infer<typeof colonyUiSnapshotSchema>;

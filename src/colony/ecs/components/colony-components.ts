@@ -16,6 +16,7 @@ export type JobKind =
   | "buildCell"
   | "layEgg"
   | "feedLarvae"
+  | "feedQueen"
   | "cleanBrood"
   | "foragePollen"
   | "forageNectar"
@@ -24,6 +25,7 @@ export type JobKind =
   | "depositNectar"
   | "depositWater"
   | "honeyProcess"
+  | "guardHive"
   | "adultFeed"
   | "waterDeliver";
 
@@ -66,12 +68,24 @@ export class JobComponent extends Component {
   reservedBeeIds: number[] = [];
   status: "open" | "active" | "done" = "open";
   pathPoints: Vector[] = [];
-  foragePhase: "outbound" | "wait" | "return" | "idle" = "idle";
+  foragePhase: "outbound" | "wait" | "return" | "depositing" | "capacityWait" | "idle" =
+    "idle";
   forageWaitMs = 0;
+  /** In `capacityWait`, ms until next deposit-capacity check. */
+  forageCapacityPollMs = 0;
   carryPayload: "none" | "pollen" | "nectar" | "honey" | "water" = "none";
   depositTargetKey: string | null = null;
-  /** Adult feed: target bee entity id. */
+  /**
+   * `adultFeed` / `waterDeliver`: thirsty/hungry target bee.
+   * `feedQueen`: queen entity id to feed.
+   */
   adultFeedTargetBeeId: number | null = null;
+  /** Self-feed / deposit: hive key of food cell or deposit destination. */
+  selfFeedCellKey: string | null = null;
+  /** `feedQueen`: royal jelly feed timer while in range. */
+  feedQueenTimerMs = 0;
+  /** `guardHive`: time remaining at entrance. */
+  guardHiveTimerMs = 0;
   /** Scratch values for forage targets (world space). */
   scratchX = 0;
   scratchY = 0;
@@ -100,6 +114,13 @@ export class JobComponent extends Component {
 
 export class BeeRoleComponent extends Component {
   constructor(public role: BeeRole) {
+    super();
+  }
+}
+
+/** Age in ms for adult workers (emerged at 0; queen has no age component). */
+export class BeeAgeComponent extends Component {
+  constructor(public ageMs = 0) {
     super();
   }
 }
@@ -144,4 +165,9 @@ export class ColonyResourcesComponent extends Component {
 
 export class QueenTimerComponent extends Component {
   layCooldownMs = 0;
+}
+
+/** Global colony clock for HUD day and shared time scale. */
+export class ColonyTimeComponent extends Component {
+  colonyElapsedMs = 0;
 }
