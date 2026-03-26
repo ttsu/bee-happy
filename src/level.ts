@@ -12,6 +12,7 @@ import { COLONY } from "./colony/constants";
 import { ColonyRuntime } from "./colony/colony-runtime";
 import { ActiveLevelComponent } from "./colony/ecs/components/colony-components";
 import { setColonyBridge } from "./colony-bridge";
+import { drawBeeJobLabels } from "./render/bee-job-label";
 import { drawHiveCells } from "./render/cell-renderer-actor";
 
 /**
@@ -73,7 +74,7 @@ export class MyLevel extends Scene {
       ) {
         const w = primary.lastWorldPos;
         const h = worldToHex(w, COLONY.hexSize);
-        this.colony.handlePlacementIntent({
+        this.colony.handleTapIntent({
           q: h.q,
           r: h.r,
           level: this.colony.activeLevel,
@@ -97,12 +98,23 @@ export class MyLevel extends Scene {
     }
   }
 
-  override onPostDraw(ctx: ExcaliburGraphicsContext, _elapsed: number): void {
-    // Custom draw runs in screen space unless the camera transform is applied; match world actors.
+  /**
+   * Draw hive cells before actors so bees render on top (scene order: preDraw → world draw → postDraw).
+   */
+  override onPreDraw(ctx: ExcaliburGraphicsContext, _elapsed: number): void {
     ctx.save();
     ctx.resetTransform();
     this.camera.draw(ctx);
     drawHiveCells(ctx, this.colony);
+    ctx.restore();
+  }
+
+  /** Job labels after actors so they appear above bees and cells. */
+  override onPostDraw(ctx: ExcaliburGraphicsContext, _elapsed: number): void {
+    ctx.save();
+    ctx.resetTransform();
+    this.camera.draw(ctx);
+    drawBeeJobLabels(ctx, this.colony);
     ctx.restore();
   }
 }

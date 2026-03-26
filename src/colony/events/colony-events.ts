@@ -6,6 +6,7 @@ export type ColonyEvent =
   | { type: "CellBuilt"; cellKey: string }
   | { type: "BroodLarvaeReady"; cellKey: string }
   | { type: "BroodFed"; cellKey: string }
+  | { type: "BroodWorkerEmerged"; cellKey: string }
   | { type: "LevelChangeRequested"; delta: 1 | -1 }
   | { type: "LevelChangeStarted"; from: number; to: number }
   | { type: "LevelChanged"; level: number }

@@ -25,6 +25,7 @@ import { AdultCareSystem } from "./ecs/systems/adult-care-system";
 import { BroodSystem } from "./ecs/systems/brood-system";
 import { BuildSystem } from "./ecs/systems/build-system";
 import { EconomySystem } from "./ecs/systems/economy-system";
+import { IdleWanderSystem } from "./ecs/systems/idle-wander-system";
 import { JobAssignmentSystem } from "./ecs/systems/job-assignment-system";
 import { LevelSystem } from "./ecs/systems/level-system";
 import { MovementSystem } from "./ecs/systems/movement-system";
@@ -61,8 +62,6 @@ export class ColonyRuntime {
 
     const res = this.controllerEntity.get(ColonyResourcesComponent)!;
     res.wax = COLONY.initialWax;
-    res.pollen = COLONY.initialPollen;
-    res.honey = COLONY.initialHoney;
     res.colonyNectar = COLONY.initialColonyNectar;
 
     this.controllerEntity.get(QueenTimerComponent)!.layCooldownMs = 3500;
@@ -72,6 +71,7 @@ export class ColonyRuntime {
     world.add(new LevelSystem(world, this));
     world.add(new JobAssignmentSystem(world, this));
     world.add(new MovementSystem(world, this));
+    world.add(new IdleWanderSystem(world, this));
     world.add(new BuildSystem(world, this));
     world.add(new BroodSystem(world, this));
     world.add(new EconomySystem(world, this));
@@ -80,6 +80,32 @@ export class ColonyRuntime {
 
   get resources(): ColonyResourcesComponent {
     return this.controllerEntity.get(ColonyResourcesComponent)!;
+  }
+
+  /**
+   * Sums pollen across all built pollen storage cells (HUD and economy demand checks).
+   */
+  sumPollenStored(): number {
+    let total = 0;
+    for (const [, e] of this.cellsByKey) {
+      const st = e.get(CellStateComponent)!;
+      if (st.built && st.cellType === "pollen") {
+        total += st.pollenStored;
+      }
+    }
+    return total;
+  }
+
+  /** Total honey across built nectar cells (HUD). */
+  sumHoneyStored(): number {
+    let total = 0;
+    for (const [, e] of this.cellsByKey) {
+      const st = e.get(CellStateComponent)!;
+      if (st.built && st.cellType === "nectar") {
+        total += st.honeyStored;
+      }
+    }
+    return total;
   }
 
   get activeLevel(): number {
@@ -113,6 +139,15 @@ export class ColonyRuntime {
     return bee;
   }
 
+  /**
+   * Spawns a worker that eclosed from a brood cell and pushes an immediate HUD update.
+   */
+  spawnEmergingWorker(level: number, hex: HexCoord): BeeActor {
+    const bee = this.spawnBee("worker", level, hex);
+    this.emitUiSnapshotImmediate();
+    return bee;
+  }
+
   createCellEntity(coord: HiveCoord, state: Partial<CellStateComponent>): Entity {
     const key = hiveKey(coord);
     const ent = new Entity({
@@ -133,6 +168,30 @@ export class ColonyRuntime {
     ent.addTag("job");
     this.scene.world.add(ent);
     return ent;
+  }
+
+  /**
+   * Handles a tap on the hive: assign type for a finished empty cell, or place a new foundation.
+   */
+  handleTapIntent(coord: HiveCoord): void {
+    const active = this.controllerEntity.get(ActiveLevelComponent)!;
+    if (active.transition !== "idle") {
+      return;
+    }
+    if (coord.level !== active.activeLevel) {
+      return;
+    }
+    const key = hiveKey(coord);
+    const existing = this.cellsByKey.get(key);
+    if (existing) {
+      const st = existing.get(CellStateComponent)!;
+      if (st.built && st.cellType === "none") {
+        this.pendingCellTypeKey = key;
+        this.emitUiSnapshotImmediate();
+        return;
+      }
+    }
+    this.handlePlacementIntent(coord);
   }
 
   handlePlacementIntent(coord: HiveCoord): void {
@@ -178,6 +237,12 @@ export class ColonyRuntime {
     st.cellType = cellType;
     st.stage = "empty";
     this.pendingCellTypeKey = null;
+    this.emitUiSnapshotImmediate();
+  }
+
+  /** Pushes the latest HUD snapshot to subscribers without waiting for the frame throttle. */
+  private emitUiSnapshotImmediate(): void {
+    this.events.emit({ type: "ColonySnapshot", snapshot: this.getUiSnapshot() });
   }
 
   getUiSnapshot(): ColonyUiSnapshot {
@@ -228,8 +293,8 @@ export class ColonyRuntime {
       beesTotal: workers + queens,
       workers,
       queens,
-      pollen: res.pollen,
-      honey: res.honey,
+      pollen: this.sumPollenStored(),
+      honey: this.sumHoneyStored(),
       colonyNectar: res.colonyNectar,
       happinessPct: Math.min(
         100,
@@ -275,6 +340,13 @@ export class ColonyRuntime {
         stage: "empty",
         buildProgress: 1,
         cellType: s.type,
+        ...(s.type === "pollen" ? { pollenStored: COLONY.initialPollen } : {}),
+        ...(s.type === "nectar"
+          ? {
+              nectarStored: Math.min(COLONY.nectarCellCapacity, 8),
+              honeyStored: 0,
+            }
+          : {}),
       });
     }
     this.spawnBee("queen", 0, { q: 0, r: 0 });

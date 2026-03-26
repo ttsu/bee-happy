@@ -1,6 +1,6 @@
 import { hexNeighbors } from "../grid/hex-grid";
 import type { HiveCoord } from "../grid/hive-levels";
-import { hiveKey, isLevelInBounds, verticalNeighbor } from "../grid/hive-levels";
+import { hiveKey, isLevelInBounds, parseHiveKey, verticalNeighbor } from "../grid/hive-levels";
 import type { CellStateComponent } from "./ecs/components/colony-components";
 
 export interface CellLookup {
@@ -43,4 +43,40 @@ export const canPlaceFoundation = (coord: HiveCoord, cells: CellLookup): boolean
     }
   }
   return false;
+};
+
+/**
+ * Returns empty axial positions on `level` where {@link canPlaceFoundation} is true.
+ * Candidates are derived from hex and vertical neighbors of all built cells (any level).
+ */
+export const eligibleFoundationCoordsForLevel = (
+  level: number,
+  cells: CellLookup,
+  builtCoords: readonly HiveCoord[],
+): HiveCoord[] => {
+  const candidateKeys = new Set<string>();
+  for (const coord of builtCoords) {
+    for (const n of hexNeighbors(coord)) {
+      candidateKeys.add(hiveKey({ ...n, level: coord.level }));
+    }
+    const up = verticalNeighbor(coord, 1);
+    if (up) {
+      candidateKeys.add(hiveKey(up));
+    }
+    const down = verticalNeighbor(coord, -1);
+    if (down) {
+      candidateKeys.add(hiveKey(down));
+    }
+  }
+  const out: HiveCoord[] = [];
+  for (const key of candidateKeys) {
+    const c = parseHiveKey(key);
+    if (c.level !== level) {
+      continue;
+    }
+    if (canPlaceFoundation(c, cells)) {
+      out.push(c);
+    }
+  }
+  return out;
 };

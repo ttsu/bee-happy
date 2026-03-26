@@ -62,3 +62,9 @@ const axialRound = (q: number, r: number): HexCoord => {
 };
 
 export const hexKey = (h: HexCoord): string => `${h.q},${h.r}`;
+
+/**
+ * Axial hex distance (steps between centers on the honeycomb).
+ */
+export const hexAxialDistance = (a: HexCoord, b: HexCoord): number =>
+  (Math.abs(a.q - b.q) + Math.abs(a.q + a.r - b.q - b.r) + Math.abs(a.r - b.r)) / 2;

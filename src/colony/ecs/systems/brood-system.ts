@@ -12,6 +12,7 @@ import type { ColonyRuntime } from "../../colony-runtime";
 import { hiveKey } from "../../../grid/hive-levels";
 import { hexToWorld } from "../../../grid/hex-grid";
 import { JobPriority } from "../../job-priority";
+import { canSpawnFeedLarvaeJob, processFeedLarvaeJobs } from "../../feed-larvae-path";
 
 const findEntityById = (world: World, id: number) =>
   asActor(world.entities.find((e) => e.id === id));
@@ -24,6 +25,8 @@ const releaseJob = (world: World, job: JobComponent): void => {
       w.availability = "available";
       w.currentJobEntityId = null;
       w.pathIndex = 0;
+      w.idleWanderTarget = null;
+      w.idleWanderPauseRemainingMs = 0;
     }
   }
   job.reservedBeeIds = [];
@@ -66,7 +69,6 @@ export class BroodSystem extends System {
   }
 
   override update(elapsed: number): void {
-    const res = this.colony.resources;
     const qt = this.colony.controllerEntity.get(QueenTimerComponent)!;
     qt.layCooldownMs -= elapsed;
     if (qt.layCooldownMs <= 0) {
@@ -92,12 +94,16 @@ export class BroodSystem extends System {
         st.eggTimerMs -= elapsed;
         if (st.eggTimerMs <= 0) {
           st.stage = "larvae";
-          st.larvaeFoodRemaining = COLONY.larvaeFoodNeeded;
+          st.larvaePollenRemaining = COLONY.larvaePollenUnitsNeeded;
+          st.larvaeNectarRemaining = COLONY.larvaeNectarUnitsNeeded;
           this.colony.events.emit({ type: "BroodLarvaeReady", cellKey: key });
         }
-      } else if (st.stage === "larvae" && st.larvaeFoodRemaining > 0) {
+      } else if (
+        st.stage === "larvae" &&
+        (st.larvaePollenRemaining > 0 || st.larvaeNectarRemaining > 0)
+      ) {
         if (
-          res.pollen >= COLONY.pollenPerFeedUnit &&
+          canSpawnFeedLarvaeJob(this.colony, coord, st) &&
           !hasOpenJobForCell(this.world, "feedLarvae", key)
         ) {
           const j = new JobComponent(
@@ -115,6 +121,8 @@ export class BroodSystem extends System {
         if (st.sealedTimerMs <= 0) {
           st.stage = "cleaning";
           st.cleaningTimerMs = COLONY.cleaningDurationMs;
+          this.colony.spawnEmergingWorker(coord.level, { q: coord.q, r: coord.r });
+          this.colony.events.emit({ type: "BroodWorkerEmerged", cellKey: key });
           if (!hasOpenJobForCell(this.world, "cleanBrood", key)) {
             const j = new JobComponent(
               "cleanBrood",
@@ -171,57 +179,15 @@ export class BroodSystem extends System {
       }
     }
 
-    this.processFeedJobs(elapsed, res);
-  }
-
-  private processFeedJobs(
-    elapsed: number,
-    res: { pollen: number; honey: number },
-  ): void {
-    for (const je of this.world.entities) {
-      const job = je.get(JobComponent);
-      if (!job || job.kind !== "feedLarvae" || job.status === "done") {
-        continue;
-      }
-      const key = hiveKey({
-        q: job.targetQ,
-        r: job.targetR,
-        level: job.targetLevel,
-      });
-      const cellEnt = this.colony.getCellAt(key);
-      if (!cellEnt) {
-        continue;
-      }
-      const st = cellEnt.get(CellStateComponent)!;
-      const center = hexToWorld({ q: job.targetQ, r: job.targetR }, COLONY.hexSize);
-      let fed = false;
-      for (const id of job.reservedBeeIds) {
-        const bee = findEntityById(this.world, id);
-        if (bee && bee.pos.sub(center).size < 45) {
-          fed = true;
-        }
-      }
-      if (fed) {
-        if (res.pollen >= COLONY.pollenPerFeedUnit) {
-          res.pollen -= COLONY.pollenPerFeedUnit;
-        } else if (res.honey >= COLONY.honeyPerFeedUnit) {
-          res.honey -= COLONY.honeyPerFeedUnit;
-        } else {
-          continue;
-        }
-        st.larvaeFoodRemaining = Math.max(
-          0,
-          st.larvaeFoodRemaining - COLONY.feedAmountPerVisit,
-        );
-        if (st.larvaeFoodRemaining <= 0) {
-          st.stage = "sealed";
-          st.sealedTimerMs = COLONY.sealedDurationMs;
-          this.colony.events.emit({ type: "BroodFed", cellKey: key });
-        }
-        job.status = "done";
-        releaseJob(this.world, job);
-        je.kill();
-      }
-    }
+    processFeedLarvaeJobs(
+      this.colony,
+      this.world,
+      (id) => findEntityById(this.world, id),
+      releaseJob,
+      (cellKey) => {
+        this.colony.events.emit({ type: "BroodFed", cellKey });
+      },
+      elapsed,
+    );
   }
 }

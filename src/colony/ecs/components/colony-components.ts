@@ -44,12 +44,19 @@ export class CellStateComponent extends Component {
   stage: CellStage = "foundation";
   buildProgress = 0;
   cellType: CellTypeKind = "none";
+  /** Pollen units in this cell when {@link cellType} is `pollen`. */
+  pollenStored = 0;
   nectarStored = 0;
+  /** Honey units in this cell after nectar is processed; nectar deposits blocked until this is 0. */
+  honeyStored = 0;
   honeyProcessingProgress = 0;
   eggTimerMs = 0;
   sealedTimerMs = 0;
   cleaningTimerMs = 0;
-  larvaeFoodRemaining = 0;
+  /** Portions of pollen still required before pupation (fed from pollen storage cells). */
+  larvaePollenRemaining = 0;
+  /** Portions of nectar/honey still required before pupation (fed from nectar cells / honey). */
+  larvaeNectarRemaining = 0;
   /** When true, honey job may be interrupted for adult nectar use. */
   honeyProcessingDirty = false;
 }
@@ -61,15 +68,24 @@ export class JobComponent extends Component {
   pathPoints: Vector[] = [];
   foragePhase: "outbound" | "wait" | "return" | "idle" = "idle";
   forageWaitMs = 0;
-  carryPayload: "none" | "pollen" | "nectar" | "water" = "none";
+  carryPayload: "none" | "pollen" | "nectar" | "honey" | "water" = "none";
   depositTargetKey: string | null = null;
   /** Adult feed: target bee entity id. */
   adultFeedTargetBeeId: number | null = null;
   /** Scratch values for forage targets (world space). */
   scratchX = 0;
   scratchY = 0;
-  /** Feed larvae: pollen taken from storage when job starts. */
-  feedReservedPollen = 0;
+  /**
+   * Feed larvae: travel → timed gather at food cell → travel → timed deposit at brood.
+   */
+  feedLarvaePhase: "toPickup" | "collecting" | "toDeliver" | "depositing" = "toPickup";
+  /** Counts down during {@link feedLarvaePhase} `collecting` or `depositing`. */
+  feedLarvaePhaseTimerMs = 0;
+  feedPickupQ = 0;
+  feedPickupR = 0;
+  feedPickupLevel = 0;
+  /** Active leg: what the bee will pick up at {@link feedPickupQ}/R or is carrying to brood. */
+  feedCargoKind: "none" | "pollen" | "nectar" | "honey" = "none";
   constructor(
     public kind: JobKind,
     public priority: number,
@@ -92,10 +108,14 @@ export class BeeWorkComponent extends Component {
   availability: BeeAvailability = "available";
   currentJobEntityId: number | null = null;
   pathIndex = 0;
+  /** World target for idle wandering when unassigned and no eligible open jobs. */
+  idleWanderTarget: Vector | null = null;
+  /** Time left in the current idle rest (no movement); ms. */
+  idleWanderPauseRemainingMs = 0;
 }
 
 export class BeeCarryComponent extends Component {
-  carry: "none" | "pollen" | "nectar" | "water" = "none";
+  carry: "none" | "pollen" | "nectar" | "honey" | "water" = "none";
 }
 
 export class BeeNeedsComponent extends Component {
@@ -119,8 +139,6 @@ export class ActiveLevelComponent extends Component {
 
 export class ColonyResourcesComponent extends Component {
   wax = 0;
-  pollen = 0;
-  honey = 0;
   colonyNectar = 0;
 }
 

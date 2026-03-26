@@ -1,4 +1,9 @@
-import { System, SystemPriority, SystemType, type World } from "excalibur";
+import {
+  System,
+  SystemPriority,
+  SystemType,
+  type World,
+} from "excalibur";
 import { asActor } from "../../actor-utils";
 import {
   BeeLevelComponent,
@@ -9,7 +14,12 @@ import { COLONY } from "../../constants";
 import type { ColonyRuntime } from "../../colony-runtime";
 import { hexToWorld } from "../../../grid/hex-grid";
 
-const findEntityById = (world: World, id: number) =>
+/** Returns any ECS entity by id (jobs are Entity, not Actor). */
+const findWorldEntityById = (world: World, id: number) =>
+  world.entities.find((e) => e.id === id);
+
+/** Returns a scene Actor by id (e.g. bees). */
+const findActorById = (world: World, id: number) =>
   asActor(world.entities.find((e) => e.id === id));
 
 /**
@@ -32,7 +42,7 @@ export class MovementSystem extends System {
       if (!w?.currentJobEntityId) {
         continue;
       }
-      const jobEnt = findEntityById(this.world, w.currentJobEntityId);
+      const jobEnt = findWorldEntityById(this.world, w.currentJobEntityId);
       if (!jobEnt) {
         continue;
       }
@@ -47,9 +57,15 @@ export class MovementSystem extends System {
       ) {
         continue;
       }
+      if (
+        job.kind === "feedLarvae" &&
+        (job.feedLarvaePhase === "collecting" || job.feedLarvaePhase === "depositing")
+      ) {
+        continue;
+      }
       if (job.kind === "adultFeed" || job.kind === "waterDeliver") {
         const target = job.adultFeedTargetBeeId
-          ? findEntityById(this.world, job.adultFeedTargetBeeId)
+          ? findActorById(this.world, job.adultFeedTargetBeeId)
           : undefined;
         if (target) {
           const to = target.pos.sub(actor.pos);

@@ -11,6 +11,10 @@ import { COLONY } from "../../constants";
 import type { ColonyRuntime } from "../../colony-runtime";
 import { hiveKey } from "../../../grid/hive-levels";
 import { JobPriority } from "../../job-priority";
+import {
+  nectarCellHasHoneyForFeeding,
+  nectarCellHasNectarForFeeding,
+} from "../../nectar-cell-helpers";
 
 const findEntityById = (world: World, id: number) =>
   asActor(world.entities.find((e) => e.id === id));
@@ -23,6 +27,8 @@ const releaseJob = (world: World, job: JobComponent): void => {
       w.availability = "available";
       w.currentJobEntityId = null;
       w.pathIndex = 0;
+      w.idleWanderTarget = null;
+      w.idleWanderPauseRemainingMs = 0;
     }
   }
   job.reservedBeeIds = [];
@@ -41,7 +47,7 @@ const hasCareJob = (
   });
 
 /**
- * Hunger, thirst, adult feeding, water delivery, and honey-processing preemption for nectar.
+ * Hunger, thirst, adult feeding, water delivery, and honey-processing preemption for nectar in cells.
  */
 export class AdultCareSystem extends System {
   static override priority = SystemPriority.Lower;
@@ -130,8 +136,8 @@ export class AdultCareSystem extends System {
       res.colonyNectar -= 0.4;
     } else if (this.tryConsumeCellNectar()) {
       /* consumed stored nectar */
-    } else if (res.honey >= 0.35) {
-      res.honey -= 0.35;
+    } else if (this.tryConsumeCellHoney()) {
+      /* consumed cell honey (nutrient-dense vs nectar) */
     } else if (this.interruptHoneyForNectar()) {
       if (!this.tryConsumeCellNectar()) {
         return;
@@ -169,8 +175,19 @@ export class AdultCareSystem extends System {
   private tryConsumeCellNectar(): boolean {
     for (const [, e] of this.colony.cellsByKey) {
       const st = e.get(CellStateComponent)!;
-      if (st.built && st.cellType === "nectar" && st.nectarStored > 0.5) {
+      if (nectarCellHasNectarForFeeding(st, 0.5)) {
         st.nectarStored -= 0.5;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private tryConsumeCellHoney(): boolean {
+    for (const [, e] of this.colony.cellsByKey) {
+      const st = e.get(CellStateComponent)!;
+      if (nectarCellHasHoneyForFeeding(st, COLONY.adultHoneyPerFeed)) {
+        st.honeyStored -= COLONY.adultHoneyPerFeed;
         return true;
       }
     }
@@ -193,7 +210,7 @@ export class AdultCareSystem extends System {
         continue;
       }
       const st = cell.get(CellStateComponent)!;
-      if (st.nectarStored > 0.5) {
+      if (nectarCellHasNectarForFeeding(st, 0.5)) {
         st.nectarStored -= 0.5;
         st.honeyProcessingDirty = true;
         this.colony.events.emit({

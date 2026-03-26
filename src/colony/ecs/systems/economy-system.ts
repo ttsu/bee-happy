@@ -13,6 +13,10 @@ import type { ColonyRuntime } from "../../colony-runtime";
 import { hiveKey } from "../../../grid/hive-levels";
 import { hexToWorld } from "../../../grid/hex-grid";
 import { JobPriority } from "../../job-priority";
+import {
+  nectarCellCanAcceptNectarDeposit,
+  nectarCellReadyForHoneyProcessing,
+} from "../../nectar-cell-helpers";
 
 const findEntityById = (world: World, id: number) =>
   asActor(world.entities.find((e) => e.id === id));
@@ -25,6 +29,8 @@ const releaseJob = (world: World, job: JobComponent): void => {
       w.availability = "available";
       w.currentJobEntityId = null;
       w.pathIndex = 0;
+      w.idleWanderTarget = null;
+      w.idleWanderPauseRemainingMs = 0;
     }
   }
   job.reservedBeeIds = [];
@@ -52,8 +58,11 @@ export class EconomySystem extends System {
 
   override update(elapsed: number): void {
     const res = this.colony.resources;
-    if (res.pollen < 25 && !hasJobKind(this.world, "foragePollen")) {
-      const cell = this.findCellOfType("pollen");
+    if (
+      this.colony.sumPollenStored() < 25 &&
+      !hasJobKind(this.world, "foragePollen")
+    ) {
+      const cell = this.findPollenCellWithDepositRoom();
       if (cell) {
         const c = cell.get(CellCoordComponent)!;
         const j = new JobComponent(
@@ -72,7 +81,7 @@ export class EconomySystem extends System {
     }
 
     if (res.colonyNectar < 8 && !hasJobKind(this.world, "forageNectar")) {
-      const cell = this.findCellOfType("nectar");
+      const cell = this.findNectarCellForDeposit();
       if (cell) {
         const c = cell.get(CellCoordComponent)!;
         const j = new JobComponent(
@@ -102,19 +111,35 @@ export class EconomySystem extends System {
       ) {
         this.updateForage(ent, job, res, elapsed);
       } else if (job.kind === "honeyProcess") {
-        this.updateHoney(ent, job, elapsed, res);
+        this.updateHoney(ent, job, elapsed);
       }
     }
 
     this.checkFullNectarCells();
   }
 
-  private findCellOfType(
-    t: "pollen" | "nectar",
-  ): import("excalibur").Entity | undefined {
+  /**
+   * A pollen cell that can accept a forage deposit (not at capacity).
+   */
+  private findPollenCellWithDepositRoom(): import("excalibur").Entity | undefined {
     for (const [, e] of this.colony.cellsByKey) {
       const st = e.get(CellStateComponent)!;
-      if (st.built && st.cellType === t) {
+      if (
+        st.built &&
+        st.cellType === "pollen" &&
+        st.pollenStored < COLONY.pollenCellCapacity
+      ) {
+        return e;
+      }
+    }
+    return undefined;
+  }
+
+  /** Nectar cell that can still receive foraged nectar (no honey in cell). */
+  private findNectarCellForDeposit(): import("excalibur").Entity | undefined {
+    for (const [, e] of this.colony.cellsByKey) {
+      const st = e.get(CellStateComponent)!;
+      if (nectarCellCanAcceptNectarDeposit(st)) {
         return e;
       }
     }
@@ -160,7 +185,19 @@ export class EconomySystem extends System {
       const to = deposit.sub(bee.pos);
       if (to.size < 18) {
         if (job.carryPayload === "pollen") {
-          res.pollen += 12;
+          const cellKey = hiveKey({
+            q: job.targetQ,
+            r: job.targetR,
+            level: job.targetLevel,
+          });
+          const cellEnt = this.colony.getCellAt(cellKey);
+          if (cellEnt) {
+            const st = cellEnt.get(CellStateComponent)!;
+            st.pollenStored = Math.min(
+              COLONY.pollenCellCapacity,
+              st.pollenStored + 12,
+            );
+          }
         } else if (job.carryPayload === "nectar") {
           const cellKey = hiveKey({
             q: job.targetQ,
@@ -170,7 +207,12 @@ export class EconomySystem extends System {
           const cellEnt = this.colony.getCellAt(cellKey);
           if (cellEnt) {
             const st = cellEnt.get(CellStateComponent)!;
-            st.nectarStored = Math.min(COLONY.nectarCellCapacity, st.nectarStored + 10);
+            if (nectarCellCanAcceptNectarDeposit(st)) {
+              st.nectarStored = Math.min(
+                COLONY.nectarCellCapacity,
+                st.nectarStored + 10,
+              );
+            }
           }
         }
         bee.get(BeeCarryComponent)!.carry = "none";
@@ -187,7 +229,6 @@ export class EconomySystem extends System {
     ent: import("excalibur").Entity,
     job: JobComponent,
     elapsed: number,
-    res: ColonyResourcesComponent,
   ): void {
     const key = hiveKey({
       q: job.targetQ,
@@ -215,7 +256,7 @@ export class EconomySystem extends System {
     st.honeyProcessingProgress += rate;
     if (st.honeyProcessingProgress >= 1) {
       const convert = Math.min(st.nectarStored, COLONY.nectarCellCapacity);
-      res.honey += convert * 0.6;
+      st.honeyStored = Math.min(COLONY.honeyCellCapacity, st.honeyStored + convert);
       st.nectarStored = 0;
       st.honeyProcessingProgress = 0;
       st.honeyProcessingDirty = false;
@@ -230,9 +271,7 @@ export class EconomySystem extends System {
       const st = ent.get(CellStateComponent)!;
       const coord = ent.get(CellCoordComponent)!;
       if (
-        st.built &&
-        st.cellType === "nectar" &&
-        st.nectarStored >= COLONY.nectarCellCapacity &&
+        nectarCellReadyForHoneyProcessing(st) &&
         !this.hasHoneyJobAt(coord)
       ) {
         st.honeyProcessingProgress = 0;
