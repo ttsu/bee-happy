@@ -47,6 +47,8 @@ export class ColonyRuntime {
   lastUiEmit = 0;
   /** 0–1 full-screen fade during level transitions (for React overlay). */
   transitionOverlay = 0;
+  /** Debug touch mapping details for on-screen diagnostics. */
+  debugTouch = "waiting for touch";
 
   initialize(scene: Scene, engine: Engine): void {
     this.scene = scene;
@@ -317,6 +319,7 @@ export class ColonyRuntime {
       transitionOverlay: this.transitionOverlay,
       pendingCellTypeKey: this.pendingCellTypeKey,
       currentColonyDay,
+      debugTouch: this.debugTouch,
     };
   }
 

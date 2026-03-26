@@ -30,6 +30,8 @@ export interface ColonyUiSnapshot {
   readonly pendingCellTypeKey: string | null;
   /** 1-based colony calendar day (same scale as worker bee-days). */
   readonly currentColonyDay: number;
+  /** Debug-only pointer coordinate readout for touch calibration. */
+  readonly debugTouch: string;
 }
 
 type Listener = (e: ColonyEvent) => void;
