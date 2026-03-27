@@ -4,11 +4,10 @@ import {
   Scene,
   SceneActivationContext,
   vec,
-  type Vector,
   type DefaultLoader,
   type ExcaliburGraphicsContext,
 } from "excalibur";
-import { hexToWorld, worldToHex } from "./grid/hex-grid";
+import { worldToHex } from "./grid/hex-grid";
 import { COLONY } from "./colony/constants";
 import { ColonyRuntime } from "./colony/colony-runtime";
 import { ActiveLevelComponent } from "./colony/ecs/components/colony-components";
@@ -30,16 +29,12 @@ export class MyLevel extends Scene {
    * a tap looks like a huge drag. Skip one frame of pan/drag accumulation after down.
    */
   private reseedPanAfterTouchStart = false;
-  private debugTouchWorld: Vector | null = null;
-  private debugTouchHex: { q: number; r: number } | null = null;
 
   override onInitialize(engine: Engine): void {
     this.backgroundColor = Color.fromHex("#1b2838");
     this.camera.pos = vec(0, 0);
     this.colony.initialize(this, engine);
     setColonyBridge(this.colony);
-    this.debugTouchWorld = null;
-    this.debugTouchHex = null;
   }
 
   override onPreLoad(loader: DefaultLoader): void {
@@ -65,20 +60,6 @@ export class MyLevel extends Scene {
     const primary = pointers.primary;
     const page = primary.lastPagePos;
     const screen = engine.screen.pageToScreenCoordinates(page);
-    const world = engine.screen.pageToWorldCoordinates(page);
-    const hex = worldToHex(world, COLONY.hexSize);
-    this.debugTouchWorld = down ? world : null;
-    this.debugTouchHex = down ? hex : null;
-    this.colony.debugTouch = [
-      `down=${down} drag=${this.dragScreen.toFixed(1)} th=${COLONY.panTapThresholdPx}`,
-      `page=(${page.x.toFixed(1)}, ${page.y.toFixed(1)})`,
-      `screen=(${screen.x.toFixed(1)}, ${screen.y.toFixed(1)})`,
-      `world=(${world.x.toFixed(1)}, ${world.y.toFixed(1)})`,
-      `hex=(${hex.q}, ${hex.r})`,
-      `camera=(${this.camera.pos.x.toFixed(1)}, ${this.camera.pos.y.toFixed(1)})`,
-      `draw=${engine.screen.drawWidth.toFixed(0)}x${engine.screen.drawHeight.toFixed(0)}`,
-      `canvas=${engine.screen.canvasWidth.toFixed(0)}x${engine.screen.canvasHeight.toFixed(0)}`,
-    ].join("\n");
 
     if (down) {
       if (!this.wasDown) {
@@ -146,26 +127,6 @@ export class MyLevel extends Scene {
     ctx.resetTransform();
     this.camera.draw(ctx);
     drawHiveCells(ctx, this.colony);
-    if (this.debugTouchWorld && this.debugTouchHex) {
-      // Visualize pointer mapping:
-      // - red dot = engine-mapped touch point (world space)
-      // - white ring = nearest hex center (target for tap)
-      const center = hexToWorld(this.debugTouchHex, COLONY.hexSize);
-      ctx.drawCircle(
-        this.debugTouchWorld,
-        Math.max(2, COLONY.hexSize * 0.06),
-        Color.fromHex("#ff4d4d"),
-        Color.fromHex("#ffffff"),
-        1.25,
-      );
-      ctx.drawCircle(
-        center,
-        Math.max(3, COLONY.hexSize * 0.12),
-        Color.fromHex("#ffffff"),
-        Color.fromHex("#ff4d4d"),
-        1.25,
-      );
-    }
     ctx.restore();
   }
 

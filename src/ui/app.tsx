@@ -18,7 +18,6 @@ const defaultSnapshot: ColonyUiSnapshot = {
   transitionOverlay: 0,
   pendingCellTypeKey: null,
   currentColonyDay: 1,
-  debugTouch: "waiting for touch",
 };
 
 /**
@@ -142,9 +141,6 @@ export const App = () => {
           </div>
         </div>
       ) : null}
-      <pre className="touch-debug" aria-hidden>
-        {snap.debugTouch}
-      </pre>
       <div className="build-hash" aria-hidden>
         {BUILD_HASH_SHORT}
       </div>

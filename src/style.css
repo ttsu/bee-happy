@@ -147,24 +147,6 @@ body {
   transform: scale(0.98);
 }
 
-.touch-debug {
-  position: fixed;
-  left: 10px;
-  bottom: 10px;
-  z-index: 6;
-  margin: 0;
-  padding: 8px 10px;
-  pointer-events: none;
-  white-space: pre;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 10px;
-  line-height: 1.35;
-  color: rgba(236, 240, 241, 0.78);
-  background: rgba(7, 11, 15, 0.52);
-  border: 1px solid rgba(236, 240, 241, 0.14);
-  border-radius: 8px;
-}
-
 .build-hash {
   position: fixed;
   right: 8px;
