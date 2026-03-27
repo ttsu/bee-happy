@@ -359,13 +359,7 @@ export const drawHiveCells = (
         const edgeIndex = DIRECTION_TO_EDGE_INDEX[i]!;
         const a = corners[edgeIndex]!;
         const b = corners[(edgeIndex + 1) % 6]!;
-        drawOverlappedEdge(
-          ctx,
-          a,
-          b,
-          BUILT_EXTERIOR_OUTLINE,
-          BUILT_EXTERIOR_STROKE_PX,
-        );
+        drawOverlappedEdge(ctx, a, b, BUILT_EXTERIOR_OUTLINE, BUILT_EXTERIOR_STROKE_PX);
       }
     }
     const fill = colorForCell(st);

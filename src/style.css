@@ -115,10 +115,13 @@ body {
 
 .level-strip {
   position: fixed;
-  top: 0;
+  top: 50%;
   right: 0;
-  width: 72px;
-  height: 100vh;
+  width: 112px;
+  height: 88vh;
+  max-height: 760px;
+  min-height: 560px;
+  transform: translateY(-50%);
   z-index: 4;
   pointer-events: auto;
   display: flex;
@@ -131,6 +134,9 @@ body {
   font-size: 12px;
   user-select: none;
   touch-action: none;
+  padding-top: 0;
+  overflow: hidden;
+  border-radius: 14px 0 0 14px;
 }
 
 .level-strip-label {
@@ -139,10 +145,111 @@ body {
   opacity: 0.8;
 }
 
-.level-strip-value {
-  font-size: 22px;
+.level-strip-minimap-stack {
+  overflow: hidden;
+  position: relative;
+  width: 82px;
+  height: 470px;
+  border-radius: 12px;
+  border: 1px solid rgba(236, 240, 241, 0.18);
+  background: rgba(10, 15, 20, 0.64);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.level-strip-active-slot {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  top: 50%;
+  height: 82px;
+  transform: translateY(-50%);
+  border: 1px solid rgba(244, 208, 63, 0.28);
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px rgba(244, 208, 63, 0.08);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.level-strip-minimap-track {
+  position: absolute;
+  inset: 0;
+  transition: transform 200ms ease;
+  z-index: 1;
+}
+
+.level-strip-minimap-track.is-dragging {
+  transition: none;
+}
+
+.mini-level {
+  position: absolute;
+  left: 5px;
+  width: 100%;
+  width: 72px;
+  height: 82px;
+  opacity: 0.55;
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.mini-level.is-active {
+  opacity: 1;
+  transform: scale(1.02);
+}
+
+.mini-level-label {
+  position: absolute;
+  top: 6px;
+  left: 8px;
+  font-size: 10px;
   font-weight: 700;
-  color: #f4d03f;
+  color: rgba(236, 240, 241, 0.76);
+}
+
+.mini-level-map {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 64px;
+  height: 106px;
+  transform: translate(-50%, -50%);
+}
+
+.mini-level-cell {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+  clip-path: polygon(
+    50% 0%,
+    93% 25%,
+    93% 75%,
+    50% 100%,
+    7% 75%,
+    7% 25%
+  );
+}
+
+.mini-level:nth-child(1) {
+  top: 0;
+}
+
+.mini-level:nth-child(2) {
+  top: 92px;
+}
+
+.mini-level:nth-child(3) {
+  top: 184px;
+}
+
+.mini-level:nth-child(4) {
+  top: 276px;
+}
+
+.mini-level:nth-child(5) {
+  top: 368px;
 }
 
 .level-strip-hint {

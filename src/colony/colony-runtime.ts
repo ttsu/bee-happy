@@ -161,7 +161,11 @@ export class ColonyRuntime {
         builtCoords.push({ q: c.q, r: c.r, level: c.level });
       }
     }
-    const eligible = eligibleFoundationCoordsForLevel(this.activeLevel, lookup, builtCoords);
+    const eligible = eligibleFoundationCoordsForLevel(
+      this.activeLevel,
+      lookup,
+      builtCoords,
+    );
     const eligibleKeys = new Set(eligible.map((c) => hiveKey(c)));
     this.hoverHiveKey = eligibleKeys.has(key) ? key : null;
   }

@@ -11,12 +11,7 @@ export const SEASON_LENGTH_DAYS = 15;
 /** Full seasonal cycle length in colony days. */
 export const DAYS_PER_YEAR = 60;
 
-const SEASONS_IN_ORDER: readonly Season[] = [
-  "Spring",
-  "Summer",
-  "Fall",
-  "Winter",
-];
+const SEASONS_IN_ORDER: readonly Season[] = ["Spring", "Summer", "Fall", "Winter"];
 
 export interface SeasonInfo {
   /** Current season name. */
@@ -34,9 +29,7 @@ export interface SeasonInfo {
  *
  * @param colonyDayOneBased - Colony day from {@link ColonyTimeComponent} scale (1-based).
  */
-export const getSeasonForColonyDay = (
-  colonyDayOneBased: number,
-): SeasonInfo => {
+export const getSeasonForColonyDay = (colonyDayOneBased: number): SeasonInfo => {
   const safe = Math.max(1, Math.floor(colonyDayOneBased));
   const dayIdx = safe - 1;
   const cycleIndex = Math.floor(dayIdx / DAYS_PER_YEAR);

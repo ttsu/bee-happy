@@ -50,8 +50,7 @@ export class SeasonSystem extends System {
 
     if (this.prevColonyDay !== 0) {
       const crossedYear =
-        this.prevColonyDay % 60 === 0 &&
-        currentColonyDay > this.prevColonyDay;
+        this.prevColonyDay % 60 === 0 && currentColonyDay > this.prevColonyDay;
 
       if (!yearly.isYearReviewOpen && crossedYear) {
         yearly.remainingBeesAtYearEnd = this.countBees();
