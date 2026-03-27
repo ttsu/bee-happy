@@ -37,7 +37,24 @@ const defaultSnapshot: ColonyUiSnapshot = {
  */
 export const App = () => {
   const [snap, setSnap] = useState<ColonyUiSnapshot>(defaultSnapshot);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const seasonInfo = getSeasonForColonyDay(snap.currentColonyDay);
+
+  /**
+   * Persists a minimal UI snapshot and exits the current page context when possible.
+   */
+  const saveAndQuit = () => {
+    localStorage.setItem(
+      "bee-happy-last-snapshot",
+      JSON.stringify({
+        savedAtIso: new Date().toISOString(),
+        snapshot: snap,
+      }),
+    );
+    setIsSettingsOpen(false);
+    window.close();
+    window.location.replace("about:blank");
+  };
 
   useEffect(() => {
     const colony = getColonyBridge();
@@ -67,6 +84,16 @@ export const App = () => {
         <span className="season-day-divider" aria-hidden />
         <span>Day {seasonInfo.seasonDayOneBased}</span>
       </div>
+      <button
+        type="button"
+        className="settings-button"
+        aria-label="Open settings"
+        onClick={() => {
+          setIsSettingsOpen(true);
+        }}
+      >
+        ⚙️
+      </button>
       <div className="hud">
         <div className="hud-card">
           <strong>Bee Happy</strong>
@@ -173,7 +200,10 @@ export const App = () => {
               Year {snap.yearNumber} complete
             </h2>
             <p className="year-review-kpi-label">Happiness score</p>
-            <p className="year-review-kpi-value" aria-label="Cumulative happy bee seconds">
+            <p
+              className="year-review-kpi-value"
+              aria-label="Cumulative happy bee seconds"
+            >
               {snap.yearlyReviewStats.happyBeeSecondsTotal.toLocaleString(undefined, {
                 maximumFractionDigits: 0,
               })}
@@ -210,6 +240,49 @@ export const App = () => {
             >
               Continue to year {snap.yearNumber + 1}
             </button>
+          </div>
+        </div>
+      ) : null}
+      {isSettingsOpen ? (
+        <div
+          className="settings-backdrop"
+          role="dialog"
+          aria-modal
+          aria-labelledby="settings-title"
+        >
+          <div className="settings-card">
+            <h2 id="settings-title" className="settings-title">
+              Settings
+            </h2>
+            <div className="settings-buttons">
+              <button
+                type="button"
+                className="settings-action-btn settings-action-btn--danger"
+                onClick={() => {
+                  window.location.reload();
+                }}
+              >
+                Restart game
+              </button>
+              <button
+                type="button"
+                className="settings-action-btn settings-action-btn--primary"
+                onClick={() => {
+                  saveAndQuit();
+                }}
+              >
+                Save and quit
+              </button>
+              <button
+                type="button"
+                className="settings-action-btn settings-action-btn--neutral"
+                onClick={() => {
+                  setIsSettingsOpen(false);
+                }}
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       ) : null}

@@ -21,9 +21,9 @@ export const COLONY = {
   buildWorkRadiusPx: 26,
   /** Starting wax stock. */
   initialWax: 80,
-  initialPollen: 40,
+  initialPollen: 12,
   /** Colony nectar buffer (integer units; adult feed uses adultFeedColonyNectarCost). */
-  initialColonyNectar: 100,
+  initialColonyNectar: 12,
   /** Brood: time as egg (ms) before larvae. */
   eggDurationMs: 12_000,
   /** Pollen portions larvae must receive (each is one trip from a pollen cell). */
@@ -57,7 +57,7 @@ export const COLONY = {
   forageWaitMs: 1_800,
   waterForageMs: 2_000,
   /** Max pollen units per pollen storage cell. */
-  pollenCellCapacity: 48,
+  pollenCellCapacity: 12,
   /** Nectar cell capacity before honey processing can start. */
   nectarCellCapacity: 12,
   /** Max honey units stored in a nectar cell after processing (same cell as nectar; mutually exclusive). */
