@@ -13,7 +13,7 @@ import {
 } from "../colony/ecs/components/colony-components";
 import { COLONY } from "../colony/constants";
 import { eligibleFoundationCoordsForLevel } from "../colony/placement";
-import { hiveKey, type HiveCoord } from "../grid/hive-levels";
+import { hiveKey, parseHiveKey, type HiveCoord } from "../grid/hive-levels";
 import { HEX_DIRECTIONS, hexToWorld } from "../grid/hex-grid";
 
 const hexCorners = (cx: number, cy: number, r: number): [number, number][] => {
@@ -144,6 +144,13 @@ const larvaeFeedingProgress = (st: InstanceType<typeof CellStateComponent>): num
   return Math.min(1, Math.max(0, delivered / total));
 };
 
+/** Thin outline when the pointer is over a hive hex (not selected). */
+const HOVER_HEX_OUTLINE = Color.fromRGB(255, 255, 255, 0.72);
+const HOVER_HEX_STROKE_PX = 1.75;
+/** Slightly stronger outline for the cell awaiting type selection. */
+const SELECTED_HEX_OUTLINE = Color.fromHex("#f1c40f");
+const SELECTED_HEX_STROKE_PX = 2.25;
+
 /** Subtle stroke for empty hexes where a foundation may be placed. */
 const ELIGIBLE_BUILD_OUTLINE = Color.fromRGB(130, 145, 160, 0.45);
 const ELIGIBLE_BUILD_STROKE_PX = 1.25;
@@ -241,6 +248,19 @@ const drawCellStorageLabels = (
   }
 };
 
+const drawHexRing = (
+  ctx: ExcaliburGraphicsContext,
+  corners: [number, number][],
+  color: Color,
+  strokePx: number,
+): void => {
+  for (let i = 0; i < 6; i++) {
+    const a = corners[i]!;
+    const b = corners[(i + 1) % 6]!;
+    ctx.drawLine(vec(a[0], a[1]), vec(b[0], b[1]), color, strokePx);
+  }
+};
+
 const colorForCell = (st: InstanceType<typeof CellStateComponent>): Color => {
   if (!st.built) {
     return Color.fromHex("#7f8c8d");
@@ -294,7 +314,8 @@ export const drawHiveCells = (
       builtCoords.push({ q: c.q, r: c.r, level: c.level });
     }
   }
-  for (const coord of eligibleFoundationCoordsForLevel(lvl, lookup, builtCoords)) {
+  const eligibleForLevel = eligibleFoundationCoordsForLevel(lvl, lookup, builtCoords);
+  for (const coord of eligibleForLevel) {
     const w = hexToWorld({ q: coord.q, r: coord.r }, S);
     const corners = hexCorners(w.x, w.y, S * 0.92);
     for (let i = 0; i < 6; i++) {
@@ -311,6 +332,8 @@ export const drawHiveCells = (
   const builtCellKeys = new Set(
     builtCoords.filter((coord) => coord.level === lvl).map((coord) => hiveKey(coord)),
   );
+
+  const eligibleKeys = new Set(eligibleForLevel.map((c) => hiveKey(c)));
 
   for (const [, ent] of colony.cellsByKey) {
     const c = ent.get(CellCoordComponent)!;
@@ -359,6 +382,31 @@ export const drawHiveCells = (
       } else if (st.stage === "larvae") {
         drawBroodGrowthRing(ctx, w, ringR, larvaeFeedingProgress(st), "larvae");
       }
+    }
+  }
+
+  const highlightKeys = new Set<string>();
+  if (colony.pendingCellTypeKey) {
+    highlightKeys.add(colony.pendingCellTypeKey);
+  }
+  if (colony.hoverHiveKey) {
+    highlightKeys.add(colony.hoverHiveKey);
+  }
+  for (const key of highlightKeys) {
+    const coord = parseHiveKey(key);
+    if (coord.level !== lvl) {
+      continue;
+    }
+    if (!colony.cellsByKey.has(key) && !eligibleKeys.has(key)) {
+      continue;
+    }
+    const w = hexToWorld({ q: coord.q, r: coord.r }, S);
+    const corners = hexCorners(w.x, w.y, S * 0.92);
+    const isSelected = colony.pendingCellTypeKey === key;
+    if (isSelected) {
+      drawHexRing(ctx, corners, SELECTED_HEX_OUTLINE, SELECTED_HEX_STROKE_PX);
+    } else {
+      drawHexRing(ctx, corners, HOVER_HEX_OUTLINE, HOVER_HEX_STROKE_PX);
     }
   }
 };

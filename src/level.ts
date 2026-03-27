@@ -53,6 +53,7 @@ export class MyLevel extends Scene {
       this.dragScreen = 0;
       this.wasDown = false;
       this.reseedPanAfterTouchStart = false;
+      this.colony.updateHoverFromPointer();
       return;
     }
     const pointers = engine.input.pointers;
@@ -105,6 +106,7 @@ export class MyLevel extends Scene {
       this.reseedPanAfterTouchStart = false;
     }
     this.wasDown = down;
+    this.colony.updateHoverFromPointer();
   }
 
   override onPostUpdate(engine: Engine, elapsed: number): void {

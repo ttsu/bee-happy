@@ -1,6 +1,6 @@
 import type { Engine } from "excalibur";
 import { Entity, type Scene } from "excalibur";
-import { hexToWorld } from "../grid/hex-grid";
+import { hexToWorld, worldToHex } from "../grid/hex-grid";
 import type { HexCoord } from "../grid/hex-grid";
 import { hiveKey } from "../grid/hive-levels";
 import type { HiveCoord } from "../grid/hive-levels";
@@ -22,7 +22,7 @@ import {
   YearlyStatsComponent,
   type BeeRole,
 } from "./ecs/components/colony-components";
-import { canPlaceFoundation } from "./placement";
+import { canPlaceFoundation, eligibleFoundationCoordsForLevel } from "./placement";
 import { JobPriority } from "./job-priority";
 import { AdultCareSystem } from "./ecs/systems/adult-care-system";
 import { BroodSystem } from "./ecs/systems/brood-system";
@@ -47,6 +47,8 @@ export class ColonyRuntime {
   scene!: Scene;
   engine!: Engine;
   pendingCellTypeKey: string | null = null;
+  /** Hive key under the pointer for hover outline (see {@link updateHoverFromPointer}). */
+  hoverHiveKey: string | null = null;
   lastUiEmit = 0;
   /** 0–1 full-screen fade during level transitions (for React overlay). */
   transitionOverlay = 0;
@@ -122,6 +124,46 @@ export class ColonyRuntime {
 
   get activeLevel(): number {
     return this.controllerEntity.get(ActiveLevelComponent)!.activeLevel;
+  }
+
+  /**
+   * Updates {@link hoverHiveKey} from the primary pointer. Cleared while panning,
+   * during level transitions, or when the cursor is not over a hive cell or build-eligible hex.
+   */
+  updateHoverFromPointer(): void {
+    const active = this.controllerEntity.get(ActiveLevelComponent)!;
+    if (active.transition !== "idle") {
+      this.hoverHiveKey = null;
+      return;
+    }
+    if (this.engine.input.pointers.isDown(0)) {
+      this.hoverHiveKey = null;
+      return;
+    }
+    const ptr = this.engine.input.pointers.primary;
+    const w = this.engine.screen.pageToWorldCoordinates(ptr.lastPagePos);
+    const h = worldToHex(w, COLONY.hexSize);
+    const coord: HiveCoord = { q: h.q, r: h.r, level: this.activeLevel };
+    const key = hiveKey(coord);
+    if (this.cellsByKey.has(key)) {
+      this.hoverHiveKey = key;
+      return;
+    }
+    const lookup = {
+      has: (k: string) => this.cellsByKey.has(k),
+      getBuilt: (k: string) => this.cellsByKey.get(k)?.get(CellStateComponent),
+    };
+    const builtCoords: HiveCoord[] = [];
+    for (const [, ent] of this.cellsByKey) {
+      const c = ent.get(CellCoordComponent)!;
+      const st = ent.get(CellStateComponent)!;
+      if (st.built) {
+        builtCoords.push({ q: c.q, r: c.r, level: c.level });
+      }
+    }
+    const eligible = eligibleFoundationCoordsForLevel(this.activeLevel, lookup, builtCoords);
+    const eligibleKeys = new Set(eligible.map((c) => hiveKey(c)));
+    this.hoverHiveKey = eligibleKeys.has(key) ? key : null;
   }
 
   builtByLevel(): Map<number, Set<string>> {
