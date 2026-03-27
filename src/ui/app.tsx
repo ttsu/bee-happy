@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { ColonyUiSnapshot } from "../colony/events/colony-events";
 import { getColonyBridge } from "../colony-bridge";
 import { BUILD_HASH_SHORT } from "../build-info";
+import { getSeasonForColonyDay } from "../colony/seasons";
 
 const defaultSnapshot: ColonyUiSnapshot = {
   beesTotal: 0,
@@ -36,6 +37,15 @@ const defaultSnapshot: ColonyUiSnapshot = {
  */
 export const App = () => {
   const [snap, setSnap] = useState<ColonyUiSnapshot>(defaultSnapshot);
+  const seasonInfo = getSeasonForColonyDay(snap.currentColonyDay);
+  const seasonEmoji =
+    seasonInfo.season === "Spring"
+      ? "🌼"
+      : seasonInfo.season === "Summer"
+        ? "☀️"
+        : seasonInfo.season === "Fall"
+          ? "🍁"
+          : "❄️";
 
   useEffect(() => {
     const colony = getColonyBridge();
@@ -58,6 +68,13 @@ export const App = () => {
         style={{ opacity: snap.transitionOverlay }}
         aria-hidden
       />
+      <div className="season-day-banner" aria-live="polite">
+        <span>
+          {seasonEmoji} {seasonInfo.season}
+        </span>
+        <span className="season-day-divider" aria-hidden />
+        <span>Day {seasonInfo.seasonDayOneBased}</span>
+      </div>
       <div className="hud">
         <div className="hud-card">
           <strong>Bee Happy</strong>
@@ -74,8 +91,6 @@ export const App = () => {
             Brood: {snap.broodOccupied}/{snap.broodTotal}
           </div>
           <div>Level: {snap.activeLevel}</div>
-          <div>Day: {snap.currentColonyDay}</div>
-          <div>Season: {snap.currentColonySeason}</div>
           <div>Year: {snap.yearNumber}</div>
         </div>
       </div>
