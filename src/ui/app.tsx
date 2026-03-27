@@ -38,14 +38,6 @@ const defaultSnapshot: ColonyUiSnapshot = {
 export const App = () => {
   const [snap, setSnap] = useState<ColonyUiSnapshot>(defaultSnapshot);
   const seasonInfo = getSeasonForColonyDay(snap.currentColonyDay);
-  const seasonEmoji =
-    seasonInfo.season === "Spring"
-      ? "🌼"
-      : seasonInfo.season === "Summer"
-        ? "☀️"
-        : seasonInfo.season === "Fall"
-          ? "🍁"
-          : "❄️";
 
   useEffect(() => {
     const colony = getColonyBridge();
@@ -69,9 +61,9 @@ export const App = () => {
         aria-hidden
       />
       <div className="season-day-banner" aria-live="polite">
-        <span>
-          {seasonEmoji} {seasonInfo.season}
-        </span>
+        <span>{seasonInfo.season}</span>
+        <span className="season-day-divider" aria-hidden />
+        <span>Year {snap.yearNumber}</span>
         <span className="season-day-divider" aria-hidden />
         <span>Day {seasonInfo.seasonDayOneBased}</span>
       </div>
@@ -84,7 +76,7 @@ export const App = () => {
           </div>
           <div>Pollen: {snap.pollen.toFixed(0)}</div>
           <div>Honey: {snap.honey.toFixed(0)}</div>
-          <div>Nectar (buffer): {snap.colonyNectar.toFixed(0)}</div>
+          <div>Nectar: {snap.colonyNectar.toFixed(0)}</div>
           <div>Wax: {snap.wax.toFixed(0)}</div>
           <div>Happiness: {snap.happinessPct}%</div>
           <div>
@@ -184,8 +176,7 @@ export const App = () => {
             <p className="year-review-kpi-value" aria-label="Cumulative happy bee seconds">
               {snap.yearlyReviewStats.happyBeeSecondsTotal.toLocaleString(undefined, {
                 maximumFractionDigits: 0,
-              })}{" "}
-              <span className="year-review-kpi-unit">happy bee-seconds</span>
+              })}
             </p>
             <p className="year-review-kpi-hint">
               Total time all bees spent fed and hydrated this year.
