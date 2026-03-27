@@ -84,6 +84,8 @@ export class JobComponent extends Component {
   selfFeedCellKey: string | null = null;
   /** `feedQueen`: royal jelly feed timer while in range. */
   feedQueenTimerMs = 0;
+  /** `layEgg`: time queen must remain at brood cell before egg is placed. */
+  layEggTimerMs = 0;
   /** `guardHive`: time remaining at entrance. */
   guardHiveTimerMs = 0;
   /** Scratch values for forage targets (world space). */

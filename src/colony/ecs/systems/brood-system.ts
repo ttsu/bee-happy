@@ -54,6 +54,24 @@ const hasOpenJobForCell = (
   return false;
 };
 
+const findOpenLayEggJobForCell = (world: World, key: string): JobComponent | null => {
+  for (const e of world.entities) {
+    const j = e.get(JobComponent);
+    if (!j || j.kind !== "layEgg" || j.status === "done") {
+      continue;
+    }
+    const k = hiveKey({
+      q: j.targetQ,
+      r: j.targetR,
+      level: j.targetLevel,
+    });
+    if (k === key) {
+      return j;
+    }
+  }
+  return null;
+};
+
 /**
  * Queen egg laying (timer), egg→larvae→sealed→cleaning→empty, feed and clean jobs.
  */
@@ -78,12 +96,82 @@ export class BroodSystem extends System {
       qt.layCooldownMs = COLONY.queenLayIntervalMs;
       for (const [, ent] of this.colony.cellsByKey) {
         const st = ent.get(CellStateComponent)!;
-        if (st.built && st.cellType === "brood" && st.stage === "empty") {
-          st.stage = "egg";
-          st.eggTimerMs = COLONY.eggDurationMs;
+        const coord = ent.get(CellCoordComponent)!;
+        const key = hiveKey(coord);
+        if (
+          st.built &&
+          st.cellType === "brood" &&
+          st.stage === "empty" &&
+          !findOpenLayEggJobForCell(this.world, key)
+        ) {
+          const job = new JobComponent(
+            "layEgg",
+            JobPriority.layEgg,
+            coord.q,
+            coord.r,
+            coord.level,
+            1,
+          );
+          job.layEggTimerMs = COLONY.queenLayDurationMs;
+          this.colony.createJob(job);
           break;
         }
       }
+    }
+
+    for (const ent of this.world.entities) {
+      const job = ent.get(JobComponent);
+      if (!job || job.kind !== "layEgg" || job.status === "done") {
+        continue;
+      }
+      const key = hiveKey({
+        q: job.targetQ,
+        r: job.targetR,
+        level: job.targetLevel,
+      });
+      const cellEnt = this.colony.getCellAt(key);
+      if (!cellEnt) {
+        job.status = "done";
+        releaseJob(this.world, job);
+        ent.kill();
+        continue;
+      }
+      const st = cellEnt.get(CellStateComponent)!;
+      if (!st.built || st.cellType !== "brood" || st.stage !== "empty") {
+        job.status = "done";
+        releaseJob(this.world, job);
+        ent.kill();
+        continue;
+      }
+      const center = hexToWorld({ q: job.targetQ, r: job.targetR }, COLONY.hexSize);
+      let laid = false;
+      for (const id of job.reservedBeeIds) {
+        const queen = findEntityById(this.world, id);
+        if (!queen) {
+          continue;
+        }
+        const w = queen.get(BeeWorkComponent);
+        const atPathEnd =
+          !!w && job.pathPoints.length > 0 && w.pathIndex >= job.pathPoints.length - 1;
+        const inCell = queen.pos.sub(center).size <= COLONY.buildWorkRadiusPx && atPathEnd;
+        if (inCell) {
+          job.layEggTimerMs -= elapsed;
+          if (job.layEggTimerMs <= 0) {
+            st.stage = "egg";
+            st.eggTimerMs = COLONY.eggDurationMs;
+            laid = true;
+            break;
+          }
+        } else {
+          job.layEggTimerMs = COLONY.queenLayDurationMs;
+        }
+      }
+      if (!laid) {
+        continue;
+      }
+      job.status = "done";
+      releaseJob(this.world, job);
+      ent.kill();
     }
 
     for (const [, ent] of this.colony.cellsByKey) {

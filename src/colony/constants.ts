@@ -34,6 +34,8 @@ export const COLONY = {
   cleaningDurationMs: 6_000,
   /** Queen attempts to lay every N ms when brood cell is ready. */
   queenLayIntervalMs: 8_000,
+  /** Queen must stay on the brood cell this long to complete laying. */
+  queenLayDurationMs: 1_000,
   /** Hunger / thirst per second (0–100 scale). */
   hungerPerSec: 0.35,
   thirstPerSec: 0.45,
