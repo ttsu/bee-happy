@@ -13,8 +13,8 @@ import {
 } from "../colony/ecs/components/colony-components";
 import { COLONY } from "../colony/constants";
 import { eligibleFoundationCoordsForLevel } from "../colony/placement";
-import type { HiveCoord } from "../grid/hive-levels";
-import { hexToWorld } from "../grid/hex-grid";
+import { hiveKey, type HiveCoord } from "../grid/hive-levels";
+import { HEX_DIRECTIONS, hexToWorld } from "../grid/hex-grid";
 
 const hexCorners = (cx: number, cy: number, r: number): [number, number][] => {
   const pts: [number, number][] = [];
@@ -166,6 +166,35 @@ const cellStockFont = new Font({
 const CELL_STOCK_LINE_PX = 9;
 
 const HONEY_LABEL_EPS = 1e-6;
+const BUILT_EXTERIOR_OUTLINE = Color.fromHex("#d4a12a");
+const BUILT_EXTERIOR_STROKE_PX = 4;
+const BUILT_EXTERIOR_JOIN_OVERLAP_PX = 2;
+const DIRECTION_TO_EDGE_INDEX: readonly number[] = [5, 4, 3, 2, 1, 0];
+
+/** Slightly extends thick edge strokes so corners overlap without seams. */
+const drawOverlappedEdge = (
+  ctx: ExcaliburGraphicsContext,
+  a: [number, number],
+  b: [number, number],
+  color: Color,
+  strokePx: number,
+): void => {
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  const len = Math.hypot(dx, dy);
+  if (len <= 1e-6) {
+    return;
+  }
+  const ux = dx / len;
+  const uy = dy / len;
+  const extend = BUILT_EXTERIOR_JOIN_OVERLAP_PX;
+  ctx.drawLine(
+    vec(a[0] - ux * extend, a[1] - uy * extend),
+    vec(b[0] + ux * extend, b[1] + uy * extend),
+    color,
+    strokePx,
+  );
+};
 
 /**
  * Draws pollen in pollen cells; nectar or per-cell honey in nectar cells (mutually exclusive with nectar).
@@ -279,6 +308,9 @@ export const drawHiveCells = (
       );
     }
   }
+  const builtCellKeys = new Set(
+    builtCoords.filter((coord) => coord.level === lvl).map((coord) => hiveKey(coord)),
+  );
 
   for (const [, ent] of colony.cellsByKey) {
     const c = ent.get(CellCoordComponent)!;
@@ -293,6 +325,25 @@ export const drawHiveCells = (
       const a = corners[i]!;
       const b = corners[(i + 1) % 6]!;
       ctx.drawLine(vec(a[0], a[1]), vec(b[0], b[1]), stroke, 1.5);
+    }
+    if (st.built) {
+      for (let i = 0; i < HEX_DIRECTIONS.length; i++) {
+        const dir = HEX_DIRECTIONS[i]!;
+        const neighborKey = hiveKey({ q: c.q + dir.q, r: c.r + dir.r, level: c.level });
+        if (builtCellKeys.has(neighborKey)) {
+          continue;
+        }
+        const edgeIndex = DIRECTION_TO_EDGE_INDEX[i]!;
+        const a = corners[edgeIndex]!;
+        const b = corners[(edgeIndex + 1) % 6]!;
+        drawOverlappedEdge(
+          ctx,
+          a,
+          b,
+          BUILT_EXTERIOR_OUTLINE,
+          BUILT_EXTERIOR_STROKE_PX,
+        );
+      }
     }
     const fill = colorForCell(st);
     ctx.drawCircle(w, S * 0.55, fill, Color.fromHex("#2c3e50"), 1);
