@@ -55,6 +55,9 @@ export class AdultCareSystem extends System {
   }
 
   override update(elapsed: number): void {
+    if (this.colony.isSimulationPaused()) {
+      return;
+    }
     const res = this.colony.resources;
     const ms = elapsed / 1000;
     for (const actor of this.colony.scene.actors) {

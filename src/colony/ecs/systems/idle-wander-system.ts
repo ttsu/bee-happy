@@ -101,6 +101,9 @@ export class IdleWanderSystem extends System {
   }
 
   override update(elapsed: number): void {
+    if (this.colony.isSimulationPaused()) {
+      return;
+    }
     const slots = computeOpenJobAssignmentSlots(this.jobs.entities);
     const builtByLevel = this.colony.builtByLevel();
     const jobEntities = this.jobs.entities;

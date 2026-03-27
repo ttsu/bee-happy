@@ -158,3 +158,93 @@ body {
   color: rgba(236, 240, 241, 0.28);
   user-select: none;
 }
+
+.year-review-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 7;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  padding: 16px;
+}
+
+.year-review-card {
+  background: #1a252f;
+  color: #ecf0f1;
+  padding: 28px 32px;
+  border-radius: 16px;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+
+.year-review-title {
+  margin: 0 0 20px;
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.year-review-kpi-label {
+  margin: 0 0 4px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #82e0aa;
+  text-align: center;
+}
+
+.year-review-kpi-value {
+  margin: 0 0 8px;
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.15;
+  text-align: center;
+  color: #f4d03f;
+}
+
+.year-review-kpi-unit {
+  font-size: 14px;
+  font-weight: 600;
+  color: #bdc3c7;
+}
+
+.year-review-kpi-hint {
+  margin: 0 0 20px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #95a5a6;
+  text-align: center;
+}
+
+.year-review-stats {
+  margin: 0 0 22px;
+  padding-left: 18px;
+  font-size: 14px;
+  line-height: 1.65;
+  color: #bdc3c7;
+}
+
+.year-review-continue {
+  display: block;
+  width: 100%;
+  padding: 14px 18px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  background: #27ae60;
+  color: #fff;
+}
+
+.year-review-continue:hover {
+  background: #2ecc71;
+}
+
+.year-review-continue:active {
+  transform: scale(0.99);
+}

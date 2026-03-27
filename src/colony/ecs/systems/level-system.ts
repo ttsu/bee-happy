@@ -21,6 +21,9 @@ export class LevelSystem extends System {
   }
 
   override update(elapsed: number): void {
+    if (this.colony.isSimulationPaused()) {
+      return;
+    }
     const ctrl = this.colony.controllerEntity.get(ActiveLevelComponent)!;
     if (ctrl.transition === "idle") {
       this.colony.transitionOverlay = 0;

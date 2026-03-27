@@ -8,7 +8,9 @@ import {
   CellCoordComponent,
   CellStateComponent,
   ColonyResourcesComponent,
+  ColonyTimeComponent,
   JobComponent,
+  YearlyStatsComponent,
 } from "../components/colony-components";
 import { asActor } from "../../actor-utils";
 import { COLONY } from "../../constants";
@@ -21,6 +23,7 @@ import {
   nectarCellReadyForHoneyProcessing,
 } from "../../nectar-cell-helpers";
 import { releaseJobBees } from "../job-release";
+import { getSeasonForColonyDay } from "../../seasons";
 
 const findEntityById = (world: World, id: number) =>
   asActor(world.entities.find((e) => e.id === id));
@@ -52,6 +55,30 @@ export class EconomySystem extends System {
   }
 
   override update(elapsed: number): void {
+    if (this.colony.isSimulationPaused()) {
+      return;
+    }
+
+    const time = this.colony.controllerEntity.get(ColonyTimeComponent);
+    const msPerBeeDay = COLONY.workerLifespanMs / 50;
+    const currentColonyDay = time
+      ? Math.floor(time.colonyElapsedMs / msPerBeeDay) + 1
+      : 1;
+    const { season } = getSeasonForColonyDay(currentColonyDay);
+
+    if (season === "Winter") {
+      for (const ent of this.world.entities) {
+        const job = ent.get(JobComponent);
+        if (!job || job.status === "done") {
+          continue;
+        }
+        if (job.kind === "foragePollen" || job.kind === "forageNectar") {
+          releaseJob(this.world, job);
+          ent.kill();
+        }
+      }
+    }
+
     const res = this.colony.resources;
     const idleWorkers = this.colony.scene.actors.filter((a) => {
       const role = a.get(BeeRoleComponent);
@@ -62,7 +89,7 @@ export class EconomySystem extends System {
         w.currentJobEntityId == null
       );
     }).length;
-    if (idleWorkers > 0) {
+    if (idleWorkers > 0 && season !== "Winter") {
       const pollenHasCapacity = this.anyPollenDepositCapacity();
       const nectarHasCapacity = this.anyNectarDepositCapacity();
       let openPollen = countOpenJobsByKind(this.world, "foragePollen");
@@ -319,19 +346,27 @@ export class EconomySystem extends System {
       const step = COLONY.beeSpeed * 1.2 * elapsed;
       const to = dest.sub(bee.pos);
       if (to.size < 18) {
+        const yearlyStats = this.colony.controllerEntity.get(YearlyStatsComponent);
         if (job.carryPayload === "pollen") {
           const st = cellEnt.get(CellStateComponent)!;
           st.pollenStored = Math.min(
             COLONY.pollenCellCapacity,
             st.pollenStored + COLONY.foragePollenDepositAmount,
           );
+          if (yearlyStats) {
+            yearlyStats.pollenCollectedTotal += COLONY.foragePollenDepositAmount;
+          }
         } else if (job.carryPayload === "nectar") {
           const st = cellEnt.get(CellStateComponent)!;
           if (nectarCellCanAcceptNectarDeposit(st)) {
+            const before = st.nectarStored;
             st.nectarStored = Math.min(
               COLONY.nectarCellCapacity,
               st.nectarStored + COLONY.forageNectarDepositAmount,
             );
+            if (yearlyStats) {
+              yearlyStats.nectarCollectedTotal += st.nectarStored - before;
+            }
           }
         }
         bee.get(BeeCarryComponent)!.carry = "none";
@@ -465,6 +500,10 @@ export class EconomySystem extends System {
     st.honeyProcessingProgress += rate;
     if (st.honeyProcessingProgress >= 1) {
       const convert = Math.min(st.nectarStored, COLONY.nectarCellCapacity);
+      const yearly = this.colony.controllerEntity.get(YearlyStatsComponent);
+      if (yearly) {
+        yearly.honeyProcessedTotal += convert;
+      }
       st.honeyStored = Math.min(COLONY.honeyCellCapacity, st.honeyStored + convert);
       st.nectarStored = 0;
       st.honeyProcessingProgress = 0;

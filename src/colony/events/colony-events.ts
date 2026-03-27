@@ -1,4 +1,16 @@
 import type { HiveCoord } from "../../grid/hive-levels";
+import type { Season } from "../seasons";
+
+/** End-of-year summary numbers shown in the review modal. */
+export interface YearlyReviewStats {
+  readonly honeyProcessedTotal: number;
+  readonly nectarCollectedTotal: number;
+  readonly pollenCollectedTotal: number;
+  readonly beesHatchedTotal: number;
+  readonly remainingBees: number;
+  /** Cumulative seconds bees spent happy this year (sum over bees). */
+  readonly happyBeeSecondsTotal: number;
+}
 
 export type ColonyEvent =
   | { type: "PlacementIntent"; coord: HiveCoord }
@@ -30,6 +42,14 @@ export interface ColonyUiSnapshot {
   readonly pendingCellTypeKey: string | null;
   /** 1-based colony calendar day (same scale as worker bee-days). */
   readonly currentColonyDay: number;
+  /** Current season within the 60-day seasonal cycle. */
+  readonly currentColonySeason: Season;
+  /** 1-based colony year (increments when the player continues after the year review). */
+  readonly yearNumber: number;
+  /** When true, the year-end modal is open and simulation is paused. */
+  readonly isYearReviewOpen: boolean;
+  /** Stats for the year that just ended (shown while {@link isYearReviewOpen} is true). */
+  readonly yearlyReviewStats: YearlyReviewStats;
 }
 
 type Listener = (e: ColonyEvent) => void;

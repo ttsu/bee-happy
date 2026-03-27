@@ -32,6 +32,9 @@ export class MovementSystem extends System {
   }
 
   override update(elapsed: number): void {
+    if (this.colony.isSimulationPaused()) {
+      return;
+    }
     for (const actor of this.colony.scene.actors) {
       const w = actor.get(BeeWorkComponent);
       if (!w?.currentJobEntityId) {

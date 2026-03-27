@@ -67,6 +67,9 @@ export class JobAssignmentSystem extends System {
   }
 
   override update(_elapsed: number): void {
+    if (this.colony.isSimulationPaused()) {
+      return;
+    }
     const jobEntities = this.jobs.entities
       .filter((e) => e.get(JobComponent)!.status !== "done")
       .sort((a, b) => b.get(JobComponent)!.priority - a.get(JobComponent)!.priority);

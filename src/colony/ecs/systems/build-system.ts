@@ -43,6 +43,9 @@ export class BuildSystem extends System {
   }
 
   override update(elapsed: number): void {
+    if (this.colony.isSimulationPaused()) {
+      return;
+    }
     const res = this.colony.resources;
     for (const ent of this.world.entities) {
       const job = ent.get(JobComponent);

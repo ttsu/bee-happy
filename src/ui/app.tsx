@@ -18,6 +18,17 @@ const defaultSnapshot: ColonyUiSnapshot = {
   transitionOverlay: 0,
   pendingCellTypeKey: null,
   currentColonyDay: 1,
+  currentColonySeason: "Spring",
+  yearNumber: 1,
+  isYearReviewOpen: false,
+  yearlyReviewStats: {
+    honeyProcessedTotal: 0,
+    nectarCollectedTotal: 0,
+    pollenCollectedTotal: 0,
+    beesHatchedTotal: 0,
+    remainingBees: 0,
+    happyBeeSecondsTotal: 0,
+  },
 };
 
 /**
@@ -64,6 +75,8 @@ export const App = () => {
           </div>
           <div>Level: {snap.activeLevel}</div>
           <div>Day: {snap.currentColonyDay}</div>
+          <div>Season: {snap.currentColonySeason}</div>
+          <div>Year: {snap.yearNumber}</div>
         </div>
       </div>
       <div
@@ -138,6 +151,59 @@ export const App = () => {
                 Nectar / honey
               </button>
             </div>
+          </div>
+        </div>
+      ) : null}
+      {snap.isYearReviewOpen ? (
+        <div
+          className="year-review-backdrop"
+          role="dialog"
+          aria-modal
+          aria-labelledby="year-review-title"
+        >
+          <div className="year-review-card">
+            <h2 id="year-review-title" className="year-review-title">
+              Year {snap.yearNumber} complete
+            </h2>
+            <p className="year-review-kpi-label">Happiness score</p>
+            <p className="year-review-kpi-value" aria-label="Cumulative happy bee seconds">
+              {snap.yearlyReviewStats.happyBeeSecondsTotal.toLocaleString(undefined, {
+                maximumFractionDigits: 0,
+              })}{" "}
+              <span className="year-review-kpi-unit">happy bee-seconds</span>
+            </p>
+            <p className="year-review-kpi-hint">
+              Total time all bees spent fed and hydrated this year.
+            </p>
+            <ul className="year-review-stats">
+              <li>
+                Honey processed:{" "}
+                {snap.yearlyReviewStats.honeyProcessedTotal.toLocaleString()}
+              </li>
+              <li>
+                Nectar collected:{" "}
+                {snap.yearlyReviewStats.nectarCollectedTotal.toLocaleString()}
+              </li>
+              <li>
+                Pollen collected:{" "}
+                {snap.yearlyReviewStats.pollenCollectedTotal.toLocaleString()}
+              </li>
+              <li>
+                Bees hatched: {snap.yearlyReviewStats.beesHatchedTotal.toLocaleString()}
+              </li>
+              <li>
+                Bees remaining: {snap.yearlyReviewStats.remainingBees.toLocaleString()}
+              </li>
+            </ul>
+            <button
+              type="button"
+              className="year-review-continue"
+              onClick={() => {
+                getColonyBridge()?.continueToNextYear();
+              }}
+            >
+              Continue to year {snap.yearNumber + 1}
+            </button>
           </div>
         </div>
       ) : null}

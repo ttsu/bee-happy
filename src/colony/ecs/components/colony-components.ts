@@ -171,3 +171,29 @@ export class QueenTimerComponent extends Component {
 export class ColonyTimeComponent extends Component {
   colonyElapsedMs = 0;
 }
+
+/**
+ * Per-calendar-year counters and end-of-year review state (60 colony days per year).
+ *
+ * Counters reset when the player continues after the year-end modal.
+ */
+export class YearlyStatsComponent extends Component {
+  /** 1-based colony year (increments when the player continues after review). */
+  yearNumber = 1;
+  /** When true, simulation time and most systems pause until the player continues. */
+  isYearReviewOpen = false;
+  /** Honey units produced from nectar processing this year. */
+  honeyProcessedTotal = 0;
+  /** Nectar units deposited from foraging this year. */
+  nectarCollectedTotal = 0;
+  /** Pollen units deposited from foraging this year. */
+  pollenCollectedTotal = 0;
+  /** Workers eclosed from brood this year. */
+  beesHatchedTotal = 0;
+  /**
+   * Cumulative seconds all bees with {@link BeeNeedsComponent} spent happy this year.
+   */
+  happyBeeSecondsTotal = 0;
+  /** Bee count snapshot when the year ended (for the review modal). */
+  remainingBeesAtYearEnd = 0;
+}

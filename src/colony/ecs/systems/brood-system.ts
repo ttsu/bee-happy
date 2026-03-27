@@ -69,6 +69,9 @@ export class BroodSystem extends System {
   }
 
   override update(elapsed: number): void {
+    if (this.colony.isSimulationPaused()) {
+      return;
+    }
     const qt = this.colony.controllerEntity.get(QueenTimerComponent)!;
     qt.layCooldownMs -= elapsed;
     if (qt.layCooldownMs <= 0) {

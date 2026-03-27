@@ -19,6 +19,7 @@ import {
   ColonyTimeComponent,
   JobComponent,
   QueenTimerComponent,
+  YearlyStatsComponent,
   type BeeRole,
 } from "./ecs/components/colony-components";
 import { canPlaceFoundation } from "./placement";
@@ -33,6 +34,8 @@ import { LevelSystem } from "./ecs/systems/level-system";
 import { MovementSystem } from "./ecs/systems/movement-system";
 import { WorkerLifecycleSystem } from "./ecs/systems/worker-lifecycle-system";
 import { GuardSystem } from "./ecs/systems/guard-system";
+import { SeasonSystem } from "./ecs/systems/season-system";
+import { getSeasonForColonyDay } from "./seasons";
 
 /**
  * Central registry and helpers for hive cells, jobs, and colony controller ECS entities.
@@ -60,6 +63,7 @@ export class ColonyRuntime {
         new ColonyResourcesComponent(),
         new QueenTimerComponent(),
         new ColonyTimeComponent(),
+        new YearlyStatsComponent(),
       ],
     });
     this.controllerEntity.addTag("colonyController");
@@ -75,6 +79,7 @@ export class ColonyRuntime {
 
     world.add(new LevelSystem(world, this));
     world.add(new WorkerLifecycleSystem(world, this));
+    world.add(new SeasonSystem(world, this));
     world.add(new JobAssignmentSystem(world, this));
     world.add(new MovementSystem(world, this));
     world.add(new IdleWanderSystem(world, this));
@@ -151,8 +156,38 @@ export class ColonyRuntime {
    */
   spawnEmergingWorker(level: number, hex: HexCoord): BeeActor {
     const bee = this.spawnBee("worker", level, hex);
+    const yearly = this.controllerEntity.get(YearlyStatsComponent);
+    if (yearly) {
+      yearly.beesHatchedTotal += 1;
+    }
     this.emitUiSnapshotImmediate();
     return bee;
+  }
+
+  /**
+   * Whether the end-of-year review is open and simulation should not advance.
+   */
+  isSimulationPaused(): boolean {
+    return this.controllerEntity.get(YearlyStatsComponent)?.isYearReviewOpen ?? false;
+  }
+
+  /**
+   * Closes the year review, increments the calendar year, and resets yearly counters.
+   */
+  continueToNextYear(): void {
+    const yearly = this.controllerEntity.get(YearlyStatsComponent);
+    if (!yearly?.isYearReviewOpen) {
+      return;
+    }
+    yearly.isYearReviewOpen = false;
+    yearly.yearNumber += 1;
+    yearly.honeyProcessedTotal = 0;
+    yearly.nectarCollectedTotal = 0;
+    yearly.pollenCollectedTotal = 0;
+    yearly.beesHatchedTotal = 0;
+    yearly.happyBeeSecondsTotal = 0;
+    yearly.remainingBeesAtYearEnd = 0;
+    this.emitUiSnapshotImmediate();
   }
 
   createCellEntity(coord: HiveCoord, state: Partial<CellStateComponent>): Entity {
@@ -248,7 +283,7 @@ export class ColonyRuntime {
   }
 
   /** Pushes the latest HUD snapshot to subscribers without waiting for the frame throttle. */
-  private emitUiSnapshotImmediate(): void {
+  emitUiSnapshotImmediate(): void {
     this.events.emit({ type: "ColonySnapshot", snapshot: this.getUiSnapshot() });
   }
 
@@ -297,8 +332,10 @@ export class ColonyRuntime {
       }
     }
     const time = this.controllerEntity.get(ColonyTimeComponent)!;
+    const yearly = this.controllerEntity.get(YearlyStatsComponent)!;
     const msPerBeeDay = COLONY.workerLifespanMs / 50;
     const currentColonyDay = Math.floor(time.colonyElapsedMs / msPerBeeDay) + 1;
+    const { season: currentColonySeason } = getSeasonForColonyDay(currentColonyDay);
     return {
       beesTotal: workers + queens,
       workers,
@@ -317,6 +354,17 @@ export class ColonyRuntime {
       transitionOverlay: this.transitionOverlay,
       pendingCellTypeKey: this.pendingCellTypeKey,
       currentColonyDay,
+      currentColonySeason,
+      yearNumber: yearly.yearNumber,
+      isYearReviewOpen: yearly.isYearReviewOpen,
+      yearlyReviewStats: {
+        honeyProcessedTotal: yearly.honeyProcessedTotal,
+        nectarCollectedTotal: yearly.nectarCollectedTotal,
+        pollenCollectedTotal: yearly.pollenCollectedTotal,
+        beesHatchedTotal: yearly.beesHatchedTotal,
+        remainingBees: yearly.remainingBeesAtYearEnd,
+        happyBeeSecondsTotal: yearly.happyBeeSecondsTotal,
+      },
     };
   }
 

@@ -36,6 +36,9 @@ export class GuardSystem extends System {
   }
 
   override update(elapsed: number): void {
+    if (this.colony.isSimulationPaused()) {
+      return;
+    }
     let guardStageWorkers = 0;
     for (const actor of this.colony.scene.actors) {
       const role = actor.get(BeeRoleComponent);
