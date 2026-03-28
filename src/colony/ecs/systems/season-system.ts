@@ -10,6 +10,12 @@ import {
 import { getSeasonForColonyDay } from "../../seasons";
 import { releaseJobBees } from "../job-release";
 
+/** Serialized {@link SeasonSystem} fields that are not derived from colony time. */
+export type SeasonSystemSave = {
+  prevColonyDay: number;
+  lastNectarPurgeCycleIndex: number | null;
+};
+
 /**
  * Winter nectar expiry, year boundary detection, and opening the end-of-year review.
  */
@@ -25,6 +31,18 @@ export class SeasonSystem extends System {
     private readonly colony: ColonyRuntime,
   ) {
     super();
+  }
+
+  getStateForSave(): SeasonSystemSave {
+    return {
+      prevColonyDay: this.prevColonyDay,
+      lastNectarPurgeCycleIndex: this.lastNectarPurgeCycleIndex,
+    };
+  }
+
+  applyStateFromLoad(state: SeasonSystemSave): void {
+    this.prevColonyDay = state.prevColonyDay;
+    this.lastNectarPurgeCycleIndex = state.lastNectarPurgeCycleIndex;
   }
 
   override update(_elapsed: number): void {
