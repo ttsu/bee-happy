@@ -19,6 +19,7 @@ import {
 } from "../job-eligibility";
 import { planFeedLarvaeLeg } from "../../feed-larvae-path";
 import { beeStartHiveCoord, findNearestSelfFeedTarget } from "../../self-feed-target";
+import { jobResumeSortWeight } from "../job-resume-sort-weight";
 
 const findActorById = (colony: ColonyRuntime, id: number) =>
   asActor(colony.scene.actors.find((a) => a.id === id));
@@ -70,9 +71,28 @@ export class JobAssignmentSystem extends System {
     if (this.colony.isSimulationPaused()) {
       return;
     }
-    const jobEntities = this.jobs.entities
-      .filter((e) => e.get(JobComponent)!.status !== "done")
-      .sort((a, b) => b.get(JobComponent)!.priority - a.get(JobComponent)!.priority);
+    const openJobs = this.jobs.entities.filter(
+      (e) => e.get(JobComponent)!.status !== "done",
+    );
+    const resumeWeightByEntityId = new Map<number, number>();
+    for (const e of openJobs) {
+      resumeWeightByEntityId.set(
+        e.id,
+        jobResumeSortWeight(this.colony, e.get(JobComponent)!),
+      );
+    }
+    const jobEntities = openJobs.sort((a, b) => {
+      const ja = a.get(JobComponent)!;
+      const jb = b.get(JobComponent)!;
+      const byPriority = jb.priority - ja.priority;
+      if (byPriority !== 0) {
+        return byPriority;
+      }
+      return (
+        (resumeWeightByEntityId.get(b.id) ?? 0) -
+        (resumeWeightByEntityId.get(a.id) ?? 0)
+      );
+    });
 
     for (const je of jobEntities) {
       const job = je.get(JobComponent)!;
