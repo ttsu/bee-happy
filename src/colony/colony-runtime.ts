@@ -36,18 +36,25 @@ import { LevelSystem } from "./ecs/systems/level-system";
 import { MovementSystem } from "./ecs/systems/movement-system";
 import { WorkerLifecycleSystem } from "./ecs/systems/worker-lifecycle-system";
 import { GuardSystem } from "./ecs/systems/guard-system";
+import type { SeasonSystemSave } from "./ecs/systems/season-system";
 import { SeasonSystem } from "./ecs/systems/season-system";
 import { getSeasonForColonyDay } from "./seasons";
 
 /**
  * Central registry and helpers for hive cells, jobs, and colony controller ECS entities.
  */
+export type ColonyInitializeOptions = {
+  /** Default: seed level 0 and spawn bees. Skip when loading from a save. */
+  mode?: "new" | "load";
+};
+
 export class ColonyRuntime {
   readonly events = new ColonyEventBus();
   readonly cellsByKey = new Map<string, Entity>();
   controllerEntity!: Entity;
   scene!: Scene;
   engine!: Engine;
+  private seasonSystem: SeasonSystem | null = null;
   pendingCellTypeKey: string | null = null;
   /** Last validation error for {@link requestCellTypeChange} (shown in the picker). */
   cellTypeChangeError: string | null = null;
@@ -62,10 +69,11 @@ export class ColonyRuntime {
   /** 0–1 full-screen fade during level transitions (for React overlay). */
   transitionOverlay = 0;
 
-  initialize(scene: Scene, engine: Engine): void {
+  initialize(scene: Scene, engine: Engine, options?: ColonyInitializeOptions): void {
     this.scene = scene;
     this.engine = engine;
     const world = scene.world;
+    const mode = options?.mode ?? "new";
 
     this.controllerEntity = new Entity({
       name: "colony-controller",
@@ -85,11 +93,15 @@ export class ColonyRuntime {
 
     this.controllerEntity.get(QueenTimerComponent)!.layCooldownMs = 3500;
 
-    this.seedLevelZero();
+    if (mode === "new") {
+      this.seedLevelZero();
+    }
 
     world.add(new LevelSystem(world, this));
     world.add(new WorkerLifecycleSystem(world, this));
-    world.add(new SeasonSystem(world, this));
+    const season = new SeasonSystem(world, this);
+    this.seasonSystem = season;
+    world.add(season);
     world.add(new JobAssignmentSystem(world, this));
     world.add(new MovementSystem(world, this));
     world.add(new IdleWanderSystem(world, this));
@@ -99,6 +111,19 @@ export class ColonyRuntime {
     world.add(new EconomySystem(world, this));
     world.add(new AdultCareSystem(world, this));
     world.add(new GuardSystem(world, this));
+  }
+
+  getSeasonSystemStateForSave(): SeasonSystemSave {
+    return (
+      this.seasonSystem?.getStateForSave() ?? {
+        prevColonyDay: 0,
+        lastNectarPurgeCycleIndex: null,
+      }
+    );
+  }
+
+  applySeasonSystemStateForLoad(state: SeasonSystemSave): void {
+    this.seasonSystem?.applyStateFromLoad(state);
   }
 
   get resources(): ColonyResourcesComponent {
