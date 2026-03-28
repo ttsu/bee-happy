@@ -17,14 +17,14 @@ Open the URL Vite prints (the dev server defaults to port **5173**).
 
 ## Scripts
 
-| Command                         | Purpose                          |
-| ------------------------------- | -------------------------------- |
-| `npm run dev`                   | Start the Vite dev server        |
-| `npm run build`                 | Lint, typecheck, production build |
-| `npm run format`                | Apply Prettier                   |
-| `npm run lint`                  | Check Prettier                   |
-| `npm run test`                  | Build, then Playwright E2E       |
-| `npm run test:integration-update` | Update Playwright snapshots   |
+| Command                           | Purpose                           |
+| --------------------------------- | --------------------------------- |
+| `npm run dev`                     | Start the Vite dev server         |
+| `npm run build`                   | Lint, typecheck, production build |
+| `npm run format`                  | Apply Prettier                    |
+| `npm run lint`                    | Check Prettier                    |
+| `npm run test`                    | Build, then Playwright E2E        |
+| `npm run test:integration-update` | Update Playwright snapshots       |
 
 Playwright tests use a preview server on port **4173**; `npm run test` handles build and serve. For commit message rules and other contributor notes, see [`AGENTS.md`](./AGENTS.md).
 

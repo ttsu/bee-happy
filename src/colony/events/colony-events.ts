@@ -37,11 +37,14 @@ export interface ColonyUiSnapshot {
   readonly broodOccupied: number;
   readonly broodTotal: number;
   readonly activeLevel: number;
-  readonly wax: number;
   readonly transitionOverlay: number;
   readonly pendingCellTypeKey: string | null;
-  /** Set when {@link ColonyRuntime.requestCellTypeChange} cannot apply (e.g. no storage capacity). */
+  /** Set when {@link ColonyRuntime.requestCellTypeChange} cannot apply (e.g. honey processing). */
   readonly cellTypeChangeError: string | null;
+  /**
+   * Matches the cell type button the player must press again to confirm discarding stored goods.
+   */
+  readonly cellTypeChangeDiscardTarget: "brood" | "pollen" | "nectar" | null;
   /** 1-based colony calendar day (same scale as worker bee-days). */
   readonly currentColonyDay: number;
   /** Current season within the 60-day seasonal cycle. */
