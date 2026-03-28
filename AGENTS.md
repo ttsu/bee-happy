@@ -6,15 +6,15 @@
 
 ### Quick reference
 
-| Task | Command |
-|---|---|
-| Dev server | `npm run dev` (Vite, port 5173) |
-| Lint | `npm run lint` (Prettier) |
-| Type check | `npx tsc --noEmit` |
-| Build | `npm run build` (runs lint + tsc + vite build) |
-| E2E tests | `npm run test` (builds first, then Playwright on port 4173) |
-| Update snapshots | `npm run test:integration-update` |
-| Format fix | `npm run format` |
+| Task             | Command                                                     |
+| ---------------- | ----------------------------------------------------------- |
+| Dev server       | `npm run dev` (Vite, port 5173)                             |
+| Lint             | `npm run lint` (Prettier)                                   |
+| Type check       | `npx tsc --noEmit`                                          |
+| Build            | `npm run build` (runs lint + tsc + vite build)              |
+| E2E tests        | `npm run test` (builds first, then Playwright on port 4173) |
+| Update snapshots | `npm run test:integration-update`                           |
+| Format fix       | `npm run format`                                            |
 
 ### Gotchas
 

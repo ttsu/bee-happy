@@ -153,7 +153,8 @@ export class BroodSystem extends System {
         const w = queen.get(BeeWorkComponent);
         const atPathEnd =
           !!w && job.pathPoints.length > 0 && w.pathIndex >= job.pathPoints.length - 1;
-        const inCell = queen.pos.sub(center).size <= COLONY.buildWorkRadiusPx && atPathEnd;
+        const inCell =
+          queen.pos.sub(center).size <= COLONY.buildWorkRadiusPx && atPathEnd;
         if (inCell) {
           job.layEggTimerMs -= elapsed;
           if (job.layEggTimerMs <= 0) {

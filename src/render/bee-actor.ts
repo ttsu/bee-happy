@@ -17,12 +17,14 @@ import {
   BeeRoleComponent,
   BeeWorkComponent,
 } from "../colony/ecs/components/colony-components";
+import { getWorkerVisualScale } from "../colony/worker-lifecycle";
 import { beeSpriteSheet } from "../resources";
 
 /**
  * Minimal bee visualization (queen vs worker) with ECS state components attached.
  */
 export class BeeActor extends Actor {
+  private static readonly WORKER_BASE_SCALE = 0.25;
   private static readonly WIGGLE_AMPLITUDE_RADIANS = 0.08;
   private static readonly WIGGLE_CYCLES_PER_SECOND = 8;
   private readonly groundedSprite: Sprite;
@@ -32,11 +34,13 @@ export class BeeActor extends Actor {
   private wiggleTimeMs = 0;
 
   constructor(role: BeeRole, pos: Vector) {
+    const workerStartScale =
+      role === "worker" ? BeeActor.WORKER_BASE_SCALE * getWorkerVisualScale(0) : 0;
     super({
       pos,
       width: 24,
       height: 24,
-      scale: role === "queen" ? vec(0.5, 0.5) : vec(0.25, 0.25),
+      scale: role === "queen" ? vec(0.5, 0.5) : vec(workerStartScale, workerStartScale),
       collisionType: CollisionType.PreventCollision,
       name: role === "queen" ? "Queen" : "Worker",
     });
@@ -75,6 +79,13 @@ export class BeeActor extends Actor {
     }
     this.usingWingFlap = flying;
     this.graphics.use(flying ? this.wingFlapAnimation : this.groundedSprite);
+
+    const age = this.get(BeeAgeComponent);
+    if (age) {
+      const s = getWorkerVisualScale(age.ageMs);
+      const b = BeeActor.WORKER_BASE_SCALE;
+      this.scale = vec(b * s, b * s);
+    }
   }
 
   private isForageFlight(): boolean {
