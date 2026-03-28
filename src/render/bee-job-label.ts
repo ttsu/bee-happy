@@ -48,7 +48,7 @@ const shortJobLabel = (job: JobComponent): string => {
           return "deposit";
       }
     case "feedQueen":
-      return "jelly";
+      return "feed queen";
     case "cleanBrood":
       return "clean";
     case "foragePollen":
@@ -65,9 +65,9 @@ const shortJobLabel = (job: JobComponent): string => {
 
       switch (job.foragePhase) {
         case "outbound":
-          return `forage ${forageLabel}`;
+          return `find ${forageLabel}`;
         case "wait":
-          return `wait ${forageLabel}`;
+          return `forage ${forageLabel}`;
         case "return":
           return `return ${forageLabel}`;
         case "depositing":
@@ -79,17 +79,19 @@ const shortJobLabel = (job: JobComponent): string => {
       }
     }
     case "depositPollen":
+      return "store pollen";
     case "depositNectar":
-    case "depositWater":
-      return "deposit";
+      return "store nectar";
+      case "depositWater":
+      return "store water";
     case "honeyProcess":
-      return "honey";
+      return "make honey";
     case "guardHive":
       return "guard";
     case "adultFeed":
       return "eat";
     case "waterDeliver":
-      return "water";
+      return "hydrate";
     default:
       return "busy";
   }
