@@ -21,10 +21,10 @@ const defaultSnapshot: ColonyUiSnapshot = {
   broodOccupied: 0,
   broodTotal: 0,
   activeLevel: 0,
-  wax: 0,
   transitionOverlay: 0,
   pendingCellTypeKey: null,
   cellTypeChangeError: null,
+  cellTypeChangeDiscardTarget: null,
   currentColonyDay: 1,
   currentColonySeason: "Spring",
   yearNumber: 1,
@@ -250,7 +250,6 @@ export const App = () => {
             <div>Pollen: {snap.pollen.toFixed(0)}</div>
             <div>Honey: {snap.honey.toFixed(0)}</div>
             <div>Nectar: {snap.colonyNectar.toFixed(0)}</div>
-            <div>Wax: {snap.wax.toFixed(0)}</div>
             <div>Happiness: {snap.happinessPct}%</div>
             <div>
               Brood: {snap.broodOccupied}/{snap.broodTotal}

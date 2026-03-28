@@ -29,7 +29,7 @@ const releaseJobBees = (world: World, job: JobComponent): void => {
 };
 
 /**
- * Consumes wax and advances foundation builds; completes build jobs.
+ * Advances foundation builds while workers are in range; completes build jobs.
  */
 export class BuildSystem extends System {
   static override priority = SystemPriority.Average;
@@ -46,7 +46,6 @@ export class BuildSystem extends System {
     if (this.colony.isSimulationPaused()) {
       return;
     }
-    const res = this.colony.resources;
     for (const ent of this.world.entities) {
       const job = ent.get(JobComponent);
       if (!job || job.kind !== "buildCell" || job.status === "done") {
@@ -78,13 +77,8 @@ export class BuildSystem extends System {
           builders += 1;
         }
       }
-      if (builders > 0 && res.wax > 0) {
-        const rate = COLONY.waxPerBuilderPerSec * builders * (elapsed / 1000);
-        const use = Math.min(rate, res.wax);
-        res.wax -= use;
-        const progressPerWax =
-          1 / (COLONY.waxPerBuilderPerSec * COLONY.cellBuildTargetSec);
-        cell.buildProgress += use * progressPerWax;
+      if (builders > 0) {
+        cell.buildProgress += (elapsed / 1000) * (builders / COLONY.cellBuildTargetSec);
       }
       if (cell.buildProgress >= 1) {
         cell.built = true;

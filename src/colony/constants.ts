@@ -3,10 +3,8 @@ export const COLONY = {
   hexSize: 36,
   /** Camera pan: movement below this (screen px) counts as tap, not drag. */
   panTapThresholdPx: 14,
-  /** Build: wax consumed per second per worker in range. */
-  waxPerBuilderPerSec: 0.12,
   /**
-   * Target seconds to finish one foundation with one builder (wax not limiting).
+   * Target seconds to finish one foundation with one builder in range.
    * More builders in range shorten wall-clock time proportionally.
    */
   cellBuildTargetSec: 5,
@@ -16,11 +14,9 @@ export const COLONY = {
   buildReachPx: 120,
   /**
    * Worker must be within this distance of the cell center and at the end of the job path
-   * before wax/build progress applies.
+   * before build progress applies.
    */
   buildWorkRadiusPx: 26,
-  /** Starting wax stock. */
-  initialWax: 80,
   initialPollen: 12,
   /** Colony nectar buffer (integer units; adult feed uses adultFeedColonyNectarCost). */
   initialColonyNectar: 12,

@@ -82,7 +82,7 @@ const shortJobLabel = (job: JobComponent): string => {
       return "store pollen";
     case "depositNectar":
       return "store nectar";
-      case "depositWater":
+    case "depositWater":
       return "store water";
     case "honeyProcess":
       return "make honey";

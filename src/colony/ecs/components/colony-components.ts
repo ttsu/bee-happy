@@ -171,7 +171,6 @@ export class ActiveLevelComponent extends Component {
 }
 
 export class ColonyResourcesComponent extends Component {
-  wax = 0;
   colonyNectar = 0;
 }
 

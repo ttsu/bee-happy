@@ -51,6 +51,11 @@ export class ColonyRuntime {
   pendingCellTypeKey: string | null = null;
   /** Last validation error for {@link requestCellTypeChange} (shown in the picker). */
   cellTypeChangeError: string | null = null;
+  /**
+   * When set, the next {@link requestCellTypeChange} to this type on the same cell
+   * discards stored goods instead of relocating (player confirmed).
+   */
+  cellTypeChangeDiscardTarget: "brood" | "pollen" | "nectar" | null = null;
   /** Hive key under the pointer for hover outline (see {@link updateHoverFromPointer}). */
   hoverHiveKey: string | null = null;
   lastUiEmit = 0;
@@ -76,7 +81,6 @@ export class ColonyRuntime {
     world.add(this.controllerEntity);
 
     const res = this.controllerEntity.get(ColonyResourcesComponent)!;
-    res.wax = COLONY.initialWax;
     res.colonyNectar = COLONY.initialColonyNectar;
 
     this.controllerEntity.get(QueenTimerComponent)!.layCooldownMs = 3500;
@@ -281,12 +285,14 @@ export class ColonyRuntime {
       if (st.built && st.cellType === "none") {
         this.pendingCellTypeKey = key;
         this.cellTypeChangeError = null;
+        this.cellTypeChangeDiscardTarget = null;
         this.emitUiSnapshotImmediate();
         return;
       }
       if (st.built && st.cellType !== "none") {
         this.pendingCellTypeKey = key;
         this.cellTypeChangeError = null;
+        this.cellTypeChangeDiscardTarget = null;
         this.emitUiSnapshotImmediate();
         return;
       }
@@ -404,6 +410,9 @@ export class ColonyRuntime {
     targetType: "brood" | "pollen" | "nectar",
   ): void {
     this.cellTypeChangeError = null;
+    const discardConfirmed =
+      this.cellTypeChangeDiscardTarget === targetType &&
+      this.pendingCellTypeKey === cellKey;
     const ent = this.cellsByKey.get(cellKey);
     if (!ent) {
       return;
@@ -412,6 +421,7 @@ export class ColonyRuntime {
     const coord = ent.get(CellCoordComponent)!;
 
     if (!st.built) {
+      this.cellTypeChangeDiscardTarget = null;
       this.cellTypeChangeError = "Cell is not built yet.";
       this.emitUiSnapshotImmediate();
       return;
@@ -419,11 +429,13 @@ export class ColonyRuntime {
 
     if (st.cellType === targetType && !st.pendingCellType) {
       this.pendingCellTypeKey = null;
+      this.cellTypeChangeDiscardTarget = null;
       this.emitUiSnapshotImmediate();
       return;
     }
 
     if (this.hasOpenJobAtCell(cellKey, "clearCellForRetype")) {
+      this.cellTypeChangeDiscardTarget = null;
       this.cellTypeChangeError =
         "This cell is already being emptied for a type change.";
       this.emitUiSnapshotImmediate();
@@ -440,6 +452,7 @@ export class ColonyRuntime {
     if (broodBlocked) {
       st.pendingCellType = targetType;
       this.pendingCellTypeKey = null;
+      this.cellTypeChangeDiscardTarget = null;
       this.emitUiSnapshotImmediate();
       return;
     }
@@ -447,17 +460,20 @@ export class ColonyRuntime {
     if (st.cellType === "brood" && st.stage === "empty") {
       this.applyResolvedCellType(cellKey, targetType);
       this.pendingCellTypeKey = null;
+      this.cellTypeChangeDiscardTarget = null;
       this.emitUiSnapshotImmediate();
       return;
     }
 
     if (this.cellHasHoneyProcessJob(coord)) {
+      this.cellTypeChangeDiscardTarget = null;
       this.cellTypeChangeError = "Wait for honey processing to finish on this cell.";
       this.emitUiSnapshotImmediate();
       return;
     }
 
     if (st.honeyProcessingProgress > 0) {
+      this.cellTypeChangeDiscardTarget = null;
       this.cellTypeChangeError = "Wait for honey processing to finish on this cell.";
       this.emitUiSnapshotImmediate();
       return;
@@ -468,12 +484,22 @@ export class ColonyRuntime {
       (st.cellType === "nectar" && (st.nectarStored > 0 || st.honeyStored > 0));
 
     if (needsRelocate) {
-      if (!canRelocateCellContentsForRetype(this, cellKey, coord.level, st)) {
+      const canMove = canRelocateCellContentsForRetype(this, cellKey, coord.level, st);
+      if (!canMove && !discardConfirmed) {
+        this.cellTypeChangeDiscardTarget = targetType;
         this.cellTypeChangeError =
-          "Not enough free storage elsewhere on this level to move the contents.";
+          "There is nowhere else to store this on this level. Choose again to discard it and change the cell type.";
         this.emitUiSnapshotImmediate();
         return;
       }
+      if (!canMove && discardConfirmed) {
+        this.cellTypeChangeDiscardTarget = null;
+        this.applyResolvedCellType(cellKey, targetType);
+        this.pendingCellTypeKey = null;
+        this.emitUiSnapshotImmediate();
+        return;
+      }
+      this.cellTypeChangeDiscardTarget = null;
       st.pendingCellType = targetType;
       const job = new JobComponent(
         "clearCellForRetype",
@@ -489,6 +515,7 @@ export class ColonyRuntime {
       return;
     }
 
+    this.cellTypeChangeDiscardTarget = null;
     this.applyResolvedCellType(cellKey, targetType);
     this.pendingCellTypeKey = null;
     this.emitUiSnapshotImmediate();
@@ -500,6 +527,7 @@ export class ColonyRuntime {
   dismissCellTypePicker(): void {
     this.pendingCellTypeKey = null;
     this.cellTypeChangeError = null;
+    this.cellTypeChangeDiscardTarget = null;
     this.emitUiSnapshotImmediate();
   }
 
@@ -571,10 +599,10 @@ export class ColonyRuntime {
       broodOccupied,
       broodTotal,
       activeLevel: this.activeLevel,
-      wax: res.wax,
       transitionOverlay: this.transitionOverlay,
       pendingCellTypeKey: this.pendingCellTypeKey,
       cellTypeChangeError: this.cellTypeChangeError,
+      cellTypeChangeDiscardTarget: this.cellTypeChangeDiscardTarget,
       currentColonyDay,
       currentColonySeason,
       yearNumber: yearly.yearNumber,
