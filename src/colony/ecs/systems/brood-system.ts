@@ -102,6 +102,7 @@ export class BroodSystem extends System {
           st.built &&
           st.cellType === "brood" &&
           st.stage === "empty" &&
+          !st.pendingCellType &&
           !findOpenLayEggJobForCell(this.world, key)
         ) {
           const job = new JobComponent(
@@ -266,6 +267,8 @@ export class BroodSystem extends System {
               je.kill();
             }
           }
+          this.colony.applyPendingBroodRetypeIfAny(key);
+          this.colony.emitUiSnapshotImmediate();
         }
       }
     }

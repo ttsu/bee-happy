@@ -61,6 +61,9 @@ export class MovementSystem extends System {
       ) {
         continue;
       }
+      if (job.kind === "clearCellForRetype" && job.retypePhase === "clearing") {
+        continue;
+      }
       const selfFeedPath =
         job.kind === "adultFeed" &&
         job.adultFeedTargetBeeId === actor.id &&

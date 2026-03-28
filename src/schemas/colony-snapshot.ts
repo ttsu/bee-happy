@@ -26,6 +26,7 @@ export const colonyUiSnapshotSchema = z.object({
   wax: z.number(),
   transitionOverlay: z.number(),
   pendingCellTypeKey: z.string().nullable(),
+  cellTypeChangeError: z.string().nullable(),
   currentColonyDay: z.number(),
   currentColonySeason: seasonSchema,
   yearNumber: z.number(),

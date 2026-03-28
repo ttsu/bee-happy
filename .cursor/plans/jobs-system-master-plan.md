@@ -16,7 +16,7 @@ This document is the **source of truth** for colony job kinds, **which role** pe
 | Worker lifecycle ↔ job kind | `src/colony/worker-lifecycle.ts` (`isWorkerStageAllowedJobKind`) |
 | Hex paths for most site jobs | `findHexPathWorldPoints` via `JobAssignmentSystem` |
 | Movement along paths or special cases | `src/colony/ecs/systems/movement-system.ts` |
-| Domain completion (build, brood, economy, care, guard) | `build-system`, `brood-system`, `economy-system`, `adult-care-system`, `guard-system` |
+| Domain completion (build, brood, economy, care, guard, retype) | `build-system`, `brood-system`, `cell-retype-system`, `economy-system`, `adult-care-system`, `guard-system` |
 
 **Assignment rules:**
 
@@ -35,7 +35,7 @@ There is **no** separate per-role priority table in code—one global ordering.
 |------------------|---------------------|
 | 1 (days 1–2) | `cleanBrood` |
 | 2 (3–11) | `feedLarvae`, `feedQueen` |
-| 3 (12–17) | `buildCell`, `honeyProcess` |
+| 3 (12–17) | `buildCell`, `clearCellForRetype`, `honeyProcess` |
 | 4 (18–21) | `guardHive` |
 | 5 (22–50) | `foragePollen`, `forageNectar`, `forageWater`, `waterDeliver` |
 
@@ -56,6 +56,7 @@ There is **no** separate per-role priority table in code—one global ordering.
 | `cleanBrood` | `cleanBrood` | 80 | worker | Hex path | `BroodSystem` | Cleaning stage; after emerge from sealed; one job per cell |
 | `layEgg` | `layEgg` | 75 | queen | Hex path (intended) | TBD | **Not spawned.** Eligibility/UI only; brood uses `QueenTimerComponent` + `BroodSystem` timer |
 | `buildCell` | `build` | 65 | worker | Hex path | `BuildSystem` | Builder stage; spawn: `ColonyRuntime.handlePlacementIntent` |
+| `clearCellForRetype` | `clearCellForRetype` | 58 | worker | Hex path → idle at cell | `CellRetypeSystem` | Builder stage; spawn: `ColonyRuntime.requestCellTypeChange` when storage must be emptied; relocates pollen/nectar/honey on same level then applies `pendingCellType` |
 | `honeyProcess` | `honeyProcess` | 55 | worker | Hex path | `EconomySystem` | Builder stage; full nectar cell; `AdultCareSystem` can interrupt |
 | `guardHive` | `guardHive` | 52 | worker | Hex path | `GuardSystem` | Guard stage; spawned by `GuardSystem`; timed watch at entrance hex |
 | `foragePollen` | `foragePollen` | 45 | worker | Economy direct | `EconomySystem` | Forager; outbound → wait → return → **depositing** / **capacityWait** |
@@ -89,6 +90,15 @@ Step-by-step behavior only. **Do not restate priority or role here**—use [Job 
 3. Worker follows `MovementSystem` until last segment; level synced toward job target.
 4. `BuildSystem`: worker counts as builder when at **path end** and within **`COLONY.buildWorkRadiusPx`** of cell center; wax consumed; `buildProgress` increases.
 5. When `buildProgress >= 1`: cell `built`, job `done`, bees released, job entity removed.
+
+---
+
+### `clearCellForRetype`
+
+1. User chooses a new type for a pollen or nectar cell that still holds stock; capacity check passes → `CellStateComponent.pendingCellType` set, `JobComponent("clearCellForRetype", …)` created for that cell.
+2. Worker reserved; **hex path** to the cell; `retypePhase` `toCell` until at path end and within **`COLONY.buildWorkRadiusPx`** of center.
+3. `retypePhase` → `clearing`; `MovementSystem` does not move the bee. On each interval (`COLONY.retypeRelocateIntervalMs`), chunk pollen, then nectar, then honey into other same-level cells (`cell-retype-capacity.ts`).
+4. When stores are 0: `ColonyRuntime.applyResolvedCellType` with `pendingCellType`, job `done`, release, job entity removed. Forage deposit selection skips cells that are emptying for retype.
 
 ---
 

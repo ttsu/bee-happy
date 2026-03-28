@@ -24,6 +24,7 @@ const defaultSnapshot: ColonyUiSnapshot = {
   wax: 0,
   transitionOverlay: 0,
   pendingCellTypeKey: null,
+  cellTypeChangeError: null,
   currentColonyDay: 1,
   currentColonySeason: "Spring",
   yearNumber: 1,
@@ -49,6 +50,7 @@ type MiniCell = {
   readonly type: CellTypeKind;
   readonly stage: CellStage;
   readonly built: boolean;
+  readonly pendingCellType: "brood" | "pollen" | "nectar" | null;
 };
 
 type MiniLevel = {
@@ -110,6 +112,7 @@ const readMiniLevelsFromBridge = (): MiniLevel[] => {
       type: state.cellType,
       stage: state.stage,
       built: state.built,
+      pendingCellType: state.pendingCellType,
     });
   }
   return LEVELS.map((level) => ({
@@ -351,6 +354,9 @@ export const App = () => {
                         left: `${50 + (cell.q + cell.r * 0.5) * 10}%`,
                         top: `${50 + cell.r * 5.5}%`,
                         background: colorForMiniCell(cell),
+                        boxShadow: cell.pendingCellType
+                          ? "0 0 0 1.5px #e67e22"
+                          : undefined,
                       }}
                     />
                   ))}
@@ -365,14 +371,20 @@ export const App = () => {
         <div className="picker-backdrop" role="dialog" aria-modal>
           <div className="picker-card">
             <p>Choose cell type</p>
+            {snap.cellTypeChangeError ? (
+              <p className="picker-error" role="alert">
+                {snap.cellTypeChangeError}
+              </p>
+            ) : null}
             <div className="picker-buttons">
               <button
                 type="button"
                 className="picker-btn"
                 onClick={() => {
-                  const k = getColonyBridge()?.pendingCellTypeKey;
+                  const bridge = getColonyBridge();
+                  const k = bridge?.pendingCellTypeKey;
                   if (k) {
-                    getColonyBridge()?.assignCellType(k, "brood");
+                    bridge.requestCellTypeChange(k, "brood");
                   }
                 }}
               >
@@ -382,9 +394,10 @@ export const App = () => {
                 type="button"
                 className="picker-btn"
                 onClick={() => {
-                  const k = getColonyBridge()?.pendingCellTypeKey;
+                  const bridge = getColonyBridge();
+                  const k = bridge?.pendingCellTypeKey;
                   if (k) {
-                    getColonyBridge()?.assignCellType(k, "pollen");
+                    bridge.requestCellTypeChange(k, "pollen");
                   }
                 }}
               >
@@ -394,15 +407,25 @@ export const App = () => {
                 type="button"
                 className="picker-btn"
                 onClick={() => {
-                  const k = getColonyBridge()?.pendingCellTypeKey;
+                  const bridge = getColonyBridge();
+                  const k = bridge?.pendingCellTypeKey;
                   if (k) {
-                    getColonyBridge()?.assignCellType(k, "nectar");
+                    bridge.requestCellTypeChange(k, "nectar");
                   }
                 }}
               >
                 Nectar / honey
               </button>
             </div>
+            <button
+              type="button"
+              className="picker-cancel"
+              onClick={() => {
+                getColonyBridge()?.dismissCellTypePicker();
+              }}
+            >
+              Cancel
+            </button>
           </div>
         </div>
       ) : null}

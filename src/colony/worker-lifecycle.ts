@@ -54,7 +54,11 @@ export const isWorkerStagePreferredJobKind = (
     case 2:
       return kind === "feedLarvae" || kind === "feedQueen";
     case 3:
-      return kind === "buildCell" || kind === "honeyProcess";
+      return (
+        kind === "buildCell" ||
+        kind === "honeyProcess" ||
+        kind === "clearCellForRetype"
+      );
     case 4:
       return kind === "guardHive";
     case 5:

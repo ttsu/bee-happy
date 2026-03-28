@@ -27,7 +27,8 @@ export type JobKind =
   | "honeyProcess"
   | "guardHive"
   | "adultFeed"
-  | "waterDeliver";
+  | "waterDeliver"
+  | "clearCellForRetype";
 
 /** Axial + level identity for a hive cell entity. */
 export class CellCoordComponent extends Component {
@@ -61,6 +62,11 @@ export class CellStateComponent extends Component {
   larvaeNectarRemaining = 0;
   /** When true, honey job may be interrupted for adult nectar use. */
   honeyProcessingDirty = false;
+  /**
+   * Desired type after relocation or brood clears; `null` if no change is queued.
+   * Does not replace {@link cellType} until the simulation applies it.
+   */
+  pendingCellType: "brood" | "pollen" | "nectar" | null = null;
 }
 
 /** Job queue entity. */
@@ -102,6 +108,10 @@ export class JobComponent extends Component {
   feedPickupLevel = 0;
   /** Active leg: what the bee will pick up at {@link feedPickupQ}/R or is carrying to brood. */
   feedCargoKind: "none" | "pollen" | "nectar" | "honey" = "none";
+  /** `clearCellForRetype`: travel to source vs timed relocation ticks. */
+  retypePhase: "toCell" | "clearing" = "toCell";
+  /** Ms accumulator for {@link retypePhase} `clearing` steps. */
+  retypeClearAccumMs = 0;
   constructor(
     public kind: JobKind,
     public priority: number,

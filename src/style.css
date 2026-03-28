@@ -332,6 +332,29 @@ body {
   transform: scale(0.98);
 }
 
+.picker-error {
+  margin: -8px 0 14px;
+  font-size: 14px;
+  color: #f1948a;
+  line-height: 1.35;
+}
+
+.picker-cancel {
+  margin-top: 16px;
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 14px;
+  border: 1px solid #566573;
+  border-radius: 8px;
+  cursor: pointer;
+  background: transparent;
+  color: #bdc3c7;
+}
+
+.picker-cancel:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
 .build-hash {
   position: fixed;
   right: 8px;

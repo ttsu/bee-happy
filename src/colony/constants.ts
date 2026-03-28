@@ -130,4 +130,12 @@ export const COLONY = {
   foragePollenDepositAmount: 12,
   /** Payload units applied when depositing after nectar forage. */
   forageNectarDepositAmount: 10,
+  /** `clearCellForRetype`: ms between relocation chunks at the cell. */
+  retypeRelocateIntervalMs: 400,
+  /** Max pollen units moved per relocation tick. */
+  retypeRelocateChunkPollen: 4,
+  /** Max nectar units moved per relocation tick. */
+  retypeRelocateChunkNectar: 4,
+  /** Max honey units moved per relocation tick. */
+  retypeRelocateChunkHoney: 2,
 } as const;

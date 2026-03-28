@@ -7,6 +7,7 @@ export const JobPriority = {
   cleanBrood: 80,
   layEgg: 75,
   build: 65,
+  clearCellForRetype: 58,
   honeyProcess: 55,
   guardHive: 52,
   foragePollen: 45,

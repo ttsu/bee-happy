@@ -100,6 +100,9 @@ export const jobResumeSortWeight = (
       }
       return 0;
     }
+    case "clearCellForRetype": {
+      return job.retypePhase === "clearing" ? 0.5 : 0;
+    }
     default:
       return 0;
   }

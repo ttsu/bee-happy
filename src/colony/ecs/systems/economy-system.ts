@@ -22,6 +22,10 @@ import {
   nectarCellCanAcceptNectarDeposit,
   nectarCellReadyForHoneyProcessing,
 } from "../../nectar-cell-helpers";
+import {
+  cellBlocksNectarDepositDueToRetype,
+  cellBlocksPollenDepositDueToRetype,
+} from "../../cell-retype-capacity";
 import { releaseJobBees } from "../job-release";
 import { getSeasonForColonyDay } from "../../seasons";
 
@@ -150,12 +154,13 @@ export class EconomySystem extends System {
   }
 
   private anyPollenDepositCapacity(): boolean {
-    for (const [, e] of this.colony.cellsByKey) {
+    for (const [key, e] of this.colony.cellsByKey) {
       const st = e.get(CellStateComponent)!;
       if (
         st.built &&
         st.cellType === "pollen" &&
-        st.pollenStored < COLONY.pollenCellCapacity
+        st.pollenStored < COLONY.pollenCellCapacity &&
+        !cellBlocksPollenDepositDueToRetype(key, st)
       ) {
         return true;
       }
@@ -164,9 +169,13 @@ export class EconomySystem extends System {
   }
 
   private anyNectarDepositCapacity(): boolean {
-    for (const [, e] of this.colony.cellsByKey) {
+    for (const [key, e] of this.colony.cellsByKey) {
       const st = e.get(CellStateComponent)!;
-      if (st.built && nectarCellCanAcceptNectarDeposit(st)) {
+      if (
+        st.built &&
+        nectarCellCanAcceptNectarDeposit(st) &&
+        !cellBlocksNectarDepositDueToRetype(key, st)
+      ) {
         return true;
       }
     }
@@ -180,7 +189,7 @@ export class EconomySystem extends System {
   ): DepositPick | null {
     let best: DepositPick | null = null;
     let bestD = Infinity;
-    for (const [, e] of this.colony.cellsByKey) {
+    for (const [cellKey, e] of this.colony.cellsByKey) {
       const coord = e.get(CellCoordComponent)!;
       if (coord.level !== level) {
         continue;
@@ -189,7 +198,8 @@ export class EconomySystem extends System {
       if (
         !st.built ||
         st.cellType !== "pollen" ||
-        st.pollenStored >= COLONY.pollenCellCapacity
+        st.pollenStored >= COLONY.pollenCellCapacity ||
+        cellBlocksPollenDepositDueToRetype(cellKey, st)
       ) {
         continue;
       }
@@ -215,13 +225,17 @@ export class EconomySystem extends System {
   ): DepositPick | null {
     let best: DepositPick | null = null;
     let bestD = Infinity;
-    for (const [, e] of this.colony.cellsByKey) {
+    for (const [cellKey, e] of this.colony.cellsByKey) {
       const coord = e.get(CellCoordComponent)!;
       if (coord.level !== level) {
         continue;
       }
       const st = e.get(CellStateComponent)!;
-      if (!st.built || !nectarCellCanAcceptNectarDeposit(st)) {
+      if (
+        !st.built ||
+        !nectarCellCanAcceptNectarDeposit(st) ||
+        cellBlocksNectarDepositDueToRetype(cellKey, st)
+      ) {
         continue;
       }
       const c = hexToWorld({ q: coord.q, r: coord.r }, COLONY.hexSize);
@@ -518,6 +532,9 @@ export class EconomySystem extends System {
     for (const [, ent] of this.colony.cellsByKey) {
       const st = ent.get(CellStateComponent)!;
       const coord = ent.get(CellCoordComponent)!;
+      if (st.pendingCellType != null) {
+        continue;
+      }
       if (nectarCellReadyForHoneyProcessing(st) && !this.hasHoneyJobAt(coord)) {
         st.honeyProcessingProgress = 0;
         st.honeyProcessingDirty = false;

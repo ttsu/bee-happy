@@ -22,6 +22,8 @@ import {
   YearlyStatsComponent,
   type BeeRole,
 } from "./ecs/components/colony-components";
+import { canRelocateCellContentsForRetype } from "./cell-retype-capacity";
+import { CellRetypeSystem } from "./ecs/systems/cell-retype-system";
 import { canPlaceFoundation, eligibleFoundationCoordsForLevel } from "./placement";
 import { JobPriority } from "./job-priority";
 import { AdultCareSystem } from "./ecs/systems/adult-care-system";
@@ -47,6 +49,8 @@ export class ColonyRuntime {
   scene!: Scene;
   engine!: Engine;
   pendingCellTypeKey: string | null = null;
+  /** Last validation error for {@link requestCellTypeChange} (shown in the picker). */
+  cellTypeChangeError: string | null = null;
   /** Hive key under the pointer for hover outline (see {@link updateHoverFromPointer}). */
   hoverHiveKey: string | null = null;
   lastUiEmit = 0;
@@ -87,6 +91,7 @@ export class ColonyRuntime {
     world.add(new IdleWanderSystem(world, this));
     world.add(new BuildSystem(world, this));
     world.add(new BroodSystem(world, this));
+    world.add(new CellRetypeSystem(world, this));
     world.add(new EconomySystem(world, this));
     world.add(new AdultCareSystem(world, this));
     world.add(new GuardSystem(world, this));
@@ -275,6 +280,13 @@ export class ColonyRuntime {
       const st = existing.get(CellStateComponent)!;
       if (st.built && st.cellType === "none") {
         this.pendingCellTypeKey = key;
+        this.cellTypeChangeError = null;
+        this.emitUiSnapshotImmediate();
+        return;
+      }
+      if (st.built && st.cellType !== "none") {
+        this.pendingCellTypeKey = key;
+        this.cellTypeChangeError = null;
         this.emitUiSnapshotImmediate();
         return;
       }
@@ -316,15 +328,174 @@ export class ColonyRuntime {
     this.createJob(job);
   }
 
-  assignCellType(cellKey: string, cellType: "brood" | "pollen" | "nectar"): void {
+  /**
+   * Applies a new cell type and resets incompatible state (inventory, brood timers).
+   */
+  applyResolvedCellType(cellKey: string, newType: "brood" | "pollen" | "nectar"): void {
     const ent = this.cellsByKey.get(cellKey);
     if (!ent) {
       return;
     }
     const st = ent.get(CellStateComponent)!;
-    st.cellType = cellType;
+    st.cellType = newType;
     st.stage = "empty";
+    st.pendingCellType = null;
+    st.pollenStored = 0;
+    st.nectarStored = 0;
+    st.honeyStored = 0;
+    st.honeyProcessingProgress = 0;
+    st.honeyProcessingDirty = false;
+    st.eggTimerMs = 0;
+    st.sealedTimerMs = 0;
+    st.cleaningTimerMs = 0;
+    st.larvaePollenRemaining = 0;
+    st.larvaeNectarRemaining = 0;
+  }
+
+  /**
+   * After brood cleaning finishes, applies {@link CellStateComponent.pendingCellType} if set.
+   */
+  applyPendingBroodRetypeIfAny(cellKey: string): void {
+    const ent = this.cellsByKey.get(cellKey);
+    if (!ent) {
+      return;
+    }
+    const st = ent.get(CellStateComponent)!;
+    if (st.cellType !== "brood" || st.stage !== "empty") {
+      return;
+    }
+    const pending = st.pendingCellType;
+    if (!pending) {
+      return;
+    }
+    this.applyResolvedCellType(cellKey, pending);
+  }
+
+  private hasOpenJobAtCell(cellKey: string, kind: JobComponent["kind"]): boolean {
+    for (const e of this.scene.world.entities) {
+      const j = e.get(JobComponent);
+      if (!j || j.kind !== kind || j.status === "done") {
+        continue;
+      }
+      const k = hiveKey({
+        q: j.targetQ,
+        r: j.targetR,
+        level: j.targetLevel,
+      });
+      if (k === cellKey) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private cellHasHoneyProcessJob(coord: CellCoordComponent): boolean {
+    return this.hasOpenJobAtCell(
+      hiveKey({ q: coord.q, r: coord.r, level: coord.level }),
+      "honeyProcess",
+    );
+  }
+
+  /**
+   * Validates rules from the cell-type picker and applies, defers, or enqueues relocation.
+   */
+  requestCellTypeChange(cellKey: string, targetType: "brood" | "pollen" | "nectar"): void {
+    this.cellTypeChangeError = null;
+    const ent = this.cellsByKey.get(cellKey);
+    if (!ent) {
+      return;
+    }
+    const st = ent.get(CellStateComponent)!;
+    const coord = ent.get(CellCoordComponent)!;
+
+    if (!st.built) {
+      this.cellTypeChangeError = "Cell is not built yet.";
+      this.emitUiSnapshotImmediate();
+      return;
+    }
+
+    if (st.cellType === targetType && !st.pendingCellType) {
+      this.pendingCellTypeKey = null;
+      this.emitUiSnapshotImmediate();
+      return;
+    }
+
+    if (this.hasOpenJobAtCell(cellKey, "clearCellForRetype")) {
+      this.cellTypeChangeError = "This cell is already being emptied for a type change.";
+      this.emitUiSnapshotImmediate();
+      return;
+    }
+
+    const broodBlocked =
+      st.cellType === "brood" &&
+      (st.stage === "egg" ||
+        st.stage === "larvae" ||
+        st.stage === "sealed" ||
+        st.stage === "cleaning");
+
+    if (broodBlocked) {
+      st.pendingCellType = targetType;
+      this.pendingCellTypeKey = null;
+      this.emitUiSnapshotImmediate();
+      return;
+    }
+
+    if (st.cellType === "brood" && st.stage === "empty") {
+      this.applyResolvedCellType(cellKey, targetType);
+      this.pendingCellTypeKey = null;
+      this.emitUiSnapshotImmediate();
+      return;
+    }
+
+    if (this.cellHasHoneyProcessJob(coord)) {
+      this.cellTypeChangeError = "Wait for honey processing to finish on this cell.";
+      this.emitUiSnapshotImmediate();
+      return;
+    }
+
+    if (st.honeyProcessingProgress > 0) {
+      this.cellTypeChangeError = "Wait for honey processing to finish on this cell.";
+      this.emitUiSnapshotImmediate();
+      return;
+    }
+
+    const needsRelocate =
+      (st.cellType === "pollen" && st.pollenStored > 0) ||
+      (st.cellType === "nectar" && (st.nectarStored > 0 || st.honeyStored > 0));
+
+    if (needsRelocate) {
+      if (!canRelocateCellContentsForRetype(this, cellKey, coord.level, st)) {
+        this.cellTypeChangeError =
+          "Not enough free storage elsewhere on this level to move the contents.";
+        this.emitUiSnapshotImmediate();
+        return;
+      }
+      st.pendingCellType = targetType;
+      const job = new JobComponent(
+        "clearCellForRetype",
+        JobPriority.clearCellForRetype,
+        coord.q,
+        coord.r,
+        coord.level,
+        1,
+      );
+      this.createJob(job);
+      this.pendingCellTypeKey = null;
+      this.emitUiSnapshotImmediate();
+      return;
+    }
+
+    this.applyResolvedCellType(cellKey, targetType);
     this.pendingCellTypeKey = null;
+    this.emitUiSnapshotImmediate();
+  }
+
+  /**
+   * Closes the cell-type picker without changing types.
+   */
+  dismissCellTypePicker(): void {
+    this.pendingCellTypeKey = null;
+    this.cellTypeChangeError = null;
     this.emitUiSnapshotImmediate();
   }
 
@@ -399,6 +570,7 @@ export class ColonyRuntime {
       wax: res.wax,
       transitionOverlay: this.transitionOverlay,
       pendingCellTypeKey: this.pendingCellTypeKey,
+      cellTypeChangeError: this.cellTypeChangeError,
       currentColonyDay,
       currentColonySeason,
       yearNumber: yearly.yearNumber,

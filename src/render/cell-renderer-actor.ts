@@ -150,6 +150,9 @@ const HOVER_HEX_STROKE_PX = 1.75;
 /** Slightly stronger outline for the cell awaiting type selection. */
 const SELECTED_HEX_OUTLINE = Color.fromHex("#f1c40f");
 const SELECTED_HEX_STROKE_PX = 2.25;
+/** Queued cell type change (brood deferred or storage being emptied). */
+const PENDING_RETYPE_OUTLINE = Color.fromHex("#e67e22");
+const PENDING_RETYPE_STROKE_PX = 2;
 
 /** Subtle stroke for empty hexes where a foundation may be placed. */
 const ELIGIBLE_BUILD_OUTLINE = Color.fromRGB(130, 145, 160, 0.45);
@@ -376,6 +379,9 @@ export const drawHiveCells = (
       } else if (st.stage === "larvae") {
         drawBroodGrowthRing(ctx, w, ringR, larvaeFeedingProgress(st), "larvae");
       }
+    }
+    if (st.pendingCellType) {
+      drawHexRing(ctx, corners, PENDING_RETYPE_OUTLINE, PENDING_RETYPE_STROKE_PX);
     }
   }
 
