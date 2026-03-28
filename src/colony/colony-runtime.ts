@@ -399,7 +399,10 @@ export class ColonyRuntime {
   /**
    * Validates rules from the cell-type picker and applies, defers, or enqueues relocation.
    */
-  requestCellTypeChange(cellKey: string, targetType: "brood" | "pollen" | "nectar"): void {
+  requestCellTypeChange(
+    cellKey: string,
+    targetType: "brood" | "pollen" | "nectar",
+  ): void {
     this.cellTypeChangeError = null;
     const ent = this.cellsByKey.get(cellKey);
     if (!ent) {
@@ -421,7 +424,8 @@ export class ColonyRuntime {
     }
 
     if (this.hasOpenJobAtCell(cellKey, "clearCellForRetype")) {
-      this.cellTypeChangeError = "This cell is already being emptied for a type change.";
+      this.cellTypeChangeError =
+        "This cell is already being emptied for a type change.";
       this.emitUiSnapshotImmediate();
       return;
     }

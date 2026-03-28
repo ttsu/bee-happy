@@ -26,6 +26,9 @@
   "license": "",
   "bugs": {},
   "homepage": "",
+  "overrides": {
+    "serialize-javascript": "7.0.5"
+  },
   "dependencies": {
     "excalibur": "0.32.0",
     "react": "^19.2.4",

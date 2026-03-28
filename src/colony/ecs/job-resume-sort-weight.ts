@@ -24,22 +24,13 @@ export const jobResumeSortWeight = (
 
   switch (job.kind) {
     case "buildCell": {
-      if (
-        st &&
-        !st.built &&
-        st.buildProgress > 0 &&
-        st.buildProgress < 1
-      ) {
+      if (st && !st.built && st.buildProgress > 0 && st.buildProgress < 1) {
         return st.buildProgress;
       }
       return 0;
     }
     case "honeyProcess": {
-      if (
-        st &&
-        st.honeyProcessingProgress > 0 &&
-        st.honeyProcessingProgress < 1
-      ) {
+      if (st && st.honeyProcessingProgress > 0 && st.honeyProcessingProgress < 1) {
         return st.honeyProcessingProgress;
       }
       return 0;
@@ -52,8 +43,7 @@ export const jobResumeSortWeight = (
         st.cleaningTimerMs < COLONY.cleaningDurationMs
       ) {
         return (
-          (COLONY.cleaningDurationMs - st.cleaningTimerMs) /
-          COLONY.cleaningDurationMs
+          (COLONY.cleaningDurationMs - st.cleaningTimerMs) / COLONY.cleaningDurationMs
         );
       }
       return 0;
@@ -63,8 +53,7 @@ export const jobResumeSortWeight = (
       if (st?.stage === "larvae") {
         const p = COLONY.larvaePollenUnitsNeeded;
         const n = COLONY.larvaeNectarUnitsNeeded;
-        const done =
-          p - st.larvaePollenRemaining + (n - st.larvaeNectarRemaining);
+        const done = p - st.larvaePollenRemaining + (n - st.larvaeNectarRemaining);
         const total = p + n;
         if (done > 0 && done < total) {
           w = done / total;
@@ -80,13 +69,9 @@ export const jobResumeSortWeight = (
       return w;
     }
     case "layEgg": {
-      if (
-        job.layEggTimerMs > 0 &&
-        job.layEggTimerMs < COLONY.queenLayDurationMs
-      ) {
+      if (job.layEggTimerMs > 0 && job.layEggTimerMs < COLONY.queenLayDurationMs) {
         return (
-          (COLONY.queenLayDurationMs - job.layEggTimerMs) /
-          COLONY.queenLayDurationMs
+          (COLONY.queenLayDurationMs - job.layEggTimerMs) / COLONY.queenLayDurationMs
         );
       }
       return 0;

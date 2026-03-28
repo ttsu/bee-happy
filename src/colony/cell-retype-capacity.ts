@@ -13,9 +13,7 @@ export const cellBlocksPollenDepositDueToRetype = (
   _cellKey: string,
   st: CellStateComponent,
 ): boolean =>
-  st.cellType === "pollen" &&
-  st.pendingCellType != null &&
-  st.pollenStored > 0;
+  st.cellType === "pollen" && st.pendingCellType != null && st.pollenStored > 0;
 
 /**
  * True when this cell must not receive nectar deposits while contents are being cleared for a type change.
