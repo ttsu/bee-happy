@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ColonyUiSnapshot } from "../colony/events/colony-events";
+import { serializeColonySave, writeColonySaveToStorage } from "../colony/colony-save";
 import { getColonyBridge } from "../colony-bridge";
 import { BUILD_HASH_SHORT } from "../build-info";
 import { getSeasonDisplayLabel, getSeasonForColonyDay } from "../colony/seasons";
@@ -152,17 +153,25 @@ export const App = () => {
   const stackTranslateY =
     (STACK_MID_INDEX - activeLevelIndex + dragLevelOffset) * MINI_LEVEL_STEP_PX;
 
+  const autosaveTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const persistFullSave = () => {
+    const colony = getColonyBridge();
+    if (!colony) {
+      return;
+    }
+    try {
+      writeColonySaveToStorage(serializeColonySave(colony));
+    } catch {
+      /* quota / private mode */
+    }
+  };
+
   /**
-   * Persists a minimal UI snapshot and exits the current page context when possible.
+   * Writes the full game state and exits the tab when the browser allows it.
    */
   const saveAndQuit = () => {
-    localStorage.setItem(
-      "bee-happy-last-snapshot",
-      JSON.stringify({
-        savedAtIso: new Date().toISOString(),
-        snapshot: snap,
-      }),
-    );
+    persistFullSave();
     setIsSettingsOpen(false);
     window.close();
     window.location.replace("about:blank");
@@ -186,6 +195,43 @@ export const App = () => {
     setMiniLevels(readMiniLevelsFromBridge());
     return off;
   }, [isStripDragging]);
+
+  useEffect(() => {
+    const colony = getColonyBridge();
+    if (!colony) {
+      return;
+    }
+    persistFullSave();
+    if (autosaveTimerRef.current) {
+      clearInterval(autosaveTimerRef.current);
+    }
+    autosaveTimerRef.current = setInterval(() => {
+      persistFullSave();
+    }, 30_000);
+    return () => {
+      if (autosaveTimerRef.current) {
+        clearInterval(autosaveTimerRef.current);
+        autosaveTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const onHide = () => {
+      persistFullSave();
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        onHide();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("pagehide", onHide);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pagehide", onHide);
+    };
+  }, []);
 
   useEffect(() => {
     try {
@@ -499,6 +545,7 @@ export const App = () => {
                 type="button"
                 className="settings-action-btn settings-action-btn--danger"
                 onClick={() => {
+                  persistFullSave();
                   window.location.reload();
                 }}
               >

@@ -10,6 +10,7 @@ import {
 import { worldToHex } from "./grid/hex-grid";
 import { COLONY } from "./colony/constants";
 import { ColonyRuntime } from "./colony/colony-runtime";
+import { applyColonySave, readColonySaveFromStorage } from "./colony/colony-save";
 import { ActiveLevelComponent } from "./colony/ecs/components/colony-components";
 import { setColonyBridge } from "./colony-bridge";
 import { drawBeeJobLabels } from "./render/bee-job-label";
@@ -19,6 +20,9 @@ import { drawHiveCells } from "./render/cell-renderer-actor";
  * Main hive scene: camera pan vs tap placement, colony simulation, and UI snapshots.
  */
 export class MyLevel extends Scene {
+  /** Set before {@link Engine.start} when the player chose Continue on the launch menu. */
+  static loadSaveOnStart = false;
+
   readonly colony = new ColonyRuntime();
   private lastPanScreen: { x: number; y: number } | null = null;
   private dragScreen = 0;
@@ -33,7 +37,15 @@ export class MyLevel extends Scene {
   override onInitialize(engine: Engine): void {
     this.backgroundColor = Color.fromHex("#1b2838");
     this.camera.pos = vec(0, 0);
-    this.colony.initialize(this, engine);
+    const saveData = MyLevel.loadSaveOnStart ? readColonySaveFromStorage() : null;
+    const initMode = saveData ? "load" : "new";
+    this.colony.initialize(this, engine, { mode: initMode });
+    if (saveData) {
+      applyColonySave(this.colony, {
+        data: saveData,
+        seasonSystem: saveData.seasonSystem,
+      });
+    }
     setColonyBridge(this.colony);
   }
 
