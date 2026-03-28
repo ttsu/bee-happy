@@ -121,9 +121,20 @@ const readMiniLevelsFromBridge = (): MiniLevel[] => {
 /**
  * Root React overlay: HUD, level strip, cell type picker, and transition dimmer.
  */
+const HUD_MINIMIZED_KEY = "bee-happy-hud-minimized";
+
+const readHudMinimized = (): boolean => {
+  try {
+    return localStorage.getItem(HUD_MINIMIZED_KEY) === "1";
+  } catch {
+    return false;
+  }
+};
+
 export const App = () => {
   const [snap, setSnap] = useState<ColonyUiSnapshot>(defaultSnapshot);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [hudMinimized, setHudMinimized] = useState(readHudMinimized);
   const [miniLevels, setMiniLevels] = useState<MiniLevel[]>(() =>
     readMiniLevelsFromBridge(),
   );
@@ -174,6 +185,14 @@ export const App = () => {
   }, [isStripDragging]);
 
   useEffect(() => {
+    try {
+      localStorage.setItem(HUD_MINIMIZED_KEY, hudMinimized ? "1" : "0");
+    } catch {
+      /* ignore quota / private mode */
+    }
+  }, [hudMinimized]);
+
+  useEffect(() => {
     if (targetLevel === null) {
       return;
     }
@@ -210,23 +229,33 @@ export const App = () => {
         ⚙️
       </button>
       <div className="hud">
-        <div className="hud-card">
+        <button
+          type="button"
+          className={`hud-card${hudMinimized ? " hud-card--minimized" : ""}`}
+          aria-expanded={!hudMinimized}
+          aria-label={hudMinimized ? "Show colony stats" : "Hide colony stats"}
+          onClick={() => {
+            setHudMinimized((m) => !m);
+          }}
+        >
           <strong>Bee Happy</strong>
-          <div>Bees: {snap.beesTotal}</div>
-          <div>
-            Workers {snap.workers} · Queen {snap.queens}
+          <div className="hud-stats" aria-hidden={hudMinimized}>
+            <div>Bees: {snap.beesTotal}</div>
+            <div>
+              Workers {snap.workers} · Queen {snap.queens}
+            </div>
+            <div>Pollen: {snap.pollen.toFixed(0)}</div>
+            <div>Honey: {snap.honey.toFixed(0)}</div>
+            <div>Nectar: {snap.colonyNectar.toFixed(0)}</div>
+            <div>Wax: {snap.wax.toFixed(0)}</div>
+            <div>Happiness: {snap.happinessPct}%</div>
+            <div>
+              Brood: {snap.broodOccupied}/{snap.broodTotal}
+            </div>
+            <div>Level: {snap.activeLevel}</div>
+            <div>Year: {snap.yearNumber}</div>
           </div>
-          <div>Pollen: {snap.pollen.toFixed(0)}</div>
-          <div>Honey: {snap.honey.toFixed(0)}</div>
-          <div>Nectar: {snap.colonyNectar.toFixed(0)}</div>
-          <div>Wax: {snap.wax.toFixed(0)}</div>
-          <div>Happiness: {snap.happinessPct}%</div>
-          <div>
-            Brood: {snap.broodOccupied}/{snap.broodTotal}
-          </div>
-          <div>Level: {snap.activeLevel}</div>
-          <div>Year: {snap.yearNumber}</div>
-        </div>
+        </button>
       </div>
       <div
         className="level-strip"
@@ -246,7 +275,11 @@ export const App = () => {
             const dy = ev.clientY - y0;
             setDragLevelOffset(clamp(dy / DRAG_LEVEL_THRESHOLD_PX, -1, 1));
             if (dy < -DRAG_LEVEL_THRESHOLD_PX) {
-              const nextLevel = clamp(levelCursor + 1, LEVELS[0], LEVELS[LEVELS.length - 1]);
+              const nextLevel = clamp(
+                levelCursor + 1,
+                LEVELS[0],
+                LEVELS[LEVELS.length - 1],
+              );
               if (nextLevel !== levelCursor) {
                 getColonyBridge()?.requestLevelChange(1);
                 levelCursor = nextLevel;
@@ -255,7 +288,11 @@ export const App = () => {
               setDragLevelOffset(0);
               y0 = ev.clientY;
             } else if (dy > DRAG_LEVEL_THRESHOLD_PX) {
-              const nextLevel = clamp(levelCursor - 1, LEVELS[0], LEVELS[LEVELS.length - 1]);
+              const nextLevel = clamp(
+                levelCursor - 1,
+                LEVELS[0],
+                LEVELS[LEVELS.length - 1],
+              );
               if (nextLevel !== levelCursor) {
                 getColonyBridge()?.requestLevelChange(-1);
                 levelCursor = nextLevel;
