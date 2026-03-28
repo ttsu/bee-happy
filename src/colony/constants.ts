@@ -27,13 +27,13 @@ export const COLONY = {
   /** Brood: time as egg (ms) before larvae. */
   eggDurationMs: 12_000,
   /** Pollen portions larvae must receive (each is one trip from a pollen cell). */
-  larvaePollenUnitsNeeded: 8,
+  larvaePollenUnitsNeeded: 4,
   /** Nectar/honey portions larvae must receive (each is one trip from a nectar cell). */
-  larvaeNectarUnitsNeeded: 4,
+  larvaeNectarUnitsNeeded: 2,
   sealedDurationMs: 10_000,
-  cleaningDurationMs: 6_000,
+  cleaningDurationMs: 5_000,
   /** Queen attempts to lay every N ms when brood cell is ready. */
-  queenLayIntervalMs: 8_000,
+  queenLayIntervalMs: 5_000,
   /** Queen must stay on the brood cell this long to complete laying. */
   queenLayDurationMs: 1_000,
   /** Hunger / thirst per second (0–100 scale). */
@@ -52,8 +52,8 @@ export const COLONY = {
    * cutoffs so bees start prioritizing feeding/hydrating before they are considered
    * "unhappy" in the UI.
    */
-  hungerCareThreshold: 33,
-  thirstCareThreshold: 33,
+  hungerCareThreshold: 30,
+  thirstCareThreshold: 30,
   /** Forage timings. */
   forageTravelMs: 2_500,
   forageWaitMs: 1_800,
@@ -108,9 +108,9 @@ export const COLONY = {
   /** Pollen consumed per larvae feeding unit (from storage). */
   pollenPerFeedUnit: 1,
   /** Time at the food cell to gather one load for larvae (ms). */
-  feedLarvaeCollectMs: 2_800,
+  feedLarvaeCollectMs: 1_000,
   /** Time at the brood cell to deposit one load (ms). */
-  feedLarvaeDepositMs: 2_600,
+  feedLarvaeDepositMs: 1_000,
   /** Total adult worker lifespan in ms (50 bee-days). */
   workerLifespanMs: 240_000,
   /** Seeded workers start between these bee-days (forager-capable). */
