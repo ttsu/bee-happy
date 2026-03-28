@@ -15,6 +15,21 @@ export const getMsPerBeeDay = (): number => COLONY.workerLifespanMs / 50;
 export const getBeeDayOneBased = (ageMs: number): number =>
   Math.floor(ageMs / getMsPerBeeDay()) + 1;
 
+/** 1-based bee-day when workers enter adulthood (forager stage); matches {@link getWorkerLifecycleStage}. */
+export const WORKER_ADULT_DAY_ONE_BASED = 22;
+
+/**
+ * Visual size multiplier for workers: 0.8 at emergence, 1.0 from adulthood onward.
+ */
+export const getWorkerVisualScale = (ageMs: number): number => {
+  const msPerDay = getMsPerBeeDay();
+  const adultStartMs = (WORKER_ADULT_DAY_ONE_BASED - 1) * msPerDay;
+  if (adultStartMs <= 0 || ageMs >= adultStartMs) {
+    return 1;
+  }
+  return 0.8 + 0.2 * (ageMs / adultStartMs);
+};
+
 /**
  * Derives worker stage from age. Days 1–2 cleaning, 3–11 nurse, 12–17 builder, 18–21 guard, 22–50 forager.
  */
