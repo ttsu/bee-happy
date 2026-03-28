@@ -78,7 +78,8 @@ const levelHasLarvaeHoneySupply = (colony: ColonyRuntime, level: number): boolea
 };
 
 /**
- * Nearest nectar cell for one larvae portion: prefer nectar; otherwise one honey load (integer cost, 4× portions).
+ * Nearest nectar cell for one larvae portion: prefer nectar; otherwise one honey load
+ * ({@link COLONY.larvaeFeedHoneyCost} honey units, satisfies up to {@link COLONY.honeyNutrientMultiplier} portions).
  */
 const findNearestLarvaeNectarOrHoneyPickup = (
   colony: ColonyRuntime,
@@ -86,7 +87,9 @@ const findNearestLarvaeNectarOrHoneyPickup = (
   from: HexCoord,
   larvaeNectarRemaining: number,
 ): { coord: HiveCoord; kind: "nectar" | "honey" } | null => {
-  const allowHoney = larvaeNectarRemaining >= COLONY.honeyNutrientMultiplier;
+  if (larvaeNectarRemaining <= 0) {
+    return null;
+  }
   let bestN: HiveCoord | null = null;
   let bestNd = Infinity;
   let bestH: HiveCoord | null = null;
@@ -103,7 +106,6 @@ const findNearestLarvaeNectarOrHoneyPickup = (
       bestN = { q: c.q, r: c.r, level: c.level };
     }
     if (
-      allowHoney &&
       nectarCellHasHoneyForFeeding(cellSt, COLONY.larvaeFeedHoneyCost) &&
       d < bestHd
     ) {
@@ -146,10 +148,7 @@ export const canSpawnFeedLarvaeJob = (
     if (levelHasLarvaeNectarSupply(colony, coord.level)) {
       return true;
     }
-    if (
-      st.larvaeNectarRemaining >= COLONY.honeyNutrientMultiplier &&
-      levelHasLarvaeHoneySupply(colony, coord.level)
-    ) {
+    if (levelHasLarvaeHoneySupply(colony, coord.level)) {
       return true;
     }
   }

@@ -27,7 +27,7 @@ export const COLONY = {
   /** Brood: time as egg (ms) before larvae. */
   eggDurationMs: 12_000,
   /** Pollen portions larvae must receive (each is one trip from a pollen cell). */
-  larvaePollenUnitsNeeded: 4,
+  larvaePollenUnitsNeeded: 3,
   /** Nectar/honey portions larvae must receive (each is one trip from a nectar cell). */
   larvaeNectarUnitsNeeded: 2,
   sealedDurationMs: 10_000,
