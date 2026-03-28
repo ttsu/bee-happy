@@ -13,6 +13,22 @@ export const DAYS_PER_YEAR = 60;
 
 const SEASONS_IN_ORDER: readonly Season[] = ["Spring", "Summer", "Fall", "Winter"];
 
+/** Emoji prefix for HUD and other user-facing season labels. */
+const SEASON_EMOJI: Readonly<Record<Season, string>> = {
+  Spring: "🌸",
+  Summer: "☀️",
+  Fall: "🍂",
+  Winter: "❄️",
+};
+
+/**
+ * Returns a display string for the season (emoji + name), e.g. `"☀️ Summer"`.
+ *
+ * @param season - The canonical season id.
+ */
+export const getSeasonDisplayLabel = (season: Season): string =>
+  `${SEASON_EMOJI[season]} ${season}`;
+
 export interface SeasonInfo {
   /** Current season name. */
   readonly season: Season;

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { ColonyUiSnapshot } from "../colony/events/colony-events";
 import { getColonyBridge } from "../colony-bridge";
 import { BUILD_HASH_SHORT } from "../build-info";
-import { getSeasonForColonyDay } from "../colony/seasons";
+import { getSeasonDisplayLabel, getSeasonForColonyDay } from "../colony/seasons";
 import {
   CellCoordComponent,
   CellStateComponent,
@@ -215,7 +215,7 @@ export const App = () => {
         aria-hidden
       />
       <div className="season-day-banner" aria-live="polite">
-        <span>{seasonInfo.season}</span>
+        <span>{getSeasonDisplayLabel(seasonInfo.season)}</span>
         <span className="season-day-divider" aria-hidden />
         <span>Year {snap.yearNumber}</span>
         <span className="season-day-divider" aria-hidden />
