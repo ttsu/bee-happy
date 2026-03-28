@@ -104,6 +104,13 @@ body {
 
 .hud-card {
   pointer-events: auto;
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  margin: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
   background: rgba(20, 28, 36, 0.92);
   color: #ecf0f1;
   padding: 12px 16px;
@@ -114,10 +121,28 @@ body {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
 }
 
+.hud-card:focus-visible {
+  outline: 2px solid #82e0aa;
+  outline-offset: 2px;
+}
+
 .hud-card strong {
   display: block;
   margin-bottom: 8px;
   font-size: 15px;
+}
+
+.hud-card--minimized {
+  min-width: auto;
+  padding: 8px 12px;
+}
+
+.hud-card--minimized strong {
+  margin-bottom: 0;
+}
+
+.hud-card--minimized .hud-stats {
+  display: none;
 }
 
 .level-strip {
@@ -229,14 +254,7 @@ body {
   height: 7px;
   transform: translate(-50%, -50%);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
-  clip-path: polygon(
-    50% 0%,
-    93% 25%,
-    93% 75%,
-    50% 100%,
-    7% 75%,
-    7% 25%
-  );
+  clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
 }
 
 .mini-level:nth-child(1) {
