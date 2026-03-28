@@ -1,17 +1,33 @@
-# Excalibur TypeScript & Vite template
+# Bee Happy
 
-Check out the full documentation @ https://excaliburjs.com
+**Bee Happy** is a bee hive builder: you grow and manage a colony inside the hive—laying out comb, tending brood, and keeping the bees busy. Store up honey to survive the winter and keep your bees happy! It is a client-side browser game built with [Excalibur.js](https://excaliburjs.com), React, and Vite. Everything runs in the browser; no backend or database is required.
 
-You can use the excalibur cli to generate this template
+## Requirements
+
+- **Node.js 22** (see `.nvmrc`). With [nvm](https://github.com/nvm-sh/nvm): `nvm use`
+
+## Quick start
 
 ```sh
-npm create excalibur
+npm install
+npm run dev
 ```
 
-## Getting Started
+Open the URL Vite prints (the dev server defaults to port **5173**).
 
-1. [Generate a repository](https://github.com/excaliburjs/template-ts-vite/generate) from this template
-2. Modify the `package.json` with your own details
-3. Run `npm install` to install dependencies
-4. Run `npm run dev` to start the Vite server!
-5. Have fun!
+## Scripts
+
+| Command                         | Purpose                          |
+| ------------------------------- | -------------------------------- |
+| `npm run dev`                   | Start the Vite dev server        |
+| `npm run build`                 | Lint, typecheck, production build |
+| `npm run format`                | Apply Prettier                   |
+| `npm run lint`                  | Check Prettier                   |
+| `npm run test`                  | Build, then Playwright E2E       |
+| `npm run test:integration-update` | Update Playwright snapshots   |
+
+Playwright tests use a preview server on port **4173**; `npm run test` handles build and serve. For commit message rules and other contributor notes, see [`AGENTS.md`](./AGENTS.md).
+
+## Engine
+
+Excalibur.js documentation: [excaliburjs.com](https://excaliburjs.com)
