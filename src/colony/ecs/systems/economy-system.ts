@@ -1,6 +1,7 @@
 import { System, SystemPriority, SystemType, vec, type World } from "excalibur";
 import {
   BeeCarryComponent,
+  BeeLevelComponent,
   BeeNeedsComponent,
   BeeRoleComponent,
   BeeWorkComponent,
@@ -14,8 +15,10 @@ import {
 import { asActor } from "../../actor-utils";
 import { COLONY } from "../../constants";
 import type { ColonyRuntime } from "../../colony-runtime";
-import { hiveKey } from "../../../grid/hive-levels";
+import { hiveKey, type HiveCoord } from "../../../grid/hive-levels";
 import { hexToWorld } from "../../../grid/hex-grid";
+import { findHexPathWorldPointsWithLevels } from "../../pathfinding/hex-path";
+import { beeStartHiveCoord } from "../../self-feed-target";
 import { JobPriority } from "../../job-priority";
 import {
   nectarCellCanAcceptNectarDeposit,
@@ -255,12 +258,27 @@ export class EconomySystem extends System {
       job.foragePhase = "capacityWait";
       job.forageCapacityPollMs = COLONY.forageCapacityPollIntervalMs;
       job.depositTargetKey = null;
+      job.pathPoints = [];
+      job.pathLevels = [];
       return;
     }
     job.depositTargetKey = pick.key;
     job.targetQ = pick.q;
     job.targetR = pick.r;
     job.targetLevel = pick.level;
+    const w = bee.get(BeeWorkComponent)!;
+    const lvl = bee.get(BeeLevelComponent)!.level;
+    const start: HiveCoord = beeStartHiveCoord(bee.pos, lvl);
+    const goal: HiveCoord = { q: pick.q, r: pick.r, level: pick.level };
+    const waypoints = findHexPathWorldPointsWithLevels(
+      start,
+      goal,
+      COLONY.hexSize,
+      this.colony.builtByLevel(),
+    );
+    job.pathPoints = waypoints.map((p) => p.world);
+    job.pathLevels = waypoints.map((p) => p.level);
+    w.pathIndex = 0;
     job.foragePhase = "depositing";
   }
 
@@ -344,6 +362,15 @@ export class EconomySystem extends System {
       if (!cellEnt) {
         this.beginDepositPhase(job, bee);
         return;
+      }
+      const w = bee.get(BeeWorkComponent)!;
+      if (job.pathPoints.length > 0) {
+        const lastPt = job.pathPoints[job.pathPoints.length - 1]!;
+        const pathDone =
+          w.pathIndex >= job.pathPoints.length - 1 && bee.pos.sub(lastPt).size < 20;
+        if (!pathDone) {
+          return;
+        }
       }
       const coord = cellEnt.get(CellCoordComponent)!;
       const dest = hexToWorld({ q: coord.q, r: coord.r }, COLONY.hexSize);

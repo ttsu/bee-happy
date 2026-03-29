@@ -59,6 +59,8 @@ export type JobComponentJson = {
   reservedBeeIds: number[];
   status: "open" | "active" | "done";
   pathPoints: Vec2Json[];
+  /** Added in a later format; omitted in older saves. */
+  pathLevels?: number[];
   foragePhase: JobComponent["foragePhase"];
   forageWaitMs: number;
   forageCapacityPollMs: number;
@@ -187,6 +189,7 @@ function jobToJson(job: JobComponent): JobComponentJson {
     reservedBeeIds: [...job.reservedBeeIds],
     status: job.status,
     pathPoints: job.pathPoints.map((p) => ({ x: p.x, y: p.y })),
+    pathLevels: [...job.pathLevels],
     foragePhase: job.foragePhase,
     forageWaitMs: job.forageWaitMs,
     forageCapacityPollMs: job.forageCapacityPollMs,
@@ -214,6 +217,11 @@ function applyJobJson(job: JobComponent, j: JobComponentJson): void {
   job.reservedBeeIds = [...j.reservedBeeIds];
   job.status = j.status;
   job.pathPoints = j.pathPoints.map((p) => vec(p.x, p.y));
+  const pl = j.pathLevels;
+  job.pathLevels =
+    pl && pl.length === j.pathPoints.length
+      ? [...pl]
+      : j.pathPoints.map(() => job.targetLevel);
   job.foragePhase = j.foragePhase;
   job.forageWaitMs = j.forageWaitMs;
   job.forageCapacityPollMs = j.forageCapacityPollMs;

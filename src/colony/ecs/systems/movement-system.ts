@@ -48,11 +48,18 @@ export class MovementSystem extends System {
       if (job.status === "done") {
         continue;
       }
-      if (
-        job.kind === "foragePollen" ||
-        job.kind === "forageNectar" ||
-        job.kind === "forageWater"
-      ) {
+      if (job.kind === "forageWater") {
+        continue;
+      }
+      const forageDepositPath =
+        (job.kind === "foragePollen" || job.kind === "forageNectar") &&
+        job.foragePhase === "depositing" &&
+        job.pathPoints.length > 0;
+      if (job.kind === "foragePollen" || job.kind === "forageNectar") {
+        if (!forageDepositPath) {
+          continue;
+        }
+        this.followPath(actor, w, job, elapsed);
         continue;
       }
       if (
@@ -122,6 +129,12 @@ export class MovementSystem extends System {
     const step = COLONY.beeSpeed * elapsed;
     if (dist <= step + 2) {
       actor.pos = target.clone();
+      const lvl = actor.get(BeeLevelComponent)!;
+      const levelAtWaypoint =
+        job.pathLevels[idx] ??
+        job.pathLevels[job.pathLevels.length - 1] ??
+        job.targetLevel;
+      lvl.level = levelAtWaypoint;
       if (w.pathIndex < job.pathPoints.length - 1) {
         w.pathIndex += 1;
       }
@@ -129,12 +142,14 @@ export class MovementSystem extends System {
       actor.pos = actor.pos.add(to.normalize().scale(step));
     }
     const lvl = actor.get(BeeLevelComponent)!;
-    if (lvl.level !== job.targetLevel) {
-      lvl.level = job.targetLevel;
-    }
-    const cellCenter = hexToWorld({ q: job.targetQ, r: job.targetR }, COLONY.hexSize);
-    if (actor.pos.sub(cellCenter).size < COLONY.buildReachPx * 0.4) {
-      lvl.level = job.targetLevel;
+    if (job.pathLevels.length === 0) {
+      if (lvl.level !== job.targetLevel) {
+        lvl.level = job.targetLevel;
+      }
+      const cellCenter = hexToWorld({ q: job.targetQ, r: job.targetR }, COLONY.hexSize);
+      if (actor.pos.sub(cellCenter).size < COLONY.buildReachPx * 0.4) {
+        lvl.level = job.targetLevel;
+      }
     }
   }
 }

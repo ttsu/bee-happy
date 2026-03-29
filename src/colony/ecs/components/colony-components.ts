@@ -74,6 +74,8 @@ export class JobComponent extends Component {
   reservedBeeIds: number[] = [];
   status: "open" | "active" | "done" = "open";
   pathPoints: Vector[] = [];
+  /** Parallel to {@link pathPoints}: hive level after reaching each waypoint (cross-level routes). */
+  pathLevels: number[] = [];
   foragePhase: "outbound" | "wait" | "return" | "depositing" | "capacityWait" | "idle" =
     "idle";
   forageWaitMs = 0;

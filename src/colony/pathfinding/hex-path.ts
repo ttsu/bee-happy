@@ -124,3 +124,61 @@ export const findHexPathWorldPoints = (
   );
   return a.slice(0, -1).concat(b);
 };
+
+/** World waypoint with hive level (vertical moves reuse the same world position with a new level). */
+export type HexPathWaypoint = { world: Vector; level: number };
+
+/**
+ * Same routing as {@link findHexPathWorldPoints}, but each point includes the hive level the bee
+ * should be on after reaching it (so cross-level routes include a vertical leg at the junction hex).
+ */
+export const findHexPathWorldPointsWithLevels = (
+  start: HiveCoord,
+  goal: HiveCoord,
+  hexSize: number,
+  builtByLevel: Map<number, Set<string>>,
+): HexPathWaypoint[] => {
+  if (start.level === goal.level) {
+    const walk = buildWalkableKeysForLevel(
+      collectBuiltCoords(start.level, builtByLevel),
+    );
+    const path = bfsSameLevel(start, goal, walk);
+    if (!path) {
+      return [
+        { world: hexToWorld(start, hexSize), level: start.level },
+        { world: hexToWorld(goal, hexSize), level: goal.level },
+      ];
+    }
+    return path.map((h) => ({
+      world: hexToWorld(h, hexSize),
+      level: start.level,
+    }));
+  }
+
+  const toJunctionOnStart = findHexPathWorldPointsWithLevels(
+    start,
+    { q: goal.q, r: goal.r, level: start.level },
+    hexSize,
+    builtByLevel,
+  );
+  const fromJunctionOnGoal = findHexPathWorldPointsWithLevels(
+    { q: goal.q, r: goal.r, level: goal.level },
+    goal,
+    hexSize,
+    builtByLevel,
+  );
+  if (toJunctionOnStart.length === 0) {
+    return fromJunctionOnGoal;
+  }
+  if (fromJunctionOnGoal.length === 0) {
+    return toJunctionOnStart;
+  }
+  const lastOnStart = toJunctionOnStart[toJunctionOnStart.length - 1]!;
+  const firstOnGoal = fromJunctionOnGoal[0]!;
+  return [
+    ...toJunctionOnStart.slice(0, -1),
+    lastOnStart,
+    { world: firstOnGoal.world, level: goal.level },
+    ...fromJunctionOnGoal.slice(1),
+  ];
+};
