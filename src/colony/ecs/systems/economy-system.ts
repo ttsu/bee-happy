@@ -1,6 +1,7 @@
 import { System, SystemPriority, SystemType, vec, type World } from "excalibur";
 import {
   BeeCarryComponent,
+  BeeLevelComponent,
   BeeNeedsComponent,
   BeeRoleComponent,
   BeeWorkComponent,
