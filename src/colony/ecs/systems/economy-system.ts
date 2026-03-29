@@ -1,7 +1,6 @@
 import { System, SystemPriority, SystemType, vec, type World } from "excalibur";
 import {
   BeeCarryComponent,
-  BeeLevelComponent,
   BeeNeedsComponent,
   BeeRoleComponent,
   BeeWorkComponent,
@@ -185,15 +184,11 @@ export class EconomySystem extends System {
   private findNearestPollenDeposit(
     beeWorldX: number,
     beeWorldY: number,
-    level: number,
   ): DepositPick | null {
     let best: DepositPick | null = null;
     let bestD = Infinity;
     for (const [cellKey, e] of this.colony.cellsByKey) {
       const coord = e.get(CellCoordComponent)!;
-      if (coord.level !== level) {
-        continue;
-      }
       const st = e.get(CellStateComponent)!;
       if (
         !st.built ||
@@ -221,15 +216,11 @@ export class EconomySystem extends System {
   private findNearestNectarDeposit(
     beeWorldX: number,
     beeWorldY: number,
-    level: number,
   ): DepositPick | null {
     let best: DepositPick | null = null;
     let bestD = Infinity;
     for (const [cellKey, e] of this.colony.cellsByKey) {
       const coord = e.get(CellCoordComponent)!;
-      if (coord.level !== level) {
-        continue;
-      }
       const st = e.get(CellStateComponent)!;
       if (
         !st.built ||
@@ -254,12 +245,11 @@ export class EconomySystem extends System {
   }
 
   private beginDepositPhase(job: JobComponent, bee: import("excalibur").Actor): void {
-    const lvl = bee.get(BeeLevelComponent)!.level;
     const pick =
       job.kind === "foragePollen"
-        ? this.findNearestPollenDeposit(bee.pos.x, bee.pos.y, lvl)
+        ? this.findNearestPollenDeposit(bee.pos.x, bee.pos.y)
         : job.kind === "forageNectar"
-          ? this.findNearestNectarDeposit(bee.pos.x, bee.pos.y, lvl)
+          ? this.findNearestNectarDeposit(bee.pos.x, bee.pos.y)
           : null;
     if (!pick) {
       job.foragePhase = "capacityWait";
