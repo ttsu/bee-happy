@@ -31,8 +31,8 @@ export const COLONY = {
   /** Queen must stay on the brood cell this long to complete laying. */
   queenLayDurationMs: 1_000,
   /** Hunger / thirst per second (0–100 scale). */
-  hungerPerSec: .8,
-  thirstPerSec: .5,
+  hungerPerSec: 0.8,
+  thirstPerSec: 0.5,
   /** Bee is "happy" when hunger and thirst are at or below these values. */
   happyHungerMax: 50,
   happyThirstMax: 50,
