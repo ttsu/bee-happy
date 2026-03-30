@@ -7,7 +7,10 @@ import {
   BeeWorkComponent,
   JobComponent,
 } from "../components/colony-components";
-import { findHexPathWorldPoints } from "../../pathfinding/hex-path";
+import {
+  findHexPathWorldPoints,
+  findHexPathWorldPointsWithLevels,
+} from "../../pathfinding/hex-path";
 import { COLONY } from "../../constants";
 import type { ColonyRuntime } from "../../colony-runtime";
 import type { HiveCoord } from "../../../grid/hive-levels";
@@ -152,20 +155,21 @@ export class JobAssignmentSystem extends System {
             continue;
           }
           const start = beeStartHiveCoord(bee.pos, lvl);
-          const path = findHexPathWorldPoints(
+          const waypoints = findHexPathWorldPointsWithLevels(
             start,
             pick.coord,
             COLONY.hexSize,
             this.colony.builtByLevel(),
           );
-          if (!path.length) {
+          if (!waypoints.length) {
             continue;
           }
           job.targetQ = pick.coord.q;
           job.targetR = pick.coord.r;
           job.targetLevel = pick.coord.level;
           job.selfFeedCellKey = pick.key;
-          job.pathPoints = path;
+          job.pathPoints = waypoints.map((p) => p.world);
+          job.pathLevels = waypoints.map((p) => p.level);
           w.availability = "busy";
           w.currentJobEntityId = je.id;
           w.pathIndex = 0;
