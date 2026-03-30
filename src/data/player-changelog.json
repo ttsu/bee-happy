@@ -1,7 +1,15 @@
 {
-  "currentReleaseId": "0.1.0",
-  "asOfCommit": "aad530c",
+  "currentReleaseId": "0.2.0",
+  "asOfCommit": "3bd8f0f",
   "releases": [
+    {
+      "id": "0.2.0",
+      "date": "2026-03-29",
+      "items": [
+        "A loading screen appears while the game prepares assets; the menu fades in when ready.",
+        "Background music starts after you choose New game or Continue."
+      ]
+    },
     {
       "id": "0.1.0",
       "date": "2026-03-29",
