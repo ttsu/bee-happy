@@ -1,7 +1,15 @@
 {
-  "currentReleaseId": "0.3.0",
-  "asOfCommit": "81bfeb0",
+  "currentReleaseId": "0.4.0",
+  "asOfCommit": "157fd47",
   "releases": [
+    {
+      "id": "0.4.0",
+      "date": "2026-03-30",
+      "items": [
+        "Hive cells use new illustrated sprite art instead of flat colored circles.",
+        "Brood, pollen, and nectar or honey cells change appearance as they fill or mature; foundations fade in while you build."
+      ]
+    },
     {
       "id": "0.3.0",
       "date": "2026-03-30",
