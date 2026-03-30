@@ -6,6 +6,9 @@ export const gameLoader = new BeeHappyLoader();
 
 export const beeImage = new ImageSource("/images/bee.png");
 
+/** 4×4 hive cell art; each sprite is 246×280 px (see `drawHiveCells`). */
+export const cellSpritesImage = new ImageSource("/images/cell_sprites.png");
+
 /**
  * 4-frame horizontal bee sheet where each frame is 128x128 px.
  */
@@ -27,4 +30,5 @@ export const backgroundMusicSound = new Sound({
 });
 
 gameLoader.addResource(beeImage);
+gameLoader.addResource(cellSpritesImage);
 gameLoader.addResource(backgroundMusicSound);

@@ -15,6 +15,7 @@ import { COLONY } from "../colony/constants";
 import { eligibleFoundationCoordsForLevel } from "../colony/placement";
 import { hiveKey, parseHiveKey, type HiveCoord } from "../grid/hive-levels";
 import { HEX_DIRECTIONS, hexToWorld } from "../grid/hex-grid";
+import { cellSpritesImage } from "../resources";
 
 const hexCorners = (cx: number, cy: number, r: number): [number, number][] => {
   const pts: [number, number][] = [];
@@ -176,6 +177,186 @@ const cellStockFont = new Font({
 const CELL_STOCK_LINE_PX = 9;
 
 const HONEY_LABEL_EPS = 1e-6;
+const HONEY_FULL_EPS = 1e-3;
+
+/** Fallback fill when cell art is not loaded yet. */
+const colorForCellFallback = (st: InstanceType<typeof CellStateComponent>): Color => {
+  if (!st.built) {
+    return Color.fromHex("#7f8c8d");
+  }
+  if (st.stage === "foundation") {
+    return Color.fromHex("#95a5a6");
+  }
+  switch (st.cellType) {
+    case "brood":
+      if (st.stage === "egg") {
+        return Color.fromHex("#fdebd0");
+      }
+      if (st.stage === "larvae") {
+        return Color.fromHex("#f8c471");
+      }
+      if (st.stage === "sealed") {
+        return Color.fromHex("#d7bde2");
+      }
+      if (st.stage === "cleaning") {
+        return Color.fromHex("#aed6f1");
+      }
+      return Color.fromHex("#fadbd8");
+    case "pollen":
+      return Color.fromHex("#f7dc6f");
+    case "nectar":
+      return Color.fromHex("#82e0aa");
+    default:
+      return Color.fromHex("#ecf0f1");
+  }
+};
+
+/** Source art per frame in `/images/cell_sprites.png` (4×4 grid). */
+const CELL_SPRITE_SRC_W = 246;
+const CELL_SPRITE_SRC_H = 280;
+
+/**
+ * Scales isometric cell art to match the former filled-disc radius ({@link COLONY.hexSize} × 0.55).
+ */
+const CELL_SPRITE_DEST: { width: number; height: number } = (() => {
+  const maxD = COLONY.hexSize * 2;
+  const s = maxD / Math.max(CELL_SPRITE_SRC_W, CELL_SPRITE_SRC_H);
+  return { width: CELL_SPRITE_SRC_W * s, height: CELL_SPRITE_SRC_H * s };
+})();
+
+const drawCellSpriteSheetFrame = (
+  ctx: ExcaliburGraphicsContext,
+  center: { x: number; y: number },
+  /** 1-based index (top-left = 1, row-major). */
+  frame1Based: number,
+  opacity: number,
+): void => {
+  if (!cellSpritesImage.isLoaded()) {
+    return;
+  }
+  const idx = Math.min(16, Math.max(1, Math.floor(frame1Based))) - 1;
+  const col = idx % 4;
+  const row = (idx / 4) | 0;
+  const sx = col * CELL_SPRITE_SRC_W;
+  const sy = row * CELL_SPRITE_SRC_H;
+  const { width: dw, height: dh } = CELL_SPRITE_DEST;
+  const dx = center.x - dw / 2;
+  const dy = center.y - dh / 2;
+  ctx.save();
+  ctx.opacity = opacity;
+  ctx.drawImage(
+    cellSpritesImage.image,
+    sx,
+    sy,
+    CELL_SPRITE_SRC_W,
+    CELL_SPRITE_SRC_H,
+    dx,
+    dy,
+    dw,
+    dh,
+  );
+  ctx.restore();
+};
+
+/**
+ * Draws the appropriate hive cell sprite(s) for {@link CellStateComponent}.
+ * Foundation: frame 1 at 50% opacity → 100% by {@link CellStateComponent.buildProgress}.
+ */
+const drawCellInteriorFromState = (
+  ctx: ExcaliburGraphicsContext,
+  center: { x: number; y: number },
+  st: InstanceType<typeof CellStateComponent>,
+): void => {
+  if (!cellSpritesImage.isLoaded()) {
+    ctx.drawCircle(
+      vec(center.x, center.y),
+      COLONY.hexSize * 0.55,
+      colorForCellFallback(st),
+      Color.fromHex("#2c3e50"),
+      1,
+    );
+    return;
+  }
+
+  if (!st.built) {
+    const o = 0.25 + 0.75 * Math.min(1, Math.max(0, st.buildProgress));
+    drawCellSpriteSheetFrame(ctx, center, 1, o);
+    return;
+  }
+
+  if (st.cellType === "none" || st.stage === "foundation") {
+    drawCellSpriteSheetFrame(ctx, center, 1, 1);
+    return;
+  }
+
+  if (st.cellType === "brood") {
+    if (st.stage === "empty") {
+      drawCellSpriteSheetFrame(ctx, center, 1, 1);
+      return;
+    }
+    if (st.stage === "egg") {
+      drawCellSpriteSheetFrame(ctx, center, 11, 1);
+      return;
+    }
+    if (st.stage === "larvae") {
+      const p = larvaeFeedingProgress(st);
+      const frame = p < 1 / 3 ? 12 : p < 2 / 3 ? 13 : 14;
+      drawCellSpriteSheetFrame(ctx, center, frame, 1);
+      return;
+    }
+    if (st.stage === "sealed") {
+      drawCellSpriteSheetFrame(ctx, center, 15, 1);
+      return;
+    }
+    if (st.stage === "cleaning") {
+      drawCellSpriteSheetFrame(ctx, center, 16, 1);
+      return;
+    }
+    drawCellSpriteSheetFrame(ctx, center, 1, 1);
+    return;
+  }
+
+  if (st.cellType === "pollen") {
+    if (st.pollenStored <= 0) {
+      drawCellSpriteSheetFrame(ctx, center, 1, 1);
+      return;
+    }
+    const r = st.pollenStored / COLONY.pollenCellCapacity;
+    const frame = r < 1 / 3 ? 7 : r < 2 / 3 ? 8 : r < 1 ? 9 : 10;
+    drawCellSpriteSheetFrame(ctx, center, frame, 1);
+    return;
+  }
+
+  if (st.cellType === "nectar") {
+    const proc = st.honeyProcessingProgress;
+    if (proc > HONEY_LABEL_EPS && proc < 1 - HONEY_LABEL_EPS) {
+      const t = Math.min(1, Math.max(0, proc));
+      drawCellSpriteSheetFrame(ctx, center, 4, 1 - t);
+      drawCellSpriteSheetFrame(ctx, center, 5, t);
+      return;
+    }
+    if (st.honeyStored > HONEY_LABEL_EPS) {
+      if (st.honeyStored >= COLONY.honeyCellCapacity - HONEY_FULL_EPS) {
+        drawCellSpriteSheetFrame(ctx, center, 6, 1);
+      } else {
+        drawCellSpriteSheetFrame(ctx, center, 5, 1);
+      }
+      return;
+    }
+    const n = st.nectarStored;
+    if (n <= 0) {
+      drawCellSpriteSheetFrame(ctx, center, 1, 1);
+      return;
+    }
+    const frac = n / COLONY.nectarCellCapacity;
+    const frame = frac < 0.5 ? 2 : frac < 1 ? 3 : 4;
+    drawCellSpriteSheetFrame(ctx, center, frame, 1);
+    return;
+  }
+
+  drawCellSpriteSheetFrame(ctx, center, 1, 1);
+};
+
 const BUILT_EXTERIOR_OUTLINE = Color.fromHex("#d4a12a");
 const BUILT_EXTERIOR_STROKE_PX = 4;
 const BUILT_EXTERIOR_JOIN_OVERLAP_PX = 2;
@@ -264,37 +445,6 @@ const drawHexRing = (
   }
 };
 
-const colorForCell = (st: InstanceType<typeof CellStateComponent>): Color => {
-  if (!st.built) {
-    return Color.fromHex("#7f8c8d");
-  }
-  if (st.stage === "foundation") {
-    return Color.fromHex("#95a5a6");
-  }
-  switch (st.cellType) {
-    case "brood":
-      if (st.stage === "egg") {
-        return Color.fromHex("#fdebd0");
-      }
-      if (st.stage === "larvae") {
-        return Color.fromHex("#f8c471");
-      }
-      if (st.stage === "sealed") {
-        return Color.fromHex("#d7bde2");
-      }
-      if (st.stage === "cleaning") {
-        return Color.fromHex("#aed6f1");
-      }
-      return Color.fromHex("#fadbd8");
-    case "pollen":
-      return Color.fromHex("#f7dc6f");
-    case "nectar":
-      return Color.fromHex("#82e0aa");
-    default:
-      return Color.fromHex("#ecf0f1");
-  }
-};
-
 /**
  * Draws hive cells for the active level (called from {@link Scene.onPostDraw}).
  */
@@ -365,8 +515,7 @@ export const drawHiveCells = (
         drawOverlappedEdge(ctx, a, b, BUILT_EXTERIOR_OUTLINE, BUILT_EXTERIOR_STROKE_PX);
       }
     }
-    const fill = colorForCell(st);
-    ctx.drawCircle(w, S * 0.55, fill, Color.fromHex("#2c3e50"), 1);
+    drawCellInteriorFromState(ctx, w, st);
     if (st.built && (st.cellType === "pollen" || st.cellType === "nectar")) {
       drawCellStorageLabels(ctx, w, st);
     }
