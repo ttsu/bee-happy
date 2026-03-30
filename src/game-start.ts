@@ -1,6 +1,7 @@
 import { Color, DisplayMode, Engine, FadeInOut } from "excalibur";
 import { acknowledgeCurrentReleaseIfUnset } from "./changelog/last-seen-release";
-import { loader } from "./resources";
+import { startBackgroundMusic } from "./audio/background-music";
+import { gameLoader } from "./resources";
 import { MyLevel } from "./level";
 import { mountUi } from "./ui/main-ui";
 
@@ -30,9 +31,11 @@ export const startGameFromMenu = (loadSaved: boolean): void => {
     },
   });
 
+  startBackgroundMusic(game);
+
   game
     .start("start", {
-      loader,
+      loader: gameLoader,
       inTransition: new FadeInOut({
         duration: 800,
         direction: "in",

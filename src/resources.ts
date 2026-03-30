@@ -1,7 +1,8 @@
-import { ImageSource, Loader, SpriteSheet } from "excalibur";
+import { ImageSource, Sound, SpriteSheet } from "excalibur";
+import { BeeHappyLoader } from "./load/bee-happy-loader";
 
 /** Scene boot loader; add ImageSource/Sound assets here when needed. */
-export const loader = new Loader();
+export const gameLoader = new BeeHappyLoader();
 
 export const beeImage = new ImageSource("/images/bee.png");
 
@@ -18,4 +19,12 @@ export const beeSpriteSheet = SpriteSheet.fromImageSource({
   },
 });
 
-loader.addResource(beeImage);
+/** Looped background track (also preloaded at boot). Playback starts after menu choice. */
+export const backgroundMusicSound = new Sound({
+  paths: ["/sound/Cozy Hive Workshop.mp3"],
+  loop: true,
+  volume: 0.45,
+});
+
+gameLoader.addResource(beeImage);
+gameLoader.addResource(backgroundMusicSound);

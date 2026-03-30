@@ -536,6 +536,90 @@ body:not(.bee-happy-game-started) #game-canvas {
   transform: scale(0.99);
 }
 
+/* Boot screen → launch menu cross-fade */
+.boot-content-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  opacity: 0;
+  transition: opacity 0.65s ease;
+  pointer-events: none;
+}
+
+.boot-content-layer--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.boot-load-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  background: radial-gradient(
+    ellipse at 50% 30%,
+    #1f2d3a 0%,
+    #0f1419 55%,
+    #0a0d11 100%
+  );
+  transition: opacity 0.65s ease;
+}
+
+.boot-load-screen--hide {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.boot-load-screen-inner {
+  text-align: center;
+  padding: 24px;
+  max-width: 320px;
+}
+
+.boot-load-screen-title {
+  margin: 0 0 8px;
+  font-size: 28px;
+  font-weight: 800;
+  color: #ecf0f1;
+  letter-spacing: 0.04em;
+}
+
+.boot-load-screen-sub {
+  margin: 0 0 20px;
+  font-size: 15px;
+  color: #bdc3c7;
+}
+
+.boot-load-screen-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(236, 240, 241, 0.12);
+  overflow: hidden;
+}
+
+.boot-load-screen-bar-fill {
+  height: 100%;
+  width: 38%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #5dade2, #82e0aa, #5dade2);
+}
+
+.boot-load-screen-bar-fill--indeterminate {
+  animation: boot-load-shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes boot-load-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(320%);
+  }
+}
+
 .launch-menu {
   position: fixed;
   inset: 0;
