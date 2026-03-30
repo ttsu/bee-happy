@@ -1,7 +1,15 @@
 {
-  "currentReleaseId": "0.2.0",
-  "asOfCommit": "3bd8f0f",
+  "currentReleaseId": "0.3.0",
+  "asOfCommit": "81bfeb0",
   "releases": [
+    {
+      "id": "0.3.0",
+      "date": "2026-03-30",
+      "items": [
+        "Starting a new colony (not Continue) launches an interactive tutorial: it walks you through building, brood and food cells, panning the view, and changing levels.",
+        "You can skip the tutorial anytime; finishing or skipping is remembered in this browser."
+      ]
+    },
     {
       "id": "0.2.0",
       "date": "2026-03-29",
