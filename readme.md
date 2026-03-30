@@ -28,6 +28,12 @@ Open the URL Vite prints (the dev server defaults to port **5173**).
 
 Playwright tests use a preview server on port **4173**; `npm run test` handles build and serve. For commit message rules and other contributor notes, see [`AGENTS.md`](./AGENTS.md).
 
+### Player changelog and Cursor
+
+Player-facing release notes live in [`src/data/player-changelog.json`](./src/data/player-changelog.json) and power the **What’s new** dialog on the launch screen. Maintainer workflow is documented in [`AGENTS.md`](./AGENTS.md).
+
+In Cursor, the repo includes a custom command **[draft-player-changelog](.cursor/commands/draft-player-changelog.md)** to draft bullets from git history; always review and edit before committing JSON changes.
+
 ## Engine
 
 Excalibur.js documentation: [excaliburjs.com](https://excaliburjs.com)

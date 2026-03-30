@@ -3,6 +3,16 @@ import {
   clearColonySaveFromStorage,
   readColonySaveFromStorage,
 } from "../colony/colony-save";
+import {
+  CURRENT_RELEASE_ID,
+  getUnseenReleases,
+  shouldShowWhatsNew,
+} from "../changelog/player-changelog";
+import {
+  readLastSeenReleaseId,
+  writeLastSeenReleaseId,
+} from "../changelog/last-seen-release";
+import { WhatsNewModal } from "./whats-new-modal";
 
 type Props = {
   readonly onNewGame: () => void;
@@ -33,6 +43,18 @@ const formatSavedLabel = (iso: string | undefined): string => {
 export const LaunchMenu = ({ onNewGame, onContinue }: Props) => {
   const existing = useMemo(() => readColonySaveFromStorage(), []);
   const [confirmNew, setConfirmNew] = useState(false);
+  const [lastSeenReleaseId, setLastSeenReleaseId] = useState<string | null>(() =>
+    readLastSeenReleaseId(),
+  );
+
+  const showWhatsNew =
+    shouldShowWhatsNew(lastSeenReleaseId) &&
+    getUnseenReleases(lastSeenReleaseId).length > 0;
+
+  const dismissWhatsNew = () => {
+    writeLastSeenReleaseId(CURRENT_RELEASE_ID);
+    setLastSeenReleaseId(CURRENT_RELEASE_ID);
+  };
 
   return (
     <div
@@ -79,6 +101,12 @@ export const LaunchMenu = ({ onNewGame, onContinue }: Props) => {
           </button>
         </div>
       </div>
+      {showWhatsNew ? (
+        <WhatsNewModal
+          releases={getUnseenReleases(lastSeenReleaseId)}
+          onDismiss={dismissWhatsNew}
+        />
+      ) : null}
       {confirmNew ? (
         <div
           className="launch-confirm-backdrop"

@@ -666,3 +666,88 @@ body:not(.bee-happy-game-started) #game-canvas {
   flex-direction: column;
   gap: 10px;
 }
+
+.whats-new-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 22;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.65);
+  padding: 16px;
+}
+
+.whats-new-card {
+  background: #1a252f;
+  color: #ecf0f1;
+  padding: 20px 22px 18px;
+  border-radius: 14px;
+  width: min(420px, 94vw);
+  max-height: min(72vh, 520px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+}
+
+.whats-new-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  text-align: center;
+  letter-spacing: 0.03em;
+}
+
+.whats-new-scroll {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  padding-right: 4px;
+}
+
+.whats-new-section {
+  margin-bottom: 16px;
+}
+
+.whats-new-section:last-child {
+  margin-bottom: 0;
+}
+
+.whats-new-release-heading {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+}
+
+.whats-new-date {
+  font-size: 12px;
+  font-weight: 500;
+  color: #95a5a6;
+}
+
+.whats-new-list {
+  margin: 0;
+  padding-left: 1.2em;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #bdc3c7;
+  text-align: left;
+}
+
+.whats-new-list li {
+  margin-bottom: 6px;
+}
+
+.whats-new-list li:last-child {
+  margin-bottom: 0;
+}
+
+.whats-new-dismiss {
+  flex-shrink: 0;
+}

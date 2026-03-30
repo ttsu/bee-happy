@@ -1,4 +1,5 @@
 import { Color, DisplayMode, Engine, FadeInOut } from "excalibur";
+import { acknowledgeCurrentReleaseIfUnset } from "./changelog/last-seen-release";
 import { loader } from "./resources";
 import { MyLevel } from "./level";
 import { mountUi } from "./ui/main-ui";
@@ -12,6 +13,7 @@ export const startGameFromMenu = (loadSaved: boolean): void => {
   if (started) {
     return;
   }
+  acknowledgeCurrentReleaseIfUnset();
   started = true;
   document.body.classList.add("bee-happy-game-started");
   MyLevel.loadSaveOnStart = loadSaved;
