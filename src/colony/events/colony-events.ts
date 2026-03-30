@@ -14,6 +14,8 @@ export interface YearlyReviewStats {
 
 export type ColonyEvent =
   | { type: "PlacementIntent"; coord: HiveCoord }
+  /** Emitted when the player pans the hive (drag exceeds tap threshold). */
+  | { type: "CameraPanned" }
   | { type: "CellBuildStarted"; cellKey: string }
   | { type: "CellBuilt"; cellKey: string }
   | { type: "BroodLarvaeReady"; cellKey: string }

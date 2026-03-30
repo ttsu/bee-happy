@@ -100,6 +100,9 @@ export class MyLevel extends Scene {
         this.lastPanScreen = { x: screen.x, y: screen.y };
       }
     } else {
+      if (this.wasDown && this.dragScreen >= COLONY.panTapThresholdPx) {
+        this.colony.events.emit({ type: "CameraPanned" });
+      }
       if (
         this.wasDown &&
         this.dragScreen < COLONY.panTapThresholdPx &&

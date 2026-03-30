@@ -51,6 +51,11 @@ export type ColonyInitializeOptions = {
 export class ColonyRuntime {
   readonly events = new ColonyEventBus();
   readonly cellsByKey = new Map<string, Entity>();
+  /**
+   * True when this session was initialized from a save (`mode === "load"`).
+   * Used by the UI to skip the first-play tutorial on Continue.
+   */
+  sessionStartedFromSave = false;
   controllerEntity!: Entity;
   scene!: Scene;
   engine!: Engine;
@@ -74,6 +79,7 @@ export class ColonyRuntime {
     this.engine = engine;
     const world = scene.world;
     const mode = options?.mode ?? "new";
+    this.sessionStartedFromSave = mode === "load";
 
     this.controllerEntity = new Entity({
       name: "colony-controller",

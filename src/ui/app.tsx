@@ -10,6 +10,8 @@ import {
   type CellStage,
   type CellTypeKind,
 } from "../colony/ecs/components/colony-components";
+import { useTutorial } from "../tutorial/use-tutorial";
+import { TutorialOverlay } from "./tutorial-overlay";
 
 const defaultSnapshot: ColonyUiSnapshot = {
   beesTotal: 0,
@@ -147,6 +149,8 @@ export const App = () => {
   const [previewActiveLevel, setPreviewActiveLevel] = useState(snap.activeLevel);
   const [targetLevel, setTargetLevel] = useState<number | null>(null);
   const seasonInfo = getSeasonForColonyDay(snap.currentColonyDay);
+  const colony = getColonyBridge();
+  const tutorial = useTutorial(colony, snap);
   const activeLevelIndex = LEVELS.indexOf(
     previewActiveLevel as (typeof LEVELS)[number],
   );
@@ -412,6 +416,14 @@ export const App = () => {
         </div>
         <span className="level-strip-hint">tap or drag ↑↓</span>
       </div>
+      {tutorial.showTutorial && !snap.isYearReviewOpen ? (
+        <TutorialOverlay
+          stepIndex={tutorial.stepIndex}
+          advanceContinue={tutorial.advanceContinue}
+          completeTutorial={tutorial.completeTutorial}
+          skipTutorial={tutorial.skipTutorial}
+        />
+      ) : null}
       {snap.pendingCellTypeKey ? (
         <div className="picker-backdrop" role="dialog" aria-modal>
           <div className="picker-card">
