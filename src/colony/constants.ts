@@ -18,28 +18,26 @@ export const COLONY = {
    */
   buildWorkRadiusPx: 26,
   initialPollen: 12,
-  /** Colony nectar buffer (integer units; adult feed uses adultFeedColonyNectarCost). */
-  initialColonyNectar: 12,
   /** Brood: time as egg (ms) before larvae. */
-  eggDurationMs: 12_000,
+  eggDurationMs: 10_000,
   /** Pollen portions larvae must receive (each is one trip from a pollen cell). */
-  larvaePollenUnitsNeeded: 3,
+  larvaePollenUnitsNeeded: 4,
   /** Nectar/honey portions larvae must receive (each is one trip from a nectar cell). */
-  larvaeNectarUnitsNeeded: 2,
+  larvaeNectarUnitsNeeded: 1,
   sealedDurationMs: 10_000,
   cleaningDurationMs: 5_000,
   /** Queen attempts to lay every N ms when brood cell is ready. */
-  queenLayIntervalMs: 5_000,
+  queenLayIntervalMs: 3_000,
   /** Queen must stay on the brood cell this long to complete laying. */
   queenLayDurationMs: 1_000,
   /** Hunger / thirst per second (0–100 scale). */
-  hungerPerSec: 0.35,
-  thirstPerSec: 0.45,
+  hungerPerSec: .8,
+  thirstPerSec: .5,
   /** Bee is "happy" when hunger and thirst are at or below these values. */
-  happyHungerMax: 35,
-  happyThirstMax: 35,
+  happyHungerMax: 50,
+  happyThirstMax: 50,
   /** Recovery per feeding/drink. */
-  hungerRelief: 45,
+  hungerRelief: 50,
   thirstRelief: 50,
   /**
    * Threshold to open adult care jobs.
@@ -51,8 +49,8 @@ export const COLONY = {
   hungerCareThreshold: 30,
   thirstCareThreshold: 30,
   /** Forage timings. */
-  forageTravelMs: 2_500,
-  forageWaitMs: 1_800,
+  forageTravelMs: 2_000,
+  forageWaitMs: 1_000,
   waterForageMs: 2_000,
   /** Max pollen units per pollen storage cell. */
   pollenCellCapacity: 12,
@@ -68,14 +66,10 @@ export const COLONY = {
   honeyNutrientMultiplier: 4,
   /** Honey units removed from a cell for one larvae honey delivery (satisfies honeyNutrientMultiplier nectar portions). */
   larvaeFeedHoneyCost: 1,
-  /** Colony nectar units consumed per adult hunger feed (integer economy; was 0.4 × scale). */
-  adultFeedColonyNectarCost: 4,
   /** Cell nectar units consumed per adult hunger feed (was 0.5 × scale). */
-  adultFeedCellNectarCost: 5,
-  /** Cell honey units consumed per adult hunger feed (was 0.1 × scale; 4× density vs colony nectar cost). */
+  adultFeedCellNectarCost: 2,
+  /** Cell honey units consumed per adult hunger feed (was 0.1 × scale; 4× density vs cell nectar cost). */
   adultFeedHoneyCost: 1,
-  /** Queue nectar forage when colony nectar buffer is below this (was 8 in pre-scale units). */
-  colonyNectarForageThreshold: 80,
   /** Level transition (ms each phase). */
   levelFadeMs: 380,
   /** Zoom during level transition. */
@@ -123,15 +117,15 @@ export const COLONY = {
   /** When foraging has no deposit capacity, re-check interval (ms). */
   forageCapacityPollIntervalMs: 500,
   /** Payload units applied when depositing after pollen forage. */
-  foragePollenDepositAmount: 12,
+  foragePollenDepositAmount: 3,
   /** Payload units applied when depositing after nectar forage. */
-  forageNectarDepositAmount: 10,
+  forageNectarDepositAmount: 3,
   /** `clearCellForRetype`: ms between relocation chunks at the cell. */
   retypeRelocateIntervalMs: 400,
   /** Max pollen units moved per relocation tick. */
-  retypeRelocateChunkPollen: 4,
+  retypeRelocateChunkPollen: 2,
   /** Max nectar units moved per relocation tick. */
-  retypeRelocateChunkNectar: 4,
+  retypeRelocateChunkNectar: 2,
   /** Max honey units moved per relocation tick. */
   retypeRelocateChunkHoney: 2,
 } as const;

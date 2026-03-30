@@ -19,7 +19,7 @@ const defaultSnapshot: ColonyUiSnapshot = {
   queens: 0,
   pollen: 0,
   honey: 0,
-  colonyNectar: 0,
+  nectar: 0,
   happinessPct: 100,
   broodOccupied: 0,
   broodTotal: 0,
@@ -299,7 +299,7 @@ export const App = () => {
             </div>
             <div>Pollen: {snap.pollen.toFixed(0)}</div>
             <div>Honey: {snap.honey.toFixed(0)}</div>
-            <div>Nectar: {snap.colonyNectar.toFixed(0)}</div>
+            <div>Nectar: {snap.nectar.toFixed(0)}</div>
             <div>Happiness: {snap.happinessPct}%</div>
             <div>
               Brood: {snap.broodOccupied}/{snap.broodTotal}

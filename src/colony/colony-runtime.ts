@@ -15,7 +15,6 @@ import {
   BeeRoleComponent,
   CellCoordComponent,
   CellStateComponent,
-  ColonyResourcesComponent,
   ColonyTimeComponent,
   JobComponent,
   QueenTimerComponent,
@@ -85,7 +84,6 @@ export class ColonyRuntime {
       name: "colony-controller",
       components: [
         new ActiveLevelComponent(),
-        new ColonyResourcesComponent(),
         new QueenTimerComponent(),
         new ColonyTimeComponent(),
         new YearlyStatsComponent(),
@@ -93,9 +91,6 @@ export class ColonyRuntime {
     });
     this.controllerEntity.addTag("colonyController");
     world.add(this.controllerEntity);
-
-    const res = this.controllerEntity.get(ColonyResourcesComponent)!;
-    res.colonyNectar = COLONY.initialColonyNectar;
 
     this.controllerEntity.get(QueenTimerComponent)!.layCooldownMs = 3500;
 
@@ -132,10 +127,6 @@ export class ColonyRuntime {
     this.seasonSystem?.applyStateFromLoad(state);
   }
 
-  get resources(): ColonyResourcesComponent {
-    return this.controllerEntity.get(ColonyResourcesComponent)!;
-  }
-
   /**
    * Sums pollen across all built pollen storage cells (HUD and economy demand checks).
    */
@@ -157,6 +148,18 @@ export class ColonyRuntime {
       const st = e.get(CellStateComponent)!;
       if (st.built && st.cellType === "nectar") {
         total += st.honeyStored;
+      }
+    }
+    return total;
+  }
+
+  /** Total unprocessed nectar in built nectar cells (HUD). */
+  sumNectarStored(): number {
+    let total = 0;
+    for (const [, e] of this.cellsByKey) {
+      const st = e.get(CellStateComponent)!;
+      if (st.built && st.cellType === "nectar") {
+        total += st.nectarStored;
       }
     }
     return total;
@@ -568,7 +571,6 @@ export class ColonyRuntime {
   }
 
   getUiSnapshot(): ColonyUiSnapshot {
-    const res = this.resources;
     let workers = 0;
     let queens = 0;
     for (const a of this.scene.actors) {
@@ -622,7 +624,7 @@ export class ColonyRuntime {
       queens,
       pollen: this.sumPollenStored(),
       honey: this.sumHoneyStored(),
-      colonyNectar: res.colonyNectar,
+      nectar: this.sumNectarStored(),
       happinessPct: Math.min(
         100,
         Math.max(0, totalNeeds > 0 ? Math.round((happy / totalNeeds) * 100) : 100),

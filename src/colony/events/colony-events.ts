@@ -34,7 +34,8 @@ export interface ColonyUiSnapshot {
   readonly queens: number;
   readonly pollen: number;
   readonly honey: number;
-  readonly colonyNectar: number;
+  /** Unprocessed nectar stored in nectar cells (not honey). */
+  readonly nectar: number;
   readonly happinessPct: number;
   readonly broodOccupied: number;
   readonly broodTotal: number;

@@ -18,7 +18,7 @@ export const colonyUiSnapshotSchema = z.object({
   queens: z.number(),
   pollen: z.number(),
   honey: z.number(),
-  colonyNectar: z.number(),
+  nectar: z.number(),
   happinessPct: z.number(),
   broodOccupied: z.number(),
   broodTotal: z.number(),

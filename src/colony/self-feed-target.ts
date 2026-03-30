@@ -19,14 +19,13 @@ export type SelfFeedPick = {
 
 /**
  * Finds the nearest hive cell on {@link level} where a hungry worker can obtain food
- * (pollen cell, nectar/honey cell, or any nectar cell when colony buffer can pay).
+ * (pollen cell, or nectar/honey cell with stored food).
  */
 export const findNearestSelfFeedTarget = (
   colony: ColonyRuntime,
   beeWorldPos: Vector,
   level: number,
 ): SelfFeedPick | null => {
-  const res = colony.resources;
   const picks: { pick: SelfFeedPick; dist: number }[] = [];
 
   for (const [, ent] of colony.cellsByKey) {
@@ -50,12 +49,6 @@ export const findNearestSelfFeedTarget = (
       st.cellType === "nectar" &&
       (nectarCellHasNectarForFeeding(st, COLONY.adultFeedCellNectarCost) ||
         nectarCellHasHoneyForFeeding(st, COLONY.adultFeedHoneyCost))
-    ) {
-      usable = true;
-    }
-    if (
-      st.cellType === "nectar" &&
-      res.colonyNectar >= COLONY.adultFeedColonyNectarCost
     ) {
       usable = true;
     }

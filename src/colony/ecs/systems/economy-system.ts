@@ -7,7 +7,6 @@ import {
   BeeWorkComponent,
   CellCoordComponent,
   CellStateComponent,
-  ColonyResourcesComponent,
   ColonyTimeComponent,
   JobComponent,
   YearlyStatsComponent,
@@ -85,7 +84,6 @@ export class EconomySystem extends System {
       }
     }
 
-    const res = this.colony.resources;
     const idleWorkers = this.colony.scene.actors.filter((a) => {
       const role = a.get(BeeRoleComponent);
       const w = a.get(BeeWorkComponent);
@@ -146,7 +144,7 @@ export class EconomySystem extends System {
         job.kind === "forageNectar" ||
         job.kind === "forageWater"
       ) {
-        this.updateForage(ent, job, res, elapsed);
+        this.updateForage(ent, job, elapsed);
       } else if (job.kind === "honeyProcess") {
         this.updateHoney(ent, job, elapsed);
       }
@@ -285,7 +283,6 @@ export class EconomySystem extends System {
   private updateForage(
     ent: import("excalibur").Entity,
     job: JobComponent,
-    res: ColonyResourcesComponent,
     elapsed: number,
   ): void {
     const beeId = job.reservedBeeIds[0];

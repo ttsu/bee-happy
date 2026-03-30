@@ -14,7 +14,6 @@ import {
   BeeWorkComponent,
   CellCoordComponent,
   CellStateComponent,
-  ColonyResourcesComponent,
   ColonyTimeComponent,
   JobComponent,
   QueenTimerComponent,
@@ -122,7 +121,6 @@ export type ColonySaveV1 = {
   savedAtIso: string;
   camera: Vec2Json;
   activeLevel: ActiveLevelJson;
-  resources: Pick<ColonyResourcesComponent, "colonyNectar">;
   queenTimer: Pick<QueenTimerComponent, "layCooldownMs">;
   colonyTime: Pick<ColonyTimeComponent, "colonyElapsedMs">;
   yearly: YearlyStatsJson;
@@ -263,7 +261,6 @@ function newJobFromJson(j: JobComponentJson): JobComponent {
 export function serializeColonySave(colony: ColonyRuntime): ColonySaveV1 {
   const scene = colony.scene;
   const active = colony.controllerEntity.get(ActiveLevelComponent)!;
-  const res = colony.resources;
   const queen = colony.controllerEntity.get(QueenTimerComponent)!;
   const time = colony.controllerEntity.get(ColonyTimeComponent)!;
   const yearly = colony.controllerEntity.get(YearlyStatsComponent)!;
@@ -333,7 +330,6 @@ export function serializeColonySave(colony: ColonyRuntime): ColonySaveV1 {
       pendingLevel: null,
       transitionT: 0,
     },
-    resources: { colonyNectar: res.colonyNectar },
     queenTimer: { layCooldownMs: queen.layCooldownMs },
     colonyTime: { colonyElapsedMs: time.colonyElapsedMs },
     yearly: {
@@ -385,7 +381,6 @@ export function applyColonySave(colony: ColonyRuntime, payload: LoadPayload): vo
     name: "colony-controller",
     components: [
       Object.assign(new ActiveLevelComponent(), data.activeLevel),
-      Object.assign(new ColonyResourcesComponent(), data.resources),
       Object.assign(new QueenTimerComponent(), data.queenTimer),
       Object.assign(new ColonyTimeComponent(), data.colonyTime),
       Object.assign(new YearlyStatsComponent(), data.yearly),

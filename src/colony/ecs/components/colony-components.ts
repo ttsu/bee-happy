@@ -172,10 +172,6 @@ export class ActiveLevelComponent extends Component {
   transitionT = 0;
 }
 
-export class ColonyResourcesComponent extends Component {
-  colonyNectar = 0;
-}
-
 export class QueenTimerComponent extends Component {
   layCooldownMs = 0;
 }

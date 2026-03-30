@@ -4,7 +4,6 @@ import {
   BeeNeedsComponent,
   BeeRoleComponent,
   CellStateComponent,
-  ColonyResourcesComponent,
   JobComponent,
 } from "../components/colony-components";
 import { COLONY } from "../../constants";
@@ -58,7 +57,6 @@ export class AdultCareSystem extends System {
     if (this.colony.isSimulationPaused()) {
       return;
     }
-    const res = this.colony.resources;
     const ms = elapsed / 1000;
     for (const actor of this.colony.scene.actors) {
       const needs = actor.get(BeeNeedsComponent);
@@ -117,7 +115,7 @@ export class AdultCareSystem extends System {
         continue;
       }
       if (job.kind === "adultFeed") {
-        this.tryAdultFeed(ent, job, res);
+        this.tryAdultFeed(ent, job);
       } else if (job.kind === "waterDeliver") {
         this.tryWater(ent, job);
       } else if (job.kind === "feedQueen") {
@@ -126,11 +124,7 @@ export class AdultCareSystem extends System {
     }
   }
 
-  private tryAdultFeed(
-    ent: import("excalibur").Entity,
-    job: JobComponent,
-    res: ColonyResourcesComponent,
-  ): void {
+  private tryAdultFeed(ent: import("excalibur").Entity, job: JobComponent): void {
     const targetId = job.adultFeedTargetBeeId;
     const worker = job.reservedBeeIds[0]
       ? findEntityById(this.world, job.reservedBeeIds[0]!)
@@ -142,7 +136,7 @@ export class AdultCareSystem extends System {
     if (worker.pos.sub(center).size > COLONY.selfFeedWorkRadiusPx) {
       return;
     }
-    if (!this.consumeSelfFeed(res, job)) {
+    if (!this.consumeSelfFeed(job)) {
       return;
     }
     const n = worker.get(BeeNeedsComponent)!;
@@ -153,13 +147,9 @@ export class AdultCareSystem extends System {
   }
 
   /**
-   * Consumes one feeding worth of food using colony buffer, preferred cell, then global fallbacks.
+   * Consumes one feeding worth of food from preferred cell, then global fallbacks.
    */
-  private consumeSelfFeed(res: ColonyResourcesComponent, job: JobComponent): boolean {
-    if (res.colonyNectar >= COLONY.adultFeedColonyNectarCost) {
-      res.colonyNectar -= COLONY.adultFeedColonyNectarCost;
-      return true;
-    }
+  private consumeSelfFeed(job: JobComponent): boolean {
     if (job.selfFeedCellKey && this.tryConsumeCellNectarAtKey(job.selfFeedCellKey)) {
       return true;
     }
