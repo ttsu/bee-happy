@@ -1,7 +1,17 @@
 {
-  "currentReleaseId": "0.4.0",
-  "asOfCommit": "157fd47",
+  "currentReleaseId": "0.5.0",
+  "asOfCommit": "2511b64",
   "releases": [
+    {
+      "id": "0.5.0",
+      "date": "2026-03-30",
+      "items": [
+        "Unprocessed nectar in the HUD is only what’s stored in nectar cells—workers eat from those cells or honey, not a separate colony nectar pool.",
+        "Brood: eggs hatch a little faster; larvae need more pollen deliveries but fewer nectar ones; the queen attempts to lay more often.",
+        "Hunger and thirst rise faster, but the “happy” band is wider; foraging trips are shorter and each return brings less pollen and nectar.",
+        "Feeding an adult from a nectar cell uses less nectar per meal."
+      ]
+    },
     {
       "id": "0.4.0",
       "date": "2026-03-30",
