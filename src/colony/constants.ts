@@ -78,6 +78,11 @@ export const COLONY = {
   uiSnapshotMs: 120,
   /** Bee movement speed (world units per ms). */
   beeSpeed: 0.09,
+  /**
+   * When choosing a self-feed cell across levels, added to horizontal distance per hive level
+   * away from the bee (so nearer levels win ties at the same hex).
+   */
+  selfFeedCrossLevelPenaltyPx: 72,
   /** Random offset around a hex center for idle targets (world px). */
   idleWanderJitterPx: 10,
   /** Idle movement uses `beeSpeed *` this factor (slower than task movement). */

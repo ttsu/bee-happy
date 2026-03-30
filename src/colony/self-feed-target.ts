@@ -18,21 +18,19 @@ export type SelfFeedPick = {
 };
 
 /**
- * Finds the nearest hive cell on {@link level} where a hungry worker can obtain food
- * (pollen cell, or nectar/honey cell with stored food).
+ * Finds the nearest hive cell on any level where a hungry worker can obtain food
+ * (pollen cell, or nectar/honey cell with stored food). Uses horizontal distance to the
+ * cell center plus a small penalty per hive level away from the bee so ties favor closer levels.
  */
 export const findNearestSelfFeedTarget = (
   colony: ColonyRuntime,
   beeWorldPos: Vector,
-  level: number,
+  beeLevel: number,
 ): SelfFeedPick | null => {
   const picks: { pick: SelfFeedPick; dist: number }[] = [];
 
   for (const [, ent] of colony.cellsByKey) {
     const coord = ent.get(CellCoordComponent)!;
-    if (coord.level !== level) {
-      continue;
-    }
     const st = ent.get(CellStateComponent)!;
     if (!st.built) {
       continue;
@@ -40,7 +38,10 @@ export const findNearestSelfFeedTarget = (
     const hive: HiveCoord = { q: coord.q, r: coord.r, level: coord.level };
     const key = hiveKey(hive);
     const center = hexToWorld({ q: coord.q, r: coord.r }, COLONY.hexSize);
-    const dist = beeWorldPos.sub(center).size;
+    const horizontal = beeWorldPos.sub(center).size;
+    const dist =
+      horizontal +
+      Math.abs(coord.level - beeLevel) * COLONY.selfFeedCrossLevelPenaltyPx;
     let usable = false;
     if (st.cellType === "pollen" && st.pollenStored >= COLONY.adultFeedPollenCost) {
       usable = true;
