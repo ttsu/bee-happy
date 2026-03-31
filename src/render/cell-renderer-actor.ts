@@ -446,6 +446,29 @@ const drawHexRing = (
 };
 
 /**
+ * Soft outer glow + crisp edge for built cells that still need a type assignment.
+ * Layered strokes approximate shadow blur (no canvas shadow on this graphics path).
+ */
+const UNASSIGNED_TYPE_GLOW_RGB = { r: 212, g: 168, b: 72 } as const;
+const UNASSIGNED_TYPE_INNER_STROKE_PX = 1.65;
+const drawHexRingShadowBlur = (
+  ctx: ExcaliburGraphicsContext,
+  corners: [number, number][],
+): void => {
+  const { r, g, b } = UNASSIGNED_TYPE_GLOW_RGB;
+  const layers: readonly { strokePx: number; alpha: number }[] = [
+    { strokePx: UNASSIGNED_TYPE_INNER_STROKE_PX + 6.5, alpha: 0.04 },
+    { strokePx: UNASSIGNED_TYPE_INNER_STROKE_PX + 4.5, alpha: 0.055 },
+    { strokePx: UNASSIGNED_TYPE_INNER_STROKE_PX + 3, alpha: 0.075 },
+    { strokePx: UNASSIGNED_TYPE_INNER_STROKE_PX + 1.5, alpha: 0.11 },
+    { strokePx: UNASSIGNED_TYPE_INNER_STROKE_PX, alpha: 0.82 },
+  ];
+  for (const { strokePx, alpha } of layers) {
+    drawHexRing(ctx, corners, Color.fromRGB(r, g, b, alpha), strokePx);
+  }
+};
+
+/**
  * Draws hive cells for the active level (called from {@link Scene.onPostDraw}).
  */
 export const drawHiveCells = (
@@ -528,6 +551,9 @@ export const drawHiveCells = (
       } else if (st.stage === "larvae") {
         drawBroodGrowthRing(ctx, w, ringR, larvaeFeedingProgress(st), "larvae");
       }
+    }
+    if (st.built && st.cellType === "none" && !st.pendingCellType) {
+      drawHexRingShadowBlur(ctx, corners);
     }
     if (st.pendingCellType) {
       drawHexRing(ctx, corners, PENDING_RETYPE_OUTLINE, PENDING_RETYPE_STROKE_PX);
