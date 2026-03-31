@@ -1,7 +1,14 @@
 {
-  "currentReleaseId": "0.6.0",
-  "asOfCommit": "2247908",
+  "currentReleaseId": "0.7.0",
+  "asOfCommit": "8eaa1e5",
   "releases": [
+    {
+      "id": "0.7.0",
+      "date": "2026-03-31",
+      "items": [
+        "Hungry bees show a small ‼️ thought bubble on the hive so you can spot who needs food."
+      ]
+    },
     {
       "id": "0.6.0",
       "date": "2026-03-30",

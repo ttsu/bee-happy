@@ -1,6 +1,6 @@
 {
   "name": "bee-happy",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "",
   "main": "src/main.tsx",
   "scripts": {
