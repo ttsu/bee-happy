@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import {
-  clearColonySaveFromStorage,
-  readColonySaveFromStorage,
+  deleteSaveSlot,
+  listSaveSlotsNewestFirst,
+  type SaveIndexEntry,
 } from "../colony/colony-save";
 import {
   CURRENT_RELEASE_ID,
@@ -16,7 +17,7 @@ import { WhatsNewModal } from "./whats-new-modal";
 
 type Props = {
   readonly onNewGame: () => void;
-  readonly onContinue: () => void;
+  readonly onContinue: (slotId: string) => void;
 };
 
 const formatSavedLabel = (iso: string | undefined): string => {
@@ -38,14 +39,20 @@ const formatSavedLabel = (iso: string | undefined): string => {
 };
 
 /**
- * First screen: start fresh or resume the last autosaved colony from this browser.
+ * First screen: start fresh or pick a saved colony from this browser.
  */
 export const LaunchMenu = ({ onNewGame, onContinue }: Props) => {
-  const existing = useMemo(() => readColonySaveFromStorage(), []);
-  const [confirmNew, setConfirmNew] = useState(false);
+  const [slots, setSlots] = useState<SaveIndexEntry[]>(() =>
+    listSaveSlotsNewestFirst(),
+  );
+  const [deleteTarget, setDeleteTarget] = useState<SaveIndexEntry | null>(null);
   const [lastSeenReleaseId, setLastSeenReleaseId] = useState<string | null>(() =>
     readLastSeenReleaseId(),
   );
+
+  const refreshSlots = useCallback(() => {
+    setSlots(listSaveSlotsNewestFirst());
+  }, []);
 
   const showWhatsNew =
     shouldShowWhatsNew(lastSeenReleaseId) &&
@@ -56,6 +63,8 @@ export const LaunchMenu = ({ onNewGame, onContinue }: Props) => {
     setLastSeenReleaseId(CURRENT_RELEASE_ID);
   };
 
+  const hasSaves = slots.length > 0;
+
   return (
     <div
       className="launch-menu"
@@ -63,41 +72,61 @@ export const LaunchMenu = ({ onNewGame, onContinue }: Props) => {
       aria-modal
       aria-labelledby="launch-title"
     >
-      <div className="launch-menu-card">
+      <div className="launch-menu-card launch-menu-card--wide">
         <h1 id="launch-title" className="launch-menu-title">
           Bee Happy
         </h1>
         <p className="launch-menu-sub">Choose how to begin.</p>
+
+        {hasSaves ? (
+          <div className="launch-save-section">
+            <h2 className="launch-save-heading">Saved games</h2>
+            <ul className="launch-save-list" aria-label="Saved games">
+              {slots.map((s) => (
+                <li key={s.slotId} className="launch-save-row">
+                  <button
+                    type="button"
+                    className="launch-save-resume"
+                    onClick={() => {
+                      onContinue(s.slotId);
+                    }}
+                  >
+                    <span className="launch-save-label">{s.slotLabel}</span>
+                    <span className="launch-save-meta">
+                      {formatSavedLabel(s.savedAtIso)}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className="launch-save-delete"
+                    aria-label={`Delete save ${s.slotLabel}`}
+                    onClick={() => {
+                      setDeleteTarget(s);
+                    }}
+                  >
+                    Delete
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <p className="launch-menu-empty">
+            No saves yet. Start a new colony — it will appear here after the first
+            autosave.
+          </p>
+        )}
+
         <div className="launch-menu-actions">
-          {existing ? (
-            <button
-              type="button"
-              className="launch-menu-btn launch-menu-btn--primary"
-              onClick={() => {
-                onContinue();
-              }}
-            >
-              Continue
-              <span className="launch-menu-hint">
-                Saved {formatSavedLabel(existing.savedAtIso)}
-              </span>
-            </button>
-          ) : null}
           <button
             type="button"
             className="launch-menu-btn launch-menu-btn--neutral"
             onClick={() => {
-              if (existing) {
-                setConfirmNew(true);
-                return;
-              }
               onNewGame();
             }}
           >
             New game
-            {existing ? (
-              <span className="launch-menu-hint">Replaces the saved colony</span>
-            ) : null}
+            <span className="launch-menu-hint">Creates a new colony save</span>
           </button>
         </div>
       </div>
@@ -107,37 +136,38 @@ export const LaunchMenu = ({ onNewGame, onContinue }: Props) => {
           onDismiss={dismissWhatsNew}
         />
       ) : null}
-      {confirmNew ? (
+      {deleteTarget ? (
         <div
           className="launch-confirm-backdrop"
           role="dialog"
           aria-modal
-          aria-labelledby="launch-confirm-title"
+          aria-labelledby="launch-delete-title"
         >
           <div className="launch-confirm-card">
-            <h2 id="launch-confirm-title" className="launch-confirm-title">
-              Start a new colony?
+            <h2 id="launch-delete-title" className="launch-confirm-title">
+              Delete this save?
             </h2>
             <p className="launch-confirm-text">
-              This removes the saved game in this browser. You cannot undo this.
+              &ldquo;{deleteTarget.slotLabel}&rdquo; will be removed from this browser.
+              You cannot undo this.
             </p>
             <div className="launch-confirm-buttons">
               <button
                 type="button"
                 className="launch-menu-btn launch-menu-btn--danger"
                 onClick={() => {
-                  clearColonySaveFromStorage();
-                  setConfirmNew(false);
-                  onNewGame();
+                  deleteSaveSlot(deleteTarget.slotId);
+                  setDeleteTarget(null);
+                  refreshSlots();
                 }}
               >
-                Start new game
+                Delete save
               </button>
               <button
                 type="button"
                 className="launch-menu-btn launch-menu-btn--neutral"
                 onClick={() => {
-                  setConfirmNew(false);
+                  setDeleteTarget(null);
                 }}
               >
                 Cancel

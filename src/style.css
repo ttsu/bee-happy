@@ -723,6 +723,104 @@ body:not(.bee-happy-game-started) #game-canvas {
   text-align: center;
 }
 
+.launch-menu-card--wide {
+  width: min(440px, 100%);
+}
+
+.launch-save-section {
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.launch-save-heading {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #95a5a6;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.launch-save-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: min(40vh, 280px);
+  overflow-y: auto;
+}
+
+.launch-save-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.launch-save-resume {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 12px 14px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  background: #2471a3;
+  color: #ecf0f1;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.launch-save-resume:hover {
+  background: #2e86c1;
+}
+
+.launch-save-resume:active {
+  transform: scale(0.99);
+}
+
+.launch-save-label {
+  width: 100%;
+}
+
+.launch-save-meta {
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.launch-save-delete {
+  flex-shrink: 0;
+  padding: 0 12px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  background: #34495e;
+  color: #ecf0f1;
+}
+
+.launch-save-delete:hover {
+  background: #c0392b;
+}
+
+.launch-save-delete:active {
+  transform: scale(0.99);
+}
+
+.launch-menu-empty {
+  margin: 0 0 20px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #95a5a6;
+  text-align: center;
+}
+
 .launch-menu-title {
   margin: 0 0 8px;
   font-size: 28px;
