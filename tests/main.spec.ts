@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { CURRENT_RELEASE_ID } from "../src/changelog/player-changelog";
 
 const LAST_SEEN_RELEASE_KEY = "bee-happy-last-seen-release";
 const TUTORIAL_STORAGE_KEY = "bee-happy-tutorial-v1";
@@ -12,7 +13,7 @@ test("HUD loads with Bee Happy title", async ({ page }) => {
     {
       lastKey: LAST_SEEN_RELEASE_KEY,
       tutKey: TUTORIAL_STORAGE_KEY,
-      lastVal: "0.1.0",
+      lastVal: CURRENT_RELEASE_ID,
     },
   );
   await page.goto("http://localhost:4173/");
@@ -52,7 +53,7 @@ test("Tutorial appears on first new game", async ({ page }) => {
     {
       lastKey: LAST_SEEN_RELEASE_KEY,
       tutKey: TUTORIAL_STORAGE_KEY,
-      lastVal: "0.1.0",
+      lastVal: CURRENT_RELEASE_ID,
     },
   );
   await page.goto("http://localhost:4173/");
