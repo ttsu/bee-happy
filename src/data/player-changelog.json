@@ -1,7 +1,14 @@
 {
-  "currentReleaseId": "0.7.0",
-  "asOfCommit": "a54dea3",
+  "currentReleaseId": "0.8.0",
+  "asOfCommit": "062feaf",
   "releases": [
+    {
+      "id": "0.8.0",
+      "date": "2026-03-30",
+      "items": [
+        "Unhappy bee thought bubbles now show the ‼️ reliably; they could look empty before."
+      ]
+    },
     {
       "id": "0.7.0",
       "date": "2026-03-31",
