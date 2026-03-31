@@ -1,12 +1,18 @@
 {
-  "currentReleaseId": "0.9.0",
-  "asOfCommit": "f24e0ab",
+  "currentReleaseId": "0.10.0",
+  "asOfCommit": "1c45dfc",
   "releases": [
+    {
+      "id": "0.10.0",
+      "date": "2026-03-31",
+      "items": [
+        "You can keep several colony saves in this browser: pick one to continue, delete saves you do not need, or start a new game for another slot (new colonies appear in the list after the first autosave)."
+      ]
+    },
     {
       "id": "0.9.0",
       "date": "2026-03-31",
       "items": [
-        "You can keep several colony saves in this browser: pick one to continue, delete ones you do not need, or start a new game for another slot.",
         "Bees moving between hive levels pause briefly at the junction with wing-flap animation and a subtle size pulse before they step onto the next comb."
       ]
     },
