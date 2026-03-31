@@ -12,11 +12,13 @@ import type { BeeRole } from "../colony/ecs/components/colony-components";
 import {
   BeeAgeComponent,
   BeeCarryComponent,
+  BeeLevelComponent,
   JobComponent,
   BeeNeedsComponent,
   BeeRoleComponent,
   BeeWorkComponent,
 } from "../colony/ecs/components/colony-components";
+import { COLONY } from "../colony/constants";
 import { getWorkerVisualScale } from "../colony/worker-lifecycle";
 import { beeSpriteSheet } from "../resources";
 
@@ -73,19 +75,39 @@ export class BeeActor extends Actor {
     this.lastPos.x = this.pos.x;
     this.lastPos.y = this.pos.y;
 
-    const flying = this.isForageFlight();
-    if (flying === this.usingWingFlap) {
-      return;
+    const flying = this.isForageFlight() || this.isVerticalLevelTransition();
+    if (flying !== this.usingWingFlap) {
+      this.usingWingFlap = flying;
+      this.graphics.use(flying ? this.wingFlapAnimation : this.groundedSprite);
     }
-    this.usingWingFlap = flying;
-    this.graphics.use(flying ? this.wingFlapAnimation : this.groundedSprite);
 
+    const vertScale = this.verticalTransitionScaleMultiplier();
     const age = this.get(BeeAgeComponent);
     if (age) {
       const s = getWorkerVisualScale(age.ageMs);
       const b = BeeActor.WORKER_BASE_SCALE;
-      this.scale = vec(b * s, b * s);
+      this.scale = vec(b * s * vertScale, b * s * vertScale);
+    } else {
+      this.scale = vec(0.5 * vertScale, 0.5 * vertScale);
     }
+  }
+
+  private isVerticalLevelTransition(): boolean {
+    return this.get(BeeLevelComponent)?.verticalTransitionTargetLevel != null;
+  }
+
+  /** Smooth bump 1 → 1+peak → 1 over the cross-level hold (sine half-period). */
+  private verticalTransitionScaleMultiplier(): number {
+    const lvl = this.get(BeeLevelComponent);
+    if (!lvl || lvl.verticalTransitionTargetLevel === null) {
+      return 1;
+    }
+    const t = Math.min(
+      1,
+      lvl.verticalTransitionElapsedMs / COLONY.beeLevelTransitionMs,
+    );
+    const peak = COLONY.beeLevelTransitionZoomPeak;
+    return 1 + Math.sin(t * Math.PI) * peak;
   }
 
   private isForageFlight(): boolean {
