@@ -1,7 +1,14 @@
 {
-  "currentReleaseId": "0.10.0",
-  "asOfCommit": "1c45dfc",
+  "currentReleaseId": "0.11.0",
+  "asOfCommit": "99603a2",
   "releases": [
+    {
+      "id": "0.11.0",
+      "date": "2026-03-31",
+      "items": [
+        "Built cells that still need a cell type get a soft golden outline so unfinished spots are easier to notice."
+      ]
+    },
     {
       "id": "0.10.0",
       "date": "2026-03-31",
