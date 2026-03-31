@@ -10,7 +10,7 @@ import {
 import { worldToHex } from "./grid/hex-grid";
 import { COLONY } from "./colony/constants";
 import { ColonyRuntime } from "./colony/colony-runtime";
-import { applyColonySave, readColonySaveFromStorage } from "./colony/colony-save";
+import { applyColonySave, getColonySaveForSlot } from "./colony/colony-save";
 import { ActiveLevelComponent } from "./colony/ecs/components/colony-components";
 import { setColonyBridge } from "./colony-bridge";
 import { drawBeeJobLabels, drawBeeUnhappyThoughtBubbles } from "./render/bee-job-label";
@@ -20,8 +20,11 @@ import { drawHiveCells } from "./render/cell-renderer-actor";
  * Main hive scene: camera pan vs tap placement, colony simulation, and UI snapshots.
  */
 export class MyLevel extends Scene {
-  /** Set before {@link Engine.start} when the player chose Continue on the launch menu. */
-  static loadSaveOnStart = false;
+  /**
+   * When set, {@link onInitialize} loads that slot from local storage.
+   * New games leave this null; the active write slot lives in session storage only until the first save.
+   */
+  static loadSaveSlotId: string | null = null;
 
   readonly colony = new ColonyRuntime();
   private lastPanScreen: { x: number; y: number } | null = null;
@@ -37,7 +40,10 @@ export class MyLevel extends Scene {
   override onInitialize(engine: Engine): void {
     this.backgroundColor = Color.fromHex("#1b2838");
     this.camera.pos = vec(0, 0);
-    const saveData = MyLevel.loadSaveOnStart ? readColonySaveFromStorage() : null;
+    const saveData =
+      MyLevel.loadSaveSlotId != null
+        ? getColonySaveForSlot(MyLevel.loadSaveSlotId)
+        : null;
     const initMode = saveData ? "load" : "new";
     this.colony.initialize(this, engine, { mode: initMode });
     if (saveData) {
