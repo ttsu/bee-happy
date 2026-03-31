@@ -1,7 +1,14 @@
 {
-  "currentReleaseId": "0.8.0",
-  "asOfCommit": "062feaf",
+  "currentReleaseId": "0.9.0",
+  "asOfCommit": "f24e0ab",
   "releases": [
+    {
+      "id": "0.9.0",
+      "date": "2026-03-31",
+      "items": [
+        "Bees moving between hive levels pause briefly at the junction with wing-flap animation and a subtle size pulse before they step onto the next comb."
+      ]
+    },
     {
       "id": "0.8.0",
       "date": "2026-03-30",
