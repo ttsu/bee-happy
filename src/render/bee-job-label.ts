@@ -43,9 +43,13 @@ const UNHAPPY_BUBBLE_RADIUS = 11;
 const UNHAPPY_BUBBLE_TAIL_R = 4;
 const UNHAPPY_BUBBLE_TAIL_POS = vec(-5, -12);
 
+/** Canvas `sans-serif` often has no emoji glyphs; include platform emoji fonts so ‼️ renders. */
+const UNHAPPY_THOUGHT_FONT_FAMILY =
+  'emoji, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+
 const unhappyThoughtFont = new Font({
   size: 11,
-  family: "sans-serif",
+  family: UNHAPPY_THOUGHT_FONT_FAMILY,
   color: Color.fromHex("#1e293b"),
   smoothing: true,
   textAlign: TextAlign.Center,
@@ -73,6 +77,11 @@ const drawUnhappyThoughtBubble = (
 
   ctx.save();
   ctx.translate(cx, cy);
+  // WebGL: sorted draws use z, then renderer priority, then first-renderer index in the
+  // frame. Job labels queue many `ex.image-v2` before these circles, so circles can be
+  // sorted after the bubble text and cover the glyph. Draw the symbol at a higher z.
+  const zBefore = ctx.z;
+  ctx.z = zBefore + 1;
   unhappyThoughtFont.render(ctx, "‼️", unhappyThoughtFont.color, 0, 0);
   ctx.restore();
 };
