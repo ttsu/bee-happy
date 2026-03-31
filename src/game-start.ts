@@ -9,15 +9,16 @@ let started = false;
 
 /**
  * Starts the Excalibur scene after the player picks an option on the launch menu.
+ * @param loadSaveSlotId - When set, that slot is loaded; when null, a new colony is started (session slot is set separately for new games).
  */
-export const startGameFromMenu = (loadSaved: boolean): void => {
+export const startGameFromMenu = (loadSaveSlotId: string | null): void => {
   if (started) {
     return;
   }
   acknowledgeCurrentReleaseIfUnset();
   started = true;
   document.body.classList.add("bee-happy-game-started");
-  MyLevel.loadSaveOnStart = loadSaved;
+  MyLevel.loadSaveSlotId = loadSaveSlotId;
 
   const game = new Engine({
     width: 800,
