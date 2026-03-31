@@ -1,6 +1,10 @@
 import type { World } from "excalibur";
 import { asActor } from "../actor-utils";
-import { BeeWorkComponent, JobComponent } from "./components/colony-components";
+import {
+  BeeLevelComponent,
+  BeeWorkComponent,
+  JobComponent,
+} from "./components/colony-components";
 
 const findActorById = (world: World, id: number) =>
   asActor(world.entities.find((e) => e.id === id));
@@ -18,6 +22,11 @@ export const releaseJobBees = (world: World, job: JobComponent): void => {
       w.pathIndex = 0;
       w.idleWanderTarget = null;
       w.idleWanderPauseRemainingMs = 0;
+    }
+    const lvl = bee?.get(BeeLevelComponent);
+    if (lvl) {
+      lvl.verticalTransitionTargetLevel = null;
+      lvl.verticalTransitionElapsedMs = 0;
     }
   }
   job.reservedBeeIds = [];
@@ -45,6 +54,11 @@ export const releaseBeeFromAllJobs = (world: World, beeId: number): void => {
       w.pathIndex = 0;
       w.idleWanderTarget = null;
       w.idleWanderPauseRemainingMs = 0;
+    }
+    const lvl = bee?.get(BeeLevelComponent);
+    if (lvl) {
+      lvl.verticalTransitionTargetLevel = null;
+      lvl.verticalTransitionElapsedMs = 0;
     }
     if (job.reservedBeeIds.length === 0) {
       job.status = "open";

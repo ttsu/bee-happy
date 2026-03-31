@@ -122,6 +122,20 @@ export class MovementSystem extends System {
     job: JobComponent,
     elapsed: number,
   ): void {
+    const lvl = actor.get(BeeLevelComponent)!;
+    if (lvl.verticalTransitionTargetLevel !== null) {
+      lvl.verticalTransitionElapsedMs += elapsed;
+      if (lvl.verticalTransitionElapsedMs >= COLONY.beeLevelTransitionMs) {
+        lvl.level = lvl.verticalTransitionTargetLevel;
+        lvl.verticalTransitionTargetLevel = null;
+        lvl.verticalTransitionElapsedMs = 0;
+        if (w.pathIndex < job.pathPoints.length - 1) {
+          w.pathIndex += 1;
+        }
+      }
+      return;
+    }
+
     const idx = Math.min(w.pathIndex, job.pathPoints.length - 1);
     const target = job.pathPoints[idx]!;
     const to = target.sub(actor.pos);
@@ -129,19 +143,27 @@ export class MovementSystem extends System {
     const step = COLONY.beeSpeed * elapsed;
     if (dist <= step + 2) {
       actor.pos = target.clone();
-      const lvl = actor.get(BeeLevelComponent)!;
+      const prevLevel = lvl.level;
       const levelAtWaypoint =
         job.pathLevels[idx] ??
         job.pathLevels[job.pathLevels.length - 1] ??
         job.targetLevel;
-      lvl.level = levelAtWaypoint;
-      if (w.pathIndex < job.pathPoints.length - 1) {
-        w.pathIndex += 1;
+      const crossLevel =
+        job.pathLevels.length > 0 &&
+        levelAtWaypoint !== prevLevel &&
+        idx < job.pathLevels.length;
+      if (crossLevel) {
+        lvl.verticalTransitionTargetLevel = levelAtWaypoint;
+        lvl.verticalTransitionElapsedMs = 0;
+      } else {
+        lvl.level = levelAtWaypoint;
+        if (w.pathIndex < job.pathPoints.length - 1) {
+          w.pathIndex += 1;
+        }
       }
     } else {
       actor.pos = actor.pos.add(to.normalize().scale(step));
     }
-    const lvl = actor.get(BeeLevelComponent)!;
     if (job.pathLevels.length === 0) {
       if (lvl.level !== job.targetLevel) {
         lvl.level = job.targetLevel;

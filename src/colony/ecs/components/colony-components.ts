@@ -163,6 +163,13 @@ export class BeeLevelComponent extends Component {
   constructor(public level: number) {
     super();
   }
+  /**
+   * When moving between hive levels, the bee holds at the junction waypoint while
+   * `verticalTransitionElapsedMs` counts up to the cross-level transition duration; then `level`
+   * updates to `verticalTransitionTargetLevel`.
+   */
+  verticalTransitionTargetLevel: number | null = null;
+  verticalTransitionElapsedMs = 0;
 }
 
 export class ActiveLevelComponent extends Component {

@@ -78,6 +78,10 @@ export const COLONY = {
   uiSnapshotMs: 120,
   /** Bee movement speed (world units per ms). */
   beeSpeed: 0.09,
+  /** Cross-hive-level move: wing-flap + zoom duration at the junction hex (ms). */
+  beeLevelTransitionMs: 300,
+  /** Peak extra scale during {@link beeLevelTransitionMs} (multiplier, e.g. 0.06 → up to 1.06×). */
+  beeLevelTransitionZoomPeak: 0.06,
   /**
    * When choosing a self-feed cell across levels, added to horizontal distance per hive level
    * away from the bee (so nearer levels win ties at the same hex).
