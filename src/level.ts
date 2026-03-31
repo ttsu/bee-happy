@@ -13,7 +13,7 @@ import { ColonyRuntime } from "./colony/colony-runtime";
 import { applyColonySave, readColonySaveFromStorage } from "./colony/colony-save";
 import { ActiveLevelComponent } from "./colony/ecs/components/colony-components";
 import { setColonyBridge } from "./colony-bridge";
-import { drawBeeJobLabels } from "./render/bee-job-label";
+import { drawBeeHungerThoughtBubbles, drawBeeJobLabels } from "./render/bee-job-label";
 import { drawHiveCells } from "./render/cell-renderer-actor";
 
 /**
@@ -153,6 +153,7 @@ export class MyLevel extends Scene {
     ctx.resetTransform();
     this.camera.draw(ctx);
     drawBeeJobLabels(ctx, this.colony);
+    drawBeeHungerThoughtBubbles(ctx, this.colony);
     ctx.restore();
   }
 }
