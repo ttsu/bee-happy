@@ -1,5 +1,5 @@
 import { System, SystemPriority, SystemType, type World } from "excalibur";
-import { COLONY } from "../../constants";
+import { getActiveColonyConstants } from "../../colony-active-constants";
 import type { ColonyRuntime } from "../../colony-runtime";
 import {
   CellStateComponent,
@@ -45,6 +45,12 @@ export class SeasonSystem extends System {
     this.lastNectarPurgeCycleIndex = state.lastNectarPurgeCycleIndex;
   }
 
+  /** Resets season tracking when the hive resets after queen succession. */
+  resetForNewColony(): void {
+    this.prevColonyDay = 0;
+    this.lastNectarPurgeCycleIndex = null;
+  }
+
   override update(_elapsed: number): void {
     const time = this.colony.controllerEntity.get(ColonyTimeComponent);
     const yearly = this.colony.controllerEntity.get(YearlyStatsComponent);
@@ -52,7 +58,8 @@ export class SeasonSystem extends System {
       return;
     }
 
-    const msPerBeeDay = COLONY.workerLifespanMs / 50;
+    const colonyConstants = getActiveColonyConstants();
+    const msPerBeeDay = colonyConstants.workerLifespanMs / 50;
     const currentColonyDay = Math.floor(time.colonyElapsedMs / msPerBeeDay) + 1;
 
     const info = getSeasonForColonyDay(currentColonyDay);
@@ -71,9 +78,13 @@ export class SeasonSystem extends System {
         this.prevColonyDay % 60 === 0 && currentColonyDay > this.prevColonyDay;
 
       if (!yearly.isYearReviewOpen && crossedYear) {
-        yearly.remainingBeesAtYearEnd = this.countBees();
-        yearly.isYearReviewOpen = true;
-        this.colony.emitUiSnapshotImmediate();
+        if (yearly.yearNumber === colonyConstants.queenAgeOutYearNumber) {
+          this.colony.triggerMandatorySuccession("queenAgedOut");
+        } else {
+          yearly.remainingBeesAtYearEnd = this.countBees();
+          yearly.isYearReviewOpen = true;
+          this.colony.emitUiSnapshotImmediate();
+        }
       }
     }
 

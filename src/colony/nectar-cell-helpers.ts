@@ -1,4 +1,4 @@
-import { COLONY } from "./constants";
+import { getActiveColonyConstants } from "./colony-active-constants";
 import type { CellStateComponent } from "./ecs/components/colony-components";
 
 const HONEY_EPS = 1e-9;
@@ -6,20 +6,28 @@ const HONEY_EPS = 1e-9;
 /**
  * Whether a nectar cell may receive new nectar: no honey in the cell (nectar and honey do not co‑exist).
  */
-export const nectarCellCanAcceptNectarDeposit = (st: CellStateComponent): boolean =>
-  st.built &&
-  st.cellType === "nectar" &&
-  st.honeyStored <= HONEY_EPS &&
-  st.nectarStored < COLONY.nectarCellCapacity;
+export const nectarCellCanAcceptNectarDeposit = (st: CellStateComponent): boolean => {
+  const cap = getActiveColonyConstants().nectarCellCapacity;
+  return (
+    st.built &&
+    st.cellType === "nectar" &&
+    st.honeyStored <= HONEY_EPS &&
+    st.nectarStored < cap
+  );
+};
 
 /**
  * Full nectar, no honey yet — eligible to queue honey processing.
  */
-export const nectarCellReadyForHoneyProcessing = (st: CellStateComponent): boolean =>
-  st.built &&
-  st.cellType === "nectar" &&
-  st.honeyStored <= HONEY_EPS &&
-  st.nectarStored >= COLONY.nectarCellCapacity;
+export const nectarCellReadyForHoneyProcessing = (st: CellStateComponent): boolean => {
+  const cap = getActiveColonyConstants().nectarCellCapacity;
+  return (
+    st.built &&
+    st.cellType === "nectar" &&
+    st.honeyStored <= HONEY_EPS &&
+    st.nectarStored >= cap
+  );
+};
 
 /**
  * Cell nectar usable for feeding (not while the cell holds honey).

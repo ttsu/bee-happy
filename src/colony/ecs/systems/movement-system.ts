@@ -7,7 +7,10 @@ import {
 } from "../components/colony-components";
 import { COLONY } from "../../constants";
 import type { ColonyRuntime } from "../../colony-runtime";
-import { hexToWorld } from "../../../grid/hex-grid";
+import {
+  advanceBeeVerticalTransition,
+  startLevelTransitionTowardActorIfNeeded,
+} from "../../bee-vertical-move";
 
 /** Returns any ECS entity by id (jobs are Entity, not Actor). */
 const findWorldEntityById = (world: World, id: number) =>
@@ -84,12 +87,17 @@ export class MovementSystem extends System {
           ? findActorById(this.world, job.adultFeedTargetBeeId)
           : undefined;
         if (target) {
+          if (advanceBeeVerticalTransition(actor, elapsed)) {
+            actor.pos = target.pos.clone();
+            continue;
+          }
           const to = target.pos.sub(actor.pos);
           const step = COLONY.beeSpeed * elapsed;
           if (to.size > step + 2) {
             actor.pos = actor.pos.add(to.normalize().scale(step));
           } else {
             actor.pos = target.pos.clone();
+            startLevelTransitionTowardActorIfNeeded(actor, target);
           }
         }
         continue;
@@ -99,12 +107,17 @@ export class MovementSystem extends System {
           ? findActorById(this.world, job.adultFeedTargetBeeId)
           : undefined;
         if (target) {
+          if (advanceBeeVerticalTransition(actor, elapsed)) {
+            actor.pos = target.pos.clone();
+            continue;
+          }
           const to = target.pos.sub(actor.pos);
           const step = COLONY.beeSpeed * elapsed;
           if (to.size > step + 2) {
             actor.pos = actor.pos.add(to.normalize().scale(step));
           } else {
             actor.pos = target.pos.clone();
+            startLevelTransitionTowardActorIfNeeded(actor, target);
           }
         }
         continue;
@@ -163,15 +176,6 @@ export class MovementSystem extends System {
       }
     } else {
       actor.pos = actor.pos.add(to.normalize().scale(step));
-    }
-    if (job.pathLevels.length === 0) {
-      if (lvl.level !== job.targetLevel) {
-        lvl.level = job.targetLevel;
-      }
-      const cellCenter = hexToWorld({ q: job.targetQ, r: job.targetR }, COLONY.hexSize);
-      if (actor.pos.sub(cellCenter).size < COLONY.buildReachPx * 0.4) {
-        lvl.level = job.targetLevel;
-      }
     }
   }
 }

@@ -4,8 +4,8 @@ import type { HexCoord } from "../grid/hex-grid";
 import { hexToWorld, worldToHex } from "../grid/hex-grid";
 import type { HiveCoord } from "../grid/hive-levels";
 import { hiveKey } from "../grid/hive-levels";
-import { findHexPathWorldPoints } from "./pathfinding/hex-path";
-import { COLONY } from "./constants";
+import { findHexPathWorldPointsWithLevels } from "./pathfinding/hex-path";
+import { getActiveColonyConstants } from "./colony-active-constants";
 import type { ColonyRuntime } from "./colony-runtime";
 import {
   BeeCarryComponent,
@@ -64,13 +64,14 @@ const levelHasLarvaeNectarSupply = (colony: ColonyRuntime, level: number): boole
 };
 
 const levelHasLarvaeHoneySupply = (colony: ColonyRuntime, level: number): boolean => {
+  const C = getActiveColonyConstants();
   for (const [, ent] of colony.cellsByKey) {
     const c = ent.get(CellCoordComponent)!;
     const cellSt = ent.get(CellStateComponent)!;
     if (c.level !== level || !cellSt.built || cellSt.cellType !== "nectar") {
       continue;
     }
-    if (nectarCellHasHoneyForFeeding(cellSt, COLONY.larvaeFeedHoneyCost)) {
+    if (nectarCellHasHoneyForFeeding(cellSt, C.larvaeFeedHoneyCost)) {
       return true;
     }
   }
@@ -79,7 +80,7 @@ const levelHasLarvaeHoneySupply = (colony: ColonyRuntime, level: number): boolea
 
 /**
  * Nearest nectar cell for one larvae portion: prefer nectar; otherwise one honey load
- * ({@link COLONY.larvaeFeedHoneyCost} honey units, satisfies up to {@link COLONY.honeyNutrientMultiplier} portions).
+ * (honey units per larvae feed; satisfies multiple nectar portions per colony tuning).
  */
 const findNearestLarvaeNectarOrHoneyPickup = (
   colony: ColonyRuntime,
@@ -87,6 +88,7 @@ const findNearestLarvaeNectarOrHoneyPickup = (
   from: HexCoord,
   larvaeNectarRemaining: number,
 ): { coord: HiveCoord; kind: "nectar" | "honey" } | null => {
+  const C = getActiveColonyConstants();
   if (larvaeNectarRemaining <= 0) {
     return null;
   }
@@ -105,10 +107,7 @@ const findNearestLarvaeNectarOrHoneyPickup = (
       bestNd = d;
       bestN = { q: c.q, r: c.r, level: c.level };
     }
-    if (
-      nectarCellHasHoneyForFeeding(cellSt, COLONY.larvaeFeedHoneyCost) &&
-      d < bestHd
-    ) {
+    if (nectarCellHasHoneyForFeeding(cellSt, C.larvaeFeedHoneyCost) && d < bestHd) {
       bestHd = d;
       bestH = { q: c.q, r: c.r, level: c.level };
     }
@@ -131,15 +130,11 @@ export const canSpawnFeedLarvaeJob = (
   coord: CellCoordComponent,
   st: CellStateComponent,
 ): boolean => {
+  const C = getActiveColonyConstants();
   const from: HexCoord = { q: coord.q, r: coord.r };
   if (st.larvaePollenRemaining > 0) {
     if (
-      findNearestPollenCellWithStock(
-        colony,
-        coord.level,
-        from,
-        COLONY.pollenPerFeedUnit,
-      )
+      findNearestPollenCellWithStock(colony, coord.level, from, C.pollenPerFeedUnit)
     ) {
       return true;
     }
@@ -165,6 +160,7 @@ export const planFeedLarvaeLeg = (
   job: JobComponent,
   bee: Actor,
 ): boolean => {
+  const C = getActiveColonyConstants();
   const broodKey = hiveKey({
     q: job.targetQ,
     r: job.targetR,
@@ -181,7 +177,7 @@ export const planFeedLarvaeLeg = (
 
   const level = job.targetLevel;
   const w = bee.get(BeeWorkComponent)!;
-  const startHex = worldToHex(bee.pos, COLONY.hexSize);
+  const startHex = worldToHex(bee.pos, C.hexSize);
   const start: HiveCoord = {
     q: startHex.q,
     r: startHex.r,
@@ -196,7 +192,7 @@ export const planFeedLarvaeLeg = (
       colony,
       level,
       { q: startHex.q, r: startHex.r },
-      COLONY.pollenPerFeedUnit,
+      C.pollenPerFeedUnit,
     );
     if (!src) {
       return false;
@@ -214,12 +210,14 @@ export const planFeedLarvaeLeg = (
       r: job.feedPickupR,
       level: job.feedPickupLevel,
     };
-    job.pathPoints = findHexPathWorldPoints(
+    const waypoints = findHexPathWorldPointsWithLevels(
       start,
       goal,
-      COLONY.hexSize,
+      C.hexSize,
       colony.builtByLevel(),
     );
+    job.pathPoints = waypoints.map((p) => p.world);
+    job.pathLevels = waypoints.map((p) => p.level);
     w.pathIndex = 0;
     return true;
   };
@@ -253,12 +251,14 @@ export const planFeedLarvaeLeg = (
       r: job.feedPickupR,
       level: job.feedPickupLevel,
     };
-    job.pathPoints = findHexPathWorldPoints(
+    const waypoints = findHexPathWorldPointsWithLevels(
       start,
       goal,
-      COLONY.hexSize,
+      C.hexSize,
       colony.builtByLevel(),
     );
+    job.pathPoints = waypoints.map((p) => p.world);
+    job.pathLevels = waypoints.map((p) => p.level);
     w.pathIndex = 0;
     return true;
   };
@@ -280,8 +280,9 @@ export const planFeedLarvaeDeliverPath = (
   job: JobComponent,
   bee: Actor,
 ): void => {
+  const C = getActiveColonyConstants();
   const w = bee.get(BeeWorkComponent)!;
-  const startHex = worldToHex(bee.pos, COLONY.hexSize);
+  const startHex = worldToHex(bee.pos, C.hexSize);
   const start: HiveCoord = {
     q: startHex.q,
     r: startHex.r,
@@ -294,12 +295,14 @@ export const planFeedLarvaeDeliverPath = (
   };
   job.feedLarvaePhase = "toDeliver";
   job.feedLarvaePhaseTimerMs = 0;
-  job.pathPoints = findHexPathWorldPoints(
+  const waypoints = findHexPathWorldPointsWithLevels(
     start,
     goal,
-    COLONY.hexSize,
+    C.hexSize,
     colony.builtByLevel(),
   );
+  job.pathPoints = waypoints.map((p) => p.world);
+  job.pathLevels = waypoints.map((p) => p.level);
   w.pathIndex = 0;
 };
 
@@ -309,8 +312,9 @@ const refreshPathToPickup = (
   job: JobComponent,
   bee: Actor,
 ): void => {
+  const C = getActiveColonyConstants();
   const w = bee.get(BeeWorkComponent)!;
-  const startHex = worldToHex(bee.pos, COLONY.hexSize);
+  const startHex = worldToHex(bee.pos, C.hexSize);
   const start: HiveCoord = {
     q: startHex.q,
     r: startHex.r,
@@ -321,12 +325,14 @@ const refreshPathToPickup = (
     r: job.feedPickupR,
     level: job.feedPickupLevel,
   };
-  job.pathPoints = findHexPathWorldPoints(
+  const waypoints = findHexPathWorldPointsWithLevels(
     start,
     goal,
-    COLONY.hexSize,
+    C.hexSize,
     colony.builtByLevel(),
   );
+  job.pathPoints = waypoints.map((p) => p.world);
+  job.pathLevels = waypoints.map((p) => p.level);
   w.pathIndex = 0;
 };
 
@@ -344,12 +350,14 @@ export const processFeedLarvaeJobs = (
   onBroodFullyFed: (cellKey: string) => void,
   elapsed: number,
 ): void => {
+  const C = getActiveColonyConstants();
   const releaseAndReopenFeedJob = (job: JobComponent): void => {
     job.feedLarvaePhase = "toPickup";
     job.feedLarvaePhaseTimerMs = 0;
     job.feedCargoKind = "none";
     job.carryPayload = "none";
     job.pathPoints = [];
+    job.pathLevels = [];
     job.status = "open";
     releaseJob(world, job);
   };
@@ -401,15 +409,20 @@ export const processFeedLarvaeJobs = (
 
     const pickupCenter = hexToWorld(
       { q: job.feedPickupQ, r: job.feedPickupR },
-      COLONY.hexSize,
+      C.hexSize,
     );
-    const broodCenter = hexToWorld({ q: job.targetQ, r: job.targetR }, COLONY.hexSize);
-    const atPickup = bee.pos.sub(pickupCenter).size < FEED_PICKUP_REACH_PX;
-    const atBrood = bee.pos.sub(broodCenter).size < FEED_DELIVER_REACH_PX;
+    const broodCenter = hexToWorld({ q: job.targetQ, r: job.targetR }, C.hexSize);
+    const beeLevel = bee.get(BeeLevelComponent)!.level;
+    const atPickup =
+      bee.pos.sub(pickupCenter).size < FEED_PICKUP_REACH_PX &&
+      beeLevel === job.feedPickupLevel;
+    const atBrood =
+      bee.pos.sub(broodCenter).size < FEED_DELIVER_REACH_PX &&
+      beeLevel === job.targetLevel;
 
     if (job.feedLarvaePhase === "toPickup" && atPickup) {
       job.feedLarvaePhase = "collecting";
-      job.feedLarvaePhaseTimerMs = COLONY.feedLarvaeCollectMs;
+      job.feedLarvaePhaseTimerMs = C.feedLarvaeCollectMs;
     }
 
     if (job.feedLarvaePhase === "collecting") {
@@ -431,11 +444,11 @@ export const processFeedLarvaeJobs = (
         });
         const pollenEnt = colony.getCellAt(pk);
         const pollenSt = pollenEnt?.get(CellStateComponent);
-        if (!pollenSt || pollenSt.pollenStored < COLONY.pollenPerFeedUnit) {
+        if (!pollenSt || pollenSt.pollenStored < C.pollenPerFeedUnit) {
           releaseAndReopenFeedJob(job);
           continue;
         }
-        pollenSt.pollenStored -= COLONY.pollenPerFeedUnit;
+        pollenSt.pollenStored -= C.pollenPerFeedUnit;
         job.carryPayload = "pollen";
         bee.get(BeeCarryComponent)!.carry = "pollen";
       } else if (job.feedCargoKind === "nectar") {
@@ -461,12 +474,12 @@ export const processFeedLarvaeJobs = (
         const pickupSt = colony.getCellAt(hk)?.get(CellStateComponent);
         if (
           !pickupSt ||
-          !nectarCellHasHoneyForFeeding(pickupSt, COLONY.larvaeFeedHoneyCost)
+          !nectarCellHasHoneyForFeeding(pickupSt, C.larvaeFeedHoneyCost)
         ) {
           releaseAndReopenFeedJob(job);
           continue;
         }
-        pickupSt.honeyStored -= COLONY.larvaeFeedHoneyCost;
+        pickupSt.honeyStored -= C.larvaeFeedHoneyCost;
         job.carryPayload = "honey";
         bee.get(BeeCarryComponent)!.carry = "honey";
       } else {
@@ -478,7 +491,7 @@ export const processFeedLarvaeJobs = (
 
     if (job.feedLarvaePhase === "toDeliver" && atBrood) {
       job.feedLarvaePhase = "depositing";
-      job.feedLarvaePhaseTimerMs = COLONY.feedLarvaeDepositMs;
+      job.feedLarvaePhaseTimerMs = C.feedLarvaeDepositMs;
     }
 
     if (job.feedLarvaePhase === "depositing") {
@@ -499,7 +512,7 @@ export const processFeedLarvaeJobs = (
       } else if (job.feedCargoKind === "honey") {
         st.larvaeNectarRemaining = Math.max(
           0,
-          st.larvaeNectarRemaining - COLONY.honeyNutrientMultiplier,
+          st.larvaeNectarRemaining - C.honeyNutrientMultiplier,
         );
       }
       job.carryPayload = "none";
@@ -508,7 +521,7 @@ export const processFeedLarvaeJobs = (
 
       if (st.larvaePollenRemaining <= 0 && st.larvaeNectarRemaining <= 0) {
         st.stage = "sealed";
-        st.sealedTimerMs = COLONY.sealedDurationMs;
+        st.sealedTimerMs = C.sealedDurationMs;
         onBroodFullyFed(broodKey);
         job.status = "done";
         releaseJob(world, job);

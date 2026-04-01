@@ -1,6 +1,9 @@
 import { Entity, vec } from "excalibur";
 import type { ColonyRuntime } from "./colony-runtime";
-import { COLONY } from "./constants";
+import {
+  getActiveColonyConstants,
+  refreshActiveColonyConstantsFromMeta,
+} from "./colony-active-constants";
 import { worldToHex } from "../grid/hex-grid";
 import type { HiveCoord } from "../grid/hive-levels";
 import { BeeActor } from "../render/bee-actor";
@@ -15,6 +18,7 @@ import {
   CellCoordComponent,
   CellStateComponent,
   ColonyTimeComponent,
+  HoneyRunComponent,
   JobComponent,
   QueenTimerComponent,
   YearlyStatsComponent,
@@ -24,6 +28,13 @@ import {
   type JobKind,
 } from "./ecs/components/colony-components";
 import type { SeasonSystemSave } from "./ecs/systems/season-system";
+import {
+  defaultMetaProgress,
+  metaProgressSchema,
+  readMetaProgressFromStorage,
+  writeMetaProgressToStorage,
+  type MetaProgressV1,
+} from "./meta/meta-progress";
 
 /** @deprecated Legacy single-save key; migrated into slots on first read of the index. */
 export const SAVE_STORAGE_KEY = "bee-happy-save-v1";
@@ -158,7 +169,24 @@ export type ColonySaveV1 = {
   jobs: { entityId: number; job: JobComponentJson }[];
   /** Stable order: entity id at save time + bee payload. */
   bees: { entityId: number; bee: BeeJson }[];
+  /**
+   * Queen lineage and succession meta (same schema as {@link MetaProgressV1}).
+   * Omitted in older saves; load falls back to legacy meta storage then defaults.
+   */
+  meta?: MetaProgressV1;
 };
+
+/**
+ * Writes lineage meta + recomputes effective colony constants from storage.
+ * Call before {@link ColonyRuntime.initialize} when loading a save so constants match the file.
+ */
+export function syncMetaFromSaveData(data: ColonySaveV1): void {
+  const rawMeta = data.meta ?? readMetaProgressFromStorage();
+  const metaParsed = metaProgressSchema.safeParse(rawMeta);
+  const meta = metaParsed.success ? metaParsed.data : defaultMetaProgress();
+  writeMetaProgressToStorage(meta);
+  refreshActiveColonyConstantsFromMeta();
+}
 
 function cellStateToJson(st: CellStateComponent): CellStateJson {
   return {
@@ -374,6 +402,7 @@ export function serializeColonySave(colony: ColonyRuntime): ColonySaveV1 {
     cells,
     jobs,
     bees,
+    meta: readMetaProgressFromStorage(),
   };
 }
 
@@ -406,6 +435,7 @@ export function applyColonySave(colony: ColonyRuntime, payload: LoadPayload): vo
       Object.assign(new QueenTimerComponent(), data.queenTimer),
       Object.assign(new ColonyTimeComponent(), data.colonyTime),
       Object.assign(new YearlyStatsComponent(), data.yearly),
+      new HoneyRunComponent(),
     ],
   });
   colony.controllerEntity.addTag("colonyController");
@@ -428,7 +458,7 @@ export function applyColonySave(colony: ColonyRuntime, payload: LoadPayload): vo
   const beeWorkOldJobIds: { actor: BeeActor; oldJobId: number | null }[] = [];
   for (const { entityId: oldBeeId, bee: b } of data.bees) {
     const pos = vec(b.pos.x, b.pos.y);
-    const hex = worldToHex(pos, COLONY.hexSize);
+    const hex = worldToHex(pos, getActiveColonyConstants().hexSize);
     const actor = colony.spawnBee(b.role, b.level, hex);
     actor.rotation = b.rotation;
     actor.pos = pos;

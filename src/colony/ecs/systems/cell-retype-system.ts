@@ -1,6 +1,7 @@
 import { System, SystemPriority, SystemType, type World } from "excalibur";
 import { asActor } from "../../actor-utils";
 import {
+  BeeLevelComponent,
   BeeWorkComponent,
   CellStateComponent,
   JobComponent,
@@ -69,10 +70,14 @@ export class CellRetypeSystem extends System {
 
       if (job.retypePhase === "toCell") {
         const w = bee.get(BeeWorkComponent)!;
+        const lvl = bee.get(BeeLevelComponent);
         const atPathEnd =
           job.pathPoints.length > 0 && w.pathIndex >= job.pathPoints.length - 1;
         const atSite =
-          bee.pos.sub(center).size <= COLONY.buildWorkRadiusPx && atPathEnd;
+          bee.pos.sub(center).size <= COLONY.buildWorkRadiusPx &&
+          atPathEnd &&
+          !!lvl &&
+          lvl.level === job.targetLevel;
         if (atSite) {
           job.retypePhase = "clearing";
           job.retypeClearAccumMs = 0;

@@ -9,10 +9,11 @@ import {
   CellStateComponent,
   ColonyTimeComponent,
   JobComponent,
+  HoneyRunComponent,
   YearlyStatsComponent,
 } from "../components/colony-components";
 import { asActor } from "../../actor-utils";
-import { COLONY } from "../../constants";
+import { getActiveColonyConstants } from "../../colony-active-constants";
 import type { ColonyRuntime } from "../../colony-runtime";
 import { hiveKey, type HiveCoord } from "../../../grid/hive-levels";
 import { hexToWorld } from "../../../grid/hex-grid";
@@ -29,6 +30,10 @@ import {
 } from "../../cell-retype-capacity";
 import { releaseJobBees } from "../job-release";
 import { getSeasonForColonyDay } from "../../seasons";
+import {
+  advanceBeeVerticalTransition,
+  startLevelTransitionTowardActorIfNeeded,
+} from "../../bee-vertical-move";
 
 const findEntityById = (world: World, id: number) =>
   asActor(world.entities.find((e) => e.id === id));
@@ -64,8 +69,9 @@ export class EconomySystem extends System {
       return;
     }
 
+    const C = getActiveColonyConstants();
     const time = this.colony.controllerEntity.get(ColonyTimeComponent);
-    const msPerBeeDay = COLONY.workerLifespanMs / 50;
+    const msPerBeeDay = C.workerLifespanMs / 50;
     const currentColonyDay = time
       ? Math.floor(time.colonyElapsedMs / msPerBeeDay) + 1
       : 1;
@@ -154,12 +160,13 @@ export class EconomySystem extends System {
   }
 
   private anyPollenDepositCapacity(): boolean {
+    const C = getActiveColonyConstants();
     for (const [key, e] of this.colony.cellsByKey) {
       const st = e.get(CellStateComponent)!;
       if (
         st.built &&
         st.cellType === "pollen" &&
-        st.pollenStored < COLONY.pollenCellCapacity &&
+        st.pollenStored < C.pollenCellCapacity &&
         !cellBlocksPollenDepositDueToRetype(key, st)
       ) {
         return true;
@@ -186,6 +193,7 @@ export class EconomySystem extends System {
     beeWorldX: number,
     beeWorldY: number,
   ): DepositPick | null {
+    const C = getActiveColonyConstants();
     let best: DepositPick | null = null;
     let bestD = Infinity;
     for (const [cellKey, e] of this.colony.cellsByKey) {
@@ -194,12 +202,12 @@ export class EconomySystem extends System {
       if (
         !st.built ||
         st.cellType !== "pollen" ||
-        st.pollenStored >= COLONY.pollenCellCapacity ||
+        st.pollenStored >= C.pollenCellCapacity ||
         cellBlocksPollenDepositDueToRetype(cellKey, st)
       ) {
         continue;
       }
-      const c = hexToWorld({ q: coord.q, r: coord.r }, COLONY.hexSize);
+      const c = hexToWorld({ q: coord.q, r: coord.r }, C.hexSize);
       const d = Math.hypot(c.x - beeWorldX, c.y - beeWorldY);
       if (d < bestD) {
         bestD = d;
@@ -218,6 +226,7 @@ export class EconomySystem extends System {
     beeWorldX: number,
     beeWorldY: number,
   ): DepositPick | null {
+    const C = getActiveColonyConstants();
     let best: DepositPick | null = null;
     let bestD = Infinity;
     for (const [cellKey, e] of this.colony.cellsByKey) {
@@ -230,7 +239,7 @@ export class EconomySystem extends System {
       ) {
         continue;
       }
-      const c = hexToWorld({ q: coord.q, r: coord.r }, COLONY.hexSize);
+      const c = hexToWorld({ q: coord.q, r: coord.r }, C.hexSize);
       const d = Math.hypot(c.x - beeWorldX, c.y - beeWorldY);
       if (d < bestD) {
         bestD = d;
@@ -246,6 +255,7 @@ export class EconomySystem extends System {
   }
 
   private beginDepositPhase(job: JobComponent, bee: import("excalibur").Actor): void {
+    const C = getActiveColonyConstants();
     const pick =
       job.kind === "foragePollen"
         ? this.findNearestPollenDeposit(bee.pos.x, bee.pos.y)
@@ -254,7 +264,7 @@ export class EconomySystem extends System {
           : null;
     if (!pick) {
       job.foragePhase = "capacityWait";
-      job.forageCapacityPollMs = COLONY.forageCapacityPollIntervalMs;
+      job.forageCapacityPollMs = C.forageCapacityPollIntervalMs;
       job.depositTargetKey = null;
       job.pathPoints = [];
       job.pathLevels = [];
@@ -271,7 +281,7 @@ export class EconomySystem extends System {
     const waypoints = findHexPathWorldPointsWithLevels(
       start,
       goal,
-      COLONY.hexSize,
+      C.hexSize,
       this.colony.builtByLevel(),
     );
     job.pathPoints = waypoints.map((p) => p.world);
@@ -285,6 +295,7 @@ export class EconomySystem extends System {
     job: JobComponent,
     elapsed: number,
   ): void {
+    const C = getActiveColonyConstants();
     const beeId = job.reservedBeeIds[0];
     const bee = beeId ? findEntityById(this.world, beeId) : undefined;
     if (!bee) {
@@ -298,11 +309,11 @@ export class EconomySystem extends System {
     }
 
     if (job.foragePhase === "outbound") {
-      const step = COLONY.beeSpeed * 1.2 * elapsed;
+      const step = C.beeSpeed * 1.2 * elapsed;
       const to = out.sub(bee.pos);
       if (to.size < 12) {
         job.foragePhase = "wait";
-        job.forageWaitMs = COLONY.forageWaitMs;
+        job.forageWaitMs = C.forageWaitMs;
       } else {
         bee.pos = bee.pos.add(to.normalize().scale(step));
       }
@@ -318,7 +329,7 @@ export class EconomySystem extends System {
         this.beginDepositPhase(job, bee);
       }
     } else if (job.foragePhase === "return") {
-      const step = COLONY.beeSpeed * 1.2 * elapsed;
+      const step = C.beeSpeed * 1.2 * elapsed;
       const key = job.depositTargetKey;
       if (key) {
         const cellEnt = this.colony.getCellAt(key);
@@ -329,7 +340,7 @@ export class EconomySystem extends System {
           return;
         }
         const coord = cellEnt.get(CellCoordComponent)!;
-        const dest = hexToWorld({ q: coord.q, r: coord.r }, COLONY.hexSize);
+        const dest = hexToWorld({ q: coord.q, r: coord.r }, C.hexSize);
         const to = dest.sub(bee.pos);
         if (to.size < 18) {
           job.foragePhase = "depositing";
@@ -347,7 +358,7 @@ export class EconomySystem extends System {
       if (job.forageCapacityPollMs > 0) {
         return;
       }
-      job.forageCapacityPollMs = COLONY.forageCapacityPollIntervalMs;
+      job.forageCapacityPollMs = C.forageCapacityPollIntervalMs;
       this.beginDepositPhase(job, bee);
     } else if (job.foragePhase === "depositing") {
       const key = job.depositTargetKey;
@@ -370,27 +381,31 @@ export class EconomySystem extends System {
         }
       }
       const coord = cellEnt.get(CellCoordComponent)!;
-      const dest = hexToWorld({ q: coord.q, r: coord.r }, COLONY.hexSize);
-      const step = COLONY.beeSpeed * 1.2 * elapsed;
+      const beeLvl = bee.get(BeeLevelComponent);
+      if (!beeLvl || beeLvl.level !== coord.level) {
+        return;
+      }
+      const dest = hexToWorld({ q: coord.q, r: coord.r }, C.hexSize);
+      const step = C.beeSpeed * 1.2 * elapsed;
       const to = dest.sub(bee.pos);
       if (to.size < 18) {
         const yearlyStats = this.colony.controllerEntity.get(YearlyStatsComponent);
         if (job.carryPayload === "pollen") {
           const st = cellEnt.get(CellStateComponent)!;
           st.pollenStored = Math.min(
-            COLONY.pollenCellCapacity,
-            st.pollenStored + COLONY.foragePollenDepositAmount,
+            C.pollenCellCapacity,
+            st.pollenStored + C.foragePollenDepositAmount,
           );
           if (yearlyStats) {
-            yearlyStats.pollenCollectedTotal += COLONY.foragePollenDepositAmount;
+            yearlyStats.pollenCollectedTotal += C.foragePollenDepositAmount;
           }
         } else if (job.carryPayload === "nectar") {
           const st = cellEnt.get(CellStateComponent)!;
           if (nectarCellCanAcceptNectarDeposit(st)) {
             const before = st.nectarStored;
             st.nectarStored = Math.min(
-              COLONY.nectarCellCapacity,
-              st.nectarStored + COLONY.forageNectarDepositAmount,
+              C.nectarCellCapacity,
+              st.nectarStored + C.forageNectarDepositAmount,
             );
             if (yearlyStats) {
               yearlyStats.nectarCollectedTotal += st.nectarStored - before;
@@ -413,13 +428,14 @@ export class EconomySystem extends System {
     bee: import("excalibur").Actor,
     elapsed: number,
   ): void {
+    const C = getActiveColonyConstants();
     const out = vec(job.scratchX, job.scratchY);
     if (job.foragePhase === "outbound") {
-      const step = COLONY.beeSpeed * 1.2 * elapsed;
+      const step = C.beeSpeed * 1.2 * elapsed;
       const to = out.sub(bee.pos);
       if (to.size < 12) {
         job.foragePhase = "wait";
-        job.forageWaitMs = COLONY.waterForageMs;
+        job.forageWaitMs = C.waterForageMs;
       } else {
         bee.pos = bee.pos.add(to.normalize().scale(step));
       }
@@ -433,8 +449,7 @@ export class EconomySystem extends System {
         const thirstyActors = this.colony.scene.actors.filter((a) => {
           const needs = a.get(BeeNeedsComponent);
           return (
-            a.id !== bee.id &&
-            (needs ? needs.thirst > COLONY.thirstCareThreshold : false)
+            a.id !== bee.id && (needs ? needs.thirst > C.thirstCareThreshold : false)
           );
         });
         const candidates =
@@ -469,7 +484,7 @@ export class EconomySystem extends System {
         job.adultFeedTargetBeeId = best?.id ?? null;
       }
     } else if (job.foragePhase === "return") {
-      const step = COLONY.beeSpeed * 1.2 * elapsed;
+      const step = C.beeSpeed * 1.2 * elapsed;
       const target = job.adultFeedTargetBeeId
         ? this.colony.scene.actors.find((a) => a.id === job.adultFeedTargetBeeId)
         : undefined;
@@ -483,10 +498,21 @@ export class EconomySystem extends System {
         return;
       }
 
+      if (advanceBeeVerticalTransition(bee, elapsed)) {
+        bee.pos = target.pos.clone();
+        return;
+      }
       const to = target.pos.sub(bee.pos);
       if (to.size < 18) {
+        const wl = bee.get(BeeLevelComponent)!;
+        const tl = target.get(BeeLevelComponent)?.level;
+        if (tl != null && wl.level !== tl) {
+          bee.pos = target.pos.clone();
+          startLevelTransitionTowardActorIfNeeded(bee, target);
+          return;
+        }
         const n = target.get(BeeNeedsComponent)!;
-        n.thirst = Math.max(0, n.thirst - COLONY.thirstRelief);
+        n.thirst = Math.max(0, n.thirst - C.thirstRelief);
         bee.get(BeeCarryComponent)!.carry = "none";
         job.status = "done";
         releaseJob(this.world, job);
@@ -502,6 +528,7 @@ export class EconomySystem extends System {
     job: JobComponent,
     elapsed: number,
   ): void {
+    const C = getActiveColonyConstants();
     const key = hiveKey({
       q: job.targetQ,
       r: job.targetR,
@@ -518,21 +545,26 @@ export class EconomySystem extends System {
       ent.kill();
       return;
     }
-    const center = hexToWorld({ q: job.targetQ, r: job.targetR }, COLONY.hexSize);
+    const center = hexToWorld({ q: job.targetQ, r: job.targetR }, C.hexSize);
     const beeId = job.reservedBeeIds[0];
     const bee = beeId ? findEntityById(this.world, beeId) : undefined;
-    if (!bee || bee.pos.sub(center).size > 50) {
+    const bl = bee?.get(BeeLevelComponent);
+    if (!bee || bee.pos.sub(center).size > 50 || !bl || bl.level !== job.targetLevel) {
       return;
     }
-    const rate = COLONY.honeyProcessRatePerSec * (elapsed / 1000);
+    const rate = C.honeyProcessRatePerSec * (elapsed / 1000);
     st.honeyProcessingProgress += rate;
     if (st.honeyProcessingProgress >= 1) {
-      const convert = Math.min(st.nectarStored, COLONY.nectarCellCapacity);
+      const convert = Math.min(st.nectarStored, C.nectarCellCapacity);
       const yearly = this.colony.controllerEntity.get(YearlyStatsComponent);
       if (yearly) {
         yearly.honeyProcessedTotal += convert;
       }
-      st.honeyStored = Math.min(COLONY.honeyCellCapacity, st.honeyStored + convert);
+      const honeyRun = this.colony.controllerEntity.get(HoneyRunComponent);
+      if (honeyRun) {
+        honeyRun.honeyProducedThisRun += convert;
+      }
+      st.honeyStored = Math.min(C.honeyCellCapacity, st.honeyStored + convert);
       st.nectarStored = 0;
       st.honeyProcessingProgress = 0;
       st.honeyProcessingDirty = false;

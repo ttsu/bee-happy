@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+const successionReasonSchema = z.enum([
+  "hiveExpanded",
+  "queenStarved",
+  "queenAgedOut",
+  "queenDiedOther",
+]);
+
 const seasonSchema = z.enum(["Spring", "Summer", "Fall", "Winter"]);
 
 const yearlyReviewStatsSchema = z.object({
@@ -32,6 +39,16 @@ export const colonyUiSnapshotSchema = z.object({
   yearNumber: z.number(),
   isYearReviewOpen: z.boolean(),
   yearlyReviewStats: yearlyReviewStatsSchema,
+  successionModal: z
+    .object({
+      mandatory: z.boolean(),
+      reason: successionReasonSchema,
+      honeyBudget: z.number(),
+      beesTotal: z.number(),
+      colonyDay: z.number(),
+    })
+    .nullable(),
+  optionalSuccessionAvailable: z.boolean(),
 });
 
 export type ColonyUiSnapshotZ = z.infer<typeof colonyUiSnapshotSchema>;

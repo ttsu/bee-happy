@@ -1,11 +1,12 @@
 import { System, SystemPriority, SystemType, type World } from "excalibur";
 import { asActor } from "../../actor-utils";
 import {
+  BeeLevelComponent,
   BeeWorkComponent,
   CellStateComponent,
   JobComponent,
 } from "../components/colony-components";
-import { COLONY } from "../../constants";
+import { getActiveColonyConstants } from "../../colony-active-constants";
 import type { ColonyRuntime } from "../../colony-runtime";
 import { hiveKey } from "../../../grid/hive-levels";
 import { hexToWorld } from "../../../grid/hex-grid";
@@ -46,6 +47,7 @@ export class BuildSystem extends System {
     if (this.colony.isSimulationPaused()) {
       return;
     }
+    const C = getActiveColonyConstants();
     for (const ent of this.world.entities) {
       const job = ent.get(JobComponent);
       if (!job || job.kind !== "buildCell" || job.status === "done") {
@@ -61,7 +63,7 @@ export class BuildSystem extends System {
         continue;
       }
       const cell = cellEnt.get(CellStateComponent)!;
-      const center = hexToWorld({ q: job.targetQ, r: job.targetR }, COLONY.hexSize);
+      const center = hexToWorld({ q: job.targetQ, r: job.targetR }, C.hexSize);
       let builders = 0;
       for (const id of job.reservedBeeIds) {
         const bee = findEntityById(this.world, id);
@@ -69,16 +71,20 @@ export class BuildSystem extends System {
           continue;
         }
         const w = bee.get(BeeWorkComponent)!;
+        const lvl = bee.get(BeeLevelComponent);
         const atPathEnd =
           job.pathPoints.length > 0 && w.pathIndex >= job.pathPoints.length - 1;
         const atSite =
-          bee.pos.sub(center).size <= COLONY.buildWorkRadiusPx && atPathEnd;
+          bee.pos.sub(center).size <= C.buildWorkRadiusPx &&
+          atPathEnd &&
+          !!lvl &&
+          lvl.level === job.targetLevel;
         if (atSite) {
           builders += 1;
         }
       }
       if (builders > 0) {
-        cell.buildProgress += (elapsed / 1000) * (builders / COLONY.cellBuildTargetSec);
+        cell.buildProgress += (elapsed / 1000) * (builders / C.cellBuildTargetSec);
       }
       if (cell.buildProgress >= 1) {
         cell.built = true;

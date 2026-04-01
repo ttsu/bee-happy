@@ -1,13 +1,14 @@
 import { System, SystemPriority, SystemType, type World } from "excalibur";
 import { asActor } from "../../actor-utils";
 import {
+  BeeLevelComponent,
   BeeWorkComponent,
   CellCoordComponent,
   CellStateComponent,
   JobComponent,
   QueenTimerComponent,
 } from "../components/colony-components";
-import { COLONY } from "../../constants";
+import { getActiveColonyConstants } from "../../colony-active-constants";
 import type { ColonyRuntime } from "../../colony-runtime";
 import { hiveKey } from "../../../grid/hive-levels";
 import { hexToWorld } from "../../../grid/hex-grid";
@@ -90,10 +91,11 @@ export class BroodSystem extends System {
     if (this.colony.isSimulationPaused()) {
       return;
     }
+    const C = getActiveColonyConstants();
     const qt = this.colony.controllerEntity.get(QueenTimerComponent)!;
     qt.layCooldownMs -= elapsed;
     if (qt.layCooldownMs <= 0) {
-      qt.layCooldownMs = COLONY.queenLayIntervalMs;
+      qt.layCooldownMs = C.queenLayIntervalMs;
       for (const [, ent] of this.colony.cellsByKey) {
         const st = ent.get(CellStateComponent)!;
         const coord = ent.get(CellCoordComponent)!;
@@ -113,7 +115,7 @@ export class BroodSystem extends System {
             coord.level,
             1,
           );
-          job.layEggTimerMs = COLONY.queenLayDurationMs;
+          job.layEggTimerMs = C.queenLayDurationMs;
           this.colony.createJob(job);
           break;
         }
@@ -144,7 +146,7 @@ export class BroodSystem extends System {
         ent.kill();
         continue;
       }
-      const center = hexToWorld({ q: job.targetQ, r: job.targetR }, COLONY.hexSize);
+      const center = hexToWorld({ q: job.targetQ, r: job.targetR }, C.hexSize);
       let laid = false;
       for (const id of job.reservedBeeIds) {
         const queen = findEntityById(this.world, id);
@@ -152,20 +154,24 @@ export class BroodSystem extends System {
           continue;
         }
         const w = queen.get(BeeWorkComponent);
+        const ql = queen.get(BeeLevelComponent);
         const atPathEnd =
           !!w && job.pathPoints.length > 0 && w.pathIndex >= job.pathPoints.length - 1;
         const inCell =
-          queen.pos.sub(center).size <= COLONY.buildWorkRadiusPx && atPathEnd;
+          queen.pos.sub(center).size <= C.buildWorkRadiusPx &&
+          atPathEnd &&
+          !!ql &&
+          ql.level === job.targetLevel;
         if (inCell) {
           job.layEggTimerMs -= elapsed;
           if (job.layEggTimerMs <= 0) {
             st.stage = "egg";
-            st.eggTimerMs = COLONY.eggDurationMs;
+            st.eggTimerMs = C.eggDurationMs;
             laid = true;
             break;
           }
         } else {
-          job.layEggTimerMs = COLONY.queenLayDurationMs;
+          job.layEggTimerMs = C.queenLayDurationMs;
         }
       }
       if (!laid) {
@@ -187,8 +193,8 @@ export class BroodSystem extends System {
         st.eggTimerMs -= elapsed;
         if (st.eggTimerMs <= 0) {
           st.stage = "larvae";
-          st.larvaePollenRemaining = COLONY.larvaePollenUnitsNeeded;
-          st.larvaeNectarRemaining = COLONY.larvaeNectarUnitsNeeded;
+          st.larvaePollenRemaining = C.larvaePollenUnitsNeeded;
+          st.larvaeNectarRemaining = C.larvaeNectarUnitsNeeded;
           this.colony.events.emit({ type: "BroodLarvaeReady", cellKey: key });
         }
       } else if (
@@ -213,7 +219,7 @@ export class BroodSystem extends System {
         st.sealedTimerMs -= elapsed;
         if (st.sealedTimerMs <= 0) {
           st.stage = "cleaning";
-          st.cleaningTimerMs = COLONY.cleaningDurationMs;
+          st.cleaningTimerMs = C.cleaningDurationMs;
           this.colony.spawnEmergingWorker(coord.level, { q: coord.q, r: coord.r });
           this.colony.events.emit({ type: "BroodWorkerEmerged", cellKey: key });
           if (!hasOpenJobForCell(this.world, "cleanBrood", key)) {
@@ -229,7 +235,7 @@ export class BroodSystem extends System {
           }
         }
       } else if (st.stage === "cleaning") {
-        const center = hexToWorld({ q: coord.q, r: coord.r }, COLONY.hexSize);
+        const center = hexToWorld({ q: coord.q, r: coord.r }, C.hexSize);
         for (const je of this.world.entities) {
           const job = je.get(JobComponent);
           if (!job || job.kind !== "cleanBrood" || job.status === "done") {
@@ -245,7 +251,13 @@ export class BroodSystem extends System {
           }
           for (const id of job.reservedBeeIds) {
             const bee = findEntityById(this.world, id);
-            if (bee && bee.pos.sub(center).size < 40) {
+            const bl = bee?.get(BeeLevelComponent);
+            if (
+              bee &&
+              bee.pos.sub(center).size < 40 &&
+              bl &&
+              bl.level === coord.level
+            ) {
               st.cleaningTimerMs -= elapsed;
             }
           }

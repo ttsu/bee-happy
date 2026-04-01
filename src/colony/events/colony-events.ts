@@ -1,5 +1,6 @@
 import type { HiveCoord } from "../../grid/hive-levels";
 import type { Season } from "../seasons";
+import type { SuccessionReason } from "../meta/meta-progress";
 
 /** End-of-year summary numbers shown in the review modal. */
 export interface YearlyReviewStats {
@@ -58,6 +59,17 @@ export interface ColonyUiSnapshot {
   readonly isYearReviewOpen: boolean;
   /** Stats for the year that just ended (shown while {@link isYearReviewOpen} is true). */
   readonly yearlyReviewStats: YearlyReviewStats;
+  /** When set, the succession (pupa) modal should be shown. */
+  readonly successionModal: {
+    readonly mandatory: boolean;
+    readonly reason: SuccessionReason;
+    /** Honey in nectar cells available for succession rerolls / upgrades. */
+    readonly honeyBudget: number;
+    readonly beesTotal: number;
+    readonly colonyDay: number;
+  } | null;
+  /** Player may open optional succession (hive above threshold and queen alive). */
+  readonly optionalSuccessionAvailable: boolean;
 }
 
 type Listener = (e: ColonyEvent) => void;

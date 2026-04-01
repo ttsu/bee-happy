@@ -1,6 +1,7 @@
 import {
   Color,
   Engine,
+  Keys,
   Scene,
   SceneActivationContext,
   vec,
@@ -10,7 +11,15 @@ import {
 import { worldToHex } from "./grid/hex-grid";
 import { COLONY } from "./colony/constants";
 import { ColonyRuntime } from "./colony/colony-runtime";
-import { applyColonySave, getColonySaveForSlot } from "./colony/colony-save";
+import {
+  applyColonySave,
+  getColonySaveForSlot,
+  syncMetaFromSaveData,
+} from "./colony/colony-save";
+import {
+  defaultMetaProgress,
+  writeMetaProgressToStorage,
+} from "./colony/meta/meta-progress";
 import { ActiveLevelComponent } from "./colony/ecs/components/colony-components";
 import { setColonyBridge } from "./colony-bridge";
 import { drawBeeJobLabels, drawBeeUnhappyThoughtBubbles } from "./render/bee-job-label";
@@ -45,6 +54,11 @@ export class MyLevel extends Scene {
         ? getColonySaveForSlot(MyLevel.loadSaveSlotId)
         : null;
     const initMode = saveData ? "load" : "new";
+    if (saveData) {
+      syncMetaFromSaveData(saveData);
+    } else {
+      writeMetaProgressToStorage(defaultMetaProgress());
+    }
     this.colony.initialize(this, engine, { mode: initMode });
     if (saveData) {
       applyColonySave(this.colony, {
@@ -65,6 +79,7 @@ export class MyLevel extends Scene {
 
   override onPreUpdate(engine: Engine, elapsed: number): void {
     void elapsed;
+    this.handleDevSuccessionShortcuts(engine);
     const ctrl = this.colony.controllerEntity.get(ActiveLevelComponent)!;
     if (ctrl.transition !== "idle") {
       this.lastPanScreen = null;
@@ -128,6 +143,30 @@ export class MyLevel extends Scene {
     }
     this.wasDown = down;
     this.colony.updateHoverFromPointer();
+  }
+
+  /**
+   * Dev build only: Ctrl+Shift+1 optional succession, 2–4 mandatory reasons (starved / aged / other).
+   */
+  private handleDevSuccessionShortcuts(engine: Engine): void {
+    if (!import.meta.env.DEV) {
+      return;
+    }
+    const kb = engine.input.keyboard;
+    const ctrl = kb.isHeld(Keys.ControlLeft) || kb.isHeld(Keys.ControlRight);
+    const shift = kb.isHeld(Keys.ShiftLeft) || kb.isHeld(Keys.ShiftRight);
+    if (!ctrl || !shift) {
+      return;
+    }
+    if (kb.wasPressed(Keys.Digit1)) {
+      this.colony.debugOpenSuccessionOptional();
+    } else if (kb.wasPressed(Keys.Digit2)) {
+      this.colony.triggerMandatorySuccession("queenStarved");
+    } else if (kb.wasPressed(Keys.Digit3)) {
+      this.colony.triggerMandatorySuccession("queenAgedOut");
+    } else if (kb.wasPressed(Keys.Digit4)) {
+      this.colony.triggerMandatorySuccession("queenDiedOther");
+    }
   }
 
   override onPostUpdate(engine: Engine, elapsed: number): void {

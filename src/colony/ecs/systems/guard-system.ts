@@ -2,6 +2,7 @@ import { System, SystemPriority, SystemType, type World } from "excalibur";
 import { asActor } from "../../actor-utils";
 import {
   BeeAgeComponent,
+  BeeLevelComponent,
   BeeRoleComponent,
   JobComponent,
 } from "../components/colony-components";
@@ -84,7 +85,12 @@ export class GuardSystem extends System {
       if (!bee) {
         continue;
       }
-      if (bee.pos.sub(center).size > COLONY.selfFeedWorkRadiusPx) {
+      const bl = bee.get(BeeLevelComponent);
+      if (
+        bee.pos.sub(center).size > COLONY.selfFeedWorkRadiusPx ||
+        !bl ||
+        bl.level !== job.targetLevel
+      ) {
         job.guardHiveTimerMs = 0;
         continue;
       }

@@ -193,6 +193,15 @@ export class ColonyTimeComponent extends Component {
  *
  * Counters reset when the player continues after the year-end modal.
  */
+/**
+ * Run-scoped total honey produced from nectar processing (increment when nectar converts to honey).
+ * Used for run summaries. Succession shop spending is based on honey still stored in cells, not this total.
+ * Resets when starting a new colony after succession or new game.
+ */
+export class HoneyRunComponent extends Component {
+  honeyProducedThisRun = 0;
+}
+
 export class YearlyStatsComponent extends Component {
   /** 1-based colony year (increments when the player continues after review). */
   yearNumber = 1;

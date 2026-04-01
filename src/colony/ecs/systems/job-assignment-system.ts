@@ -7,10 +7,7 @@ import {
   BeeWorkComponent,
   JobComponent,
 } from "../components/colony-components";
-import {
-  findHexPathWorldPoints,
-  findHexPathWorldPointsWithLevels,
-} from "../../pathfinding/hex-path";
+import { findHexPathWorldPointsWithLevels } from "../../pathfinding/hex-path";
 import { COLONY } from "../../constants";
 import type { ColonyRuntime } from "../../colony-runtime";
 import type { HiveCoord } from "../../../grid/hive-levels";
@@ -195,6 +192,7 @@ export class JobAssignmentSystem extends System {
           job.kind === "feedQueen"
         ) {
           job.pathPoints = [];
+          job.pathLevels = [];
           continue;
         }
         if (job.kind === "feedLarvae") {
@@ -217,12 +215,14 @@ export class JobAssignmentSystem extends System {
           r: startHex.r,
           level: bee.get(BeeLevelComponent)!.level,
         };
-        job.pathPoints = findHexPathWorldPoints(
+        const waypoints = findHexPathWorldPointsWithLevels(
           start,
           goal,
           COLONY.hexSize,
           this.colony.builtByLevel(),
         );
+        job.pathPoints = waypoints.map((p) => p.world);
+        job.pathLevels = waypoints.map((p) => p.level);
       }
     }
   }

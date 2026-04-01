@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ColonyUiSnapshot } from "../colony/events/colony-events";
 import { serializeColonySave, writeColonySaveToStorage } from "../colony/colony-save";
 import { getColonyBridge } from "../colony-bridge";
@@ -12,6 +12,9 @@ import {
 } from "../colony/ecs/components/colony-components";
 import { useTutorial } from "../tutorial/use-tutorial";
 import { TutorialOverlay } from "./tutorial-overlay";
+import { SuccessionModal } from "./succession-modal";
+import { LineageViewer } from "./lineage-viewer";
+import { readMetaProgressFromStorage } from "../colony/meta/meta-progress";
 
 const defaultSnapshot: ColonyUiSnapshot = {
   beesTotal: 0,
@@ -40,6 +43,8 @@ const defaultSnapshot: ColonyUiSnapshot = {
     remainingBees: 0,
     happyBeeSecondsTotal: 0,
   },
+  successionModal: null,
+  optionalSuccessionAvailable: false,
 };
 
 const LEVELS = [-2, -1, 0, 1, 2] as const;
@@ -139,6 +144,7 @@ const readHudMinimized = (): boolean => {
 
 export const App = () => {
   const [snap, setSnap] = useState<ColonyUiSnapshot>(defaultSnapshot);
+  const [lineageOpen, setLineageOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [hudMinimized, setHudMinimized] = useState(readHudMinimized);
   const [miniLevels, setMiniLevels] = useState<MiniLevel[]>(() =>
@@ -170,6 +176,11 @@ export const App = () => {
       /* quota / private mode */
     }
   };
+
+  const lineageCount = useMemo(
+    () => readMetaProgressFromStorage().lineage.length,
+    [snap],
+  );
 
   /**
    * Writes the full game state and exits the tab when the browser allows it.
@@ -271,6 +282,19 @@ export const App = () => {
         <span className="season-day-divider" aria-hidden />
         <span>Day {seasonInfo.seasonDayOneBased}</span>
       </div>
+      {lineageCount > 0 ? (
+        <button
+          type="button"
+          className="lineage-crown-button"
+          aria-label="View lineage"
+          title="View lineage"
+          onClick={() => {
+            setLineageOpen(true);
+          }}
+        >
+          👑
+        </button>
+      ) : null}
       <button
         type="button"
         className="settings-button"
@@ -306,6 +330,19 @@ export const App = () => {
             </div>
             <div>Level: {snap.activeLevel}</div>
             <div>Year: {snap.yearNumber}</div>
+            {snap.optionalSuccessionAvailable ? (
+              <div className="hud-succession-hint">
+                <button
+                  type="button"
+                  className="hud-ascend-btn"
+                  onClick={() => {
+                    getColonyBridge()?.requestOptionalSuccession();
+                  }}
+                >
+                  Ascend — new queen
+                </button>
+              </div>
+            ) : null}
           </div>
         </button>
       </div>
@@ -541,6 +578,16 @@ export const App = () => {
           </div>
         </div>
       ) : null}
+      {snap.successionModal ? (
+        <SuccessionModal snap={snap} onPersist={persistFullSave} />
+      ) : null}
+      {lineageOpen ? (
+        <LineageViewer
+          onClose={() => {
+            setLineageOpen(false);
+          }}
+        />
+      ) : null}
       {isSettingsOpen ? (
         <div
           className="settings-backdrop"
@@ -553,6 +600,16 @@ export const App = () => {
               Settings
             </h2>
             <div className="settings-buttons">
+              <button
+                type="button"
+                className="settings-action-btn settings-action-btn--neutral"
+                onClick={() => {
+                  setLineageOpen(true);
+                  setIsSettingsOpen(false);
+                }}
+              >
+                View lineage
+              </button>
               <button
                 type="button"
                 className="settings-action-btn settings-action-btn--danger"

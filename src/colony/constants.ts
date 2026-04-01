@@ -137,4 +137,13 @@ export const COLONY = {
   retypeRelocateChunkNectar: 2,
   /** Max honey units moved per relocation tick. */
   retypeRelocateChunkHoney: 2,
+  /**
+   * Optional succession: player may start succession when total bees (workers + queen) exceed this.
+   */
+  successionOptionalBeeThreshold: 50,
+  /**
+   * When a calendar year ends, if the current calendar year number equals this value,
+   * mandatory succession runs (queen aged out) instead of the normal year review.
+   */
+  queenAgeOutYearNumber: 3,
 } as const;
