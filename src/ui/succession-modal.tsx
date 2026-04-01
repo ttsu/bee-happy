@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ColonyUiSnapshot } from "../colony/events/colony-events";
-import { getColonyBridge } from "../colony-bridge";
+import { useColonyBridge } from "./colony-bridge-context";
 import { successionShopPrices } from "../data/succession-shop-prices";
 import {
   primaryMagnitudeForTier,
@@ -41,6 +41,7 @@ type Props = {
  * Full-screen succession flow: three pupae, optional honey rerolls / rarity upgrade.
  */
 export const SuccessionModal = ({ snap, onPersist }: Props) => {
+  const colony = useColonyBridge();
   const modal = snap.successionModal;
   const [options, setOptions] = useState<RolledPupaOption[]>([]);
   const [seed, setSeed] = useState(0);
@@ -124,7 +125,6 @@ export const SuccessionModal = ({ snap, onPersist }: Props) => {
     if (!opt) {
       return;
     }
-    const colony = getColonyBridge();
     if (!colony) {
       return;
     }
@@ -137,13 +137,13 @@ export const SuccessionModal = ({ snap, onPersist }: Props) => {
       recordedAtIso: new Date().toISOString(),
     });
     onPersist();
-  }, [modal, onPersist, options, selected]);
+  }, [colony, modal, onPersist, options, selected]);
 
   const dismiss = useCallback(() => {
     if (!modal?.mandatory) {
-      getColonyBridge()?.dismissSuccessionModal();
+      colony?.dismissSuccessionModal();
     }
-  }, [modal]);
+  }, [colony, modal]);
 
   if (!modal) {
     return null;

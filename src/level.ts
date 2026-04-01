@@ -16,6 +16,7 @@ import {
   getColonySaveForSlot,
   syncMetaFromSaveData,
 } from "./colony/colony-save";
+import { takePendingGameStart } from "./game-session";
 import {
   defaultMetaProgress,
   writeMetaProgressToStorage,
@@ -29,12 +30,6 @@ import { drawHiveCellOverlays, drawHiveCells } from "./render/cell-renderer-acto
  * Main hive scene: camera pan vs tap placement, colony simulation, and UI snapshots.
  */
 export class MyLevel extends Scene {
-  /**
-   * When set, {@link onInitialize} loads that slot from local storage.
-   * New games leave this null; the active write slot lives in session storage only until the first save.
-   */
-  static loadSaveSlotId: string | null = null;
-
   readonly colony = new ColonyRuntime();
   private lastPanScreen: { x: number; y: number } | null = null;
   private dragScreen = 0;
@@ -49,10 +44,9 @@ export class MyLevel extends Scene {
   override onInitialize(engine: Engine): void {
     this.backgroundColor = Color.fromHex("#1b2838");
     this.camera.pos = vec(0, 0);
-    const saveData =
-      MyLevel.loadSaveSlotId != null
-        ? getColonySaveForSlot(MyLevel.loadSaveSlotId)
-        : null;
+    const start = takePendingGameStart();
+    const loadSlotId = start?.loadSaveSlotId ?? null;
+    const saveData = loadSlotId != null ? getColonySaveForSlot(loadSlotId) : null;
     const initMode = saveData ? "load" : "new";
     if (saveData) {
       syncMetaFromSaveData(saveData);

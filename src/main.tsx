@@ -1,4 +1,3 @@
-import { createRoot } from "react-dom/client";
 import {
   ensureActiveSaveSlotForNewGame,
   setActiveSaveSlotSession,
@@ -6,11 +5,10 @@ import {
 import { BootRoot } from "./ui/boot-root";
 import { LaunchMenu } from "./ui/launch-menu";
 import { startGameFromMenu } from "./game-start";
+import { getReactRoot } from "./ui/react-root";
 
-const el = document.getElementById("react-root");
-if (el) {
-  const root = createRoot(el);
-  root.render(
+if (document.getElementById("react-root")) {
+  getReactRoot().render(
     <BootRoot>
       <LaunchMenu
         onNewGame={() => {

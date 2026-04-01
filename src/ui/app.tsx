@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { ColonyRuntime } from "../colony/colony-runtime";
 import type { ColonyUiSnapshot } from "../colony/events/colony-events";
 import { serializeColonySave, writeColonySaveToStorage } from "../colony/colony-save";
-import { getColonyBridge } from "../colony-bridge";
+import { createDefaultColonyUiSnapshot } from "../schemas/colony-snapshot";
+import { useColonyBridge } from "./colony-bridge-context";
 import { BUILD_HASH_SHORT } from "../build-info";
 import { getSeasonDisplayLabel, getSeasonForColonyDay } from "../colony/seasons";
 import {
@@ -15,37 +17,6 @@ import { TutorialOverlay } from "./tutorial-overlay";
 import { SuccessionModal } from "./succession-modal";
 import { LineageViewer } from "./lineage-viewer";
 import { readMetaProgressFromStorage } from "../colony/meta/meta-progress";
-
-const defaultSnapshot: ColonyUiSnapshot = {
-  beesTotal: 0,
-  workers: 0,
-  queens: 0,
-  pollen: 0,
-  honey: 0,
-  nectar: 0,
-  happinessPct: 100,
-  broodOccupied: 0,
-  broodTotal: 0,
-  activeLevel: 0,
-  transitionOverlay: 0,
-  pendingCellTypeKey: null,
-  cellTypeChangeError: null,
-  cellTypeChangeDiscardTarget: null,
-  currentColonyDay: 1,
-  currentColonySeason: "Spring",
-  yearNumber: 1,
-  isYearReviewOpen: false,
-  yearlyReviewStats: {
-    honeyProcessedTotal: 0,
-    nectarCollectedTotal: 0,
-    pollenCollectedTotal: 0,
-    beesHatchedTotal: 0,
-    remainingBees: 0,
-    happyBeeSecondsTotal: 0,
-  },
-  successionModal: null,
-  optionalSuccessionAvailable: false,
-};
 
 const LEVELS = [-2, -1, 0, 1, 2] as const;
 const DRAG_LEVEL_THRESHOLD_PX = 48;
@@ -96,12 +67,11 @@ const colorForMiniCell = (cell: MiniCell): string => {
   return "#ecf0f1";
 };
 
-const readMiniLevelsFromBridge = (): MiniLevel[] => {
+const readMiniLevelsFromBridge = (colony: ColonyRuntime | null): MiniLevel[] => {
   const byLevel = new Map<number, MiniCell[]>();
   for (const level of LEVELS) {
     byLevel.set(level, []);
   }
-  const colony = getColonyBridge();
   if (!colony) {
     return LEVELS.map((level) => ({ level, cells: [] }));
   }
@@ -143,19 +113,21 @@ const readHudMinimized = (): boolean => {
 };
 
 export const App = () => {
-  const [snap, setSnap] = useState<ColonyUiSnapshot>(defaultSnapshot);
+  const colony = useColonyBridge();
+  const [snap, setSnap] = useState<ColonyUiSnapshot>(() =>
+    createDefaultColonyUiSnapshot(),
+  );
   const [lineageOpen, setLineageOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [hudMinimized, setHudMinimized] = useState(readHudMinimized);
   const [miniLevels, setMiniLevels] = useState<MiniLevel[]>(() =>
-    readMiniLevelsFromBridge(),
+    readMiniLevelsFromBridge(null),
   );
   const [dragLevelOffset, setDragLevelOffset] = useState(0);
   const [isStripDragging, setIsStripDragging] = useState(false);
   const [previewActiveLevel, setPreviewActiveLevel] = useState(snap.activeLevel);
   const [targetLevel, setTargetLevel] = useState<number | null>(null);
   const seasonInfo = getSeasonForColonyDay(snap.currentColonyDay);
-  const colony = getColonyBridge();
   const tutorial = useTutorial(colony, snap);
   const activeLevelIndex = LEVELS.indexOf(
     previewActiveLevel as (typeof LEVELS)[number],
@@ -165,8 +137,7 @@ export const App = () => {
 
   const autosaveTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const persistFullSave = () => {
-    const colony = getColonyBridge();
+  const persistFullSave = useCallback(() => {
     if (!colony) {
       return;
     }
@@ -175,7 +146,7 @@ export const App = () => {
     } catch {
       /* quota / private mode */
     }
-  };
+  }, [colony]);
 
   const lineageCount = useMemo(
     () => readMetaProgressFromStorage().lineage.length,
@@ -193,26 +164,24 @@ export const App = () => {
   };
 
   useEffect(() => {
-    const colony = getColonyBridge();
     if (!colony) {
       return;
     }
     const off = colony.events.subscribe((e) => {
       if (e.type === "ColonySnapshot") {
         setSnap(e.snapshot);
-        setMiniLevels(readMiniLevelsFromBridge());
+        setMiniLevels(readMiniLevelsFromBridge(colony));
         if (!isStripDragging) {
           setPreviewActiveLevel(e.snapshot.activeLevel);
         }
       }
     });
     setSnap(colony.getUiSnapshot());
-    setMiniLevels(readMiniLevelsFromBridge());
+    setMiniLevels(readMiniLevelsFromBridge(colony));
     return off;
-  }, [isStripDragging]);
+  }, [colony, isStripDragging]);
 
   useEffect(() => {
-    const colony = getColonyBridge();
     if (!colony) {
       return;
     }
@@ -229,7 +198,7 @@ export const App = () => {
         autosaveTimerRef.current = null;
       }
     };
-  }, []);
+  }, [colony, persistFullSave]);
 
   useEffect(() => {
     const onHide = () => {
@@ -246,7 +215,7 @@ export const App = () => {
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("pagehide", onHide);
     };
-  }, []);
+  }, [persistFullSave]);
 
   useEffect(() => {
     try {
@@ -265,8 +234,8 @@ export const App = () => {
       return;
     }
     const step: 1 | -1 = targetLevel > snap.activeLevel ? 1 : -1;
-    getColonyBridge()?.requestLevelChange(step);
-  }, [snap.activeLevel, targetLevel]);
+    colony?.requestLevelChange(step);
+  }, [colony, snap.activeLevel, targetLevel]);
 
   return (
     <>
@@ -336,7 +305,7 @@ export const App = () => {
                   type="button"
                   className="hud-ascend-btn"
                   onClick={() => {
-                    getColonyBridge()?.requestOptionalSuccession();
+                    colony?.requestOptionalSuccession();
                   }}
                 >
                   Ascend — new queen
@@ -370,7 +339,7 @@ export const App = () => {
                 LEVELS[LEVELS.length - 1],
               );
               if (nextLevel !== levelCursor) {
-                getColonyBridge()?.requestLevelChange(1);
+                colony?.requestLevelChange(1);
                 levelCursor = nextLevel;
                 setPreviewActiveLevel(nextLevel);
               }
@@ -383,7 +352,7 @@ export const App = () => {
                 LEVELS[LEVELS.length - 1],
               );
               if (nextLevel !== levelCursor) {
-                getColonyBridge()?.requestLevelChange(-1);
+                colony?.requestLevelChange(-1);
                 levelCursor = nextLevel;
                 setPreviewActiveLevel(nextLevel);
               }
@@ -475,10 +444,9 @@ export const App = () => {
                 type="button"
                 className="picker-btn"
                 onClick={() => {
-                  const bridge = getColonyBridge();
-                  const k = bridge?.pendingCellTypeKey;
+                  const k = colony?.pendingCellTypeKey;
                   if (k) {
-                    bridge.requestCellTypeChange(k, "brood");
+                    colony.requestCellTypeChange(k, "brood");
                   }
                 }}
               >
@@ -488,10 +456,9 @@ export const App = () => {
                 type="button"
                 className="picker-btn"
                 onClick={() => {
-                  const bridge = getColonyBridge();
-                  const k = bridge?.pendingCellTypeKey;
+                  const k = colony?.pendingCellTypeKey;
                   if (k) {
-                    bridge.requestCellTypeChange(k, "pollen");
+                    colony.requestCellTypeChange(k, "pollen");
                   }
                 }}
               >
@@ -501,10 +468,9 @@ export const App = () => {
                 type="button"
                 className="picker-btn"
                 onClick={() => {
-                  const bridge = getColonyBridge();
-                  const k = bridge?.pendingCellTypeKey;
+                  const k = colony?.pendingCellTypeKey;
                   if (k) {
-                    bridge.requestCellTypeChange(k, "nectar");
+                    colony.requestCellTypeChange(k, "nectar");
                   }
                 }}
               >
@@ -515,7 +481,7 @@ export const App = () => {
               type="button"
               className="picker-cancel"
               onClick={() => {
-                getColonyBridge()?.dismissCellTypePicker();
+                colony?.dismissCellTypePicker();
               }}
             >
               Cancel
@@ -570,7 +536,7 @@ export const App = () => {
               type="button"
               className="year-review-continue"
               onClick={() => {
-                getColonyBridge()?.continueToNextYear();
+                colony?.continueToNextYear();
               }}
             >
               Continue to year {snap.yearNumber + 1}

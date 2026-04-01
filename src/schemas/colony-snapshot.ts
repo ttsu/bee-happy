@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { ColonyUiSnapshot } from "../colony/events/colony-events";
 
 const successionReasonSchema = z.enum([
   "hiveExpanded",
@@ -52,3 +53,38 @@ export const colonyUiSnapshotSchema = z.object({
 });
 
 export type ColonyUiSnapshotZ = z.infer<typeof colonyUiSnapshotSchema>;
+
+/**
+ * Initial HUD snapshot before the colony bridge is ready or when resetting local UI state.
+ * Keep in sync with {@link colonyUiSnapshotSchema} and {@link ColonyUiSnapshot}.
+ */
+export const createDefaultColonyUiSnapshot = (): ColonyUiSnapshot => ({
+  beesTotal: 0,
+  workers: 0,
+  queens: 0,
+  pollen: 0,
+  honey: 0,
+  nectar: 0,
+  happinessPct: 100,
+  broodOccupied: 0,
+  broodTotal: 0,
+  activeLevel: 0,
+  transitionOverlay: 0,
+  pendingCellTypeKey: null,
+  cellTypeChangeError: null,
+  cellTypeChangeDiscardTarget: null,
+  currentColonyDay: 1,
+  currentColonySeason: "Spring",
+  yearNumber: 1,
+  isYearReviewOpen: false,
+  yearlyReviewStats: {
+    honeyProcessedTotal: 0,
+    nectarCollectedTotal: 0,
+    pollenCollectedTotal: 0,
+    beesHatchedTotal: 0,
+    remainingBees: 0,
+    happyBeeSecondsTotal: 0,
+  },
+  successionModal: null,
+  optionalSuccessionAvailable: false,
+});

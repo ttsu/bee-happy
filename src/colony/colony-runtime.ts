@@ -1,19 +1,15 @@
 import type { Engine } from "excalibur";
-import { Entity, vec, type Scene } from "excalibur";
+import { Entity, type Scene } from "excalibur";
 import { hexToWorld, worldToHex } from "../grid/hex-grid";
 import type { HexCoord } from "../grid/hex-grid";
 import { hiveKey } from "../grid/hive-levels";
 import type { HiveCoord } from "../grid/hive-levels";
 import { BeeActor } from "../render/bee-actor";
-import { COLONY } from "./constants";
 import { refreshActiveColonyConstantsFromMeta } from "./colony-active-constants";
 import { ColonyEventBus, type ColonyUiSnapshot } from "./events/colony-events";
 import {
   ActiveLevelComponent,
-  BeeAgeComponent,
   BeeLevelComponent,
-  BeeNeedsComponent,
-  BeeRoleComponent,
   CellCoordComponent,
   CellStateComponent,
   ColonyTimeComponent,
@@ -23,13 +19,17 @@ import {
   YearlyStatsComponent,
   type BeeRole,
 } from "./ecs/components/colony-components";
+import type { LineageEntry, SuccessionReason } from "./meta/meta-progress";
+import { buildColonyUiSnapshot } from "./colony-ui-snapshot";
+import { seedLevelZero as seedLevelZeroColony } from "./colony-seed";
 import {
-  appendLineageEntry,
-  readMetaProgressFromStorage,
-  writeMetaProgressToStorage,
-  type LineageEntry,
-  type SuccessionReason,
-} from "./meta/meta-progress";
+  applySuccessionChoice as applySuccessionChoiceToColony,
+  debugOpenSuccessionOptional as debugOpenSuccessionOptionalImpl,
+  dismissSuccessionModal as dismissSuccessionModalImpl,
+  requestOptionalSuccession as requestOptionalSuccessionImpl,
+  resetWorldAfterSuccession as resetWorldAfterSuccessionImpl,
+  triggerMandatorySuccession as triggerMandatorySuccessionImpl,
+} from "./colony-succession";
 import { getActiveColonyConstants } from "./colony-active-constants";
 import { canRelocateCellContentsForRetype } from "./cell-retype-capacity";
 import { CellRetypeSystem } from "./ecs/systems/cell-retype-system";
@@ -47,7 +47,6 @@ import { WorkerLifecycleSystem } from "./ecs/systems/worker-lifecycle-system";
 import { GuardSystem } from "./ecs/systems/guard-system";
 import type { SeasonSystemSave } from "./ecs/systems/season-system";
 import { SeasonSystem } from "./ecs/systems/season-system";
-import { getSeasonForColonyDay } from "./seasons";
 
 /**
  * Central registry and helpers for hive cells, jobs, and colony controller ECS entities.
@@ -121,7 +120,7 @@ export class ColonyRuntime {
     refreshActiveColonyConstantsFromMeta();
 
     if (mode === "new") {
-      this.seedLevelZero();
+      seedLevelZeroColony(this);
     }
 
     world.add(new LevelSystem(world, this));
@@ -601,89 +600,7 @@ export class ColonyRuntime {
   }
 
   getUiSnapshot(): ColonyUiSnapshot {
-    let workers = 0;
-    let queens = 0;
-    for (const a of this.scene.actors) {
-      const br = a.get(BeeRoleComponent);
-      if (!br) {
-        continue;
-      }
-      if (br.role === "queen") {
-        queens += 1;
-      } else {
-        workers += 1;
-      }
-    }
-    let happy = 0;
-    let totalNeeds = 0;
-    for (const a of this.scene.actors) {
-      const n = a.get(BeeNeedsComponent);
-      if (!n) {
-        continue;
-      }
-      totalNeeds += 1;
-      if (n.hunger <= COLONY.happyHungerMax && n.thirst <= COLONY.happyThirstMax) {
-        happy += 1;
-      }
-    }
-    let broodOccupied = 0;
-    let broodTotal = 0;
-    for (const [, e] of this.cellsByKey) {
-      const st = e.get(CellStateComponent)!;
-      if (st.cellType !== "brood" || !st.built) {
-        continue;
-      }
-      broodTotal += 1;
-      if (
-        st.stage === "egg" ||
-        st.stage === "larvae" ||
-        st.stage === "sealed" ||
-        st.stage === "cleaning"
-      ) {
-        broodOccupied += 1;
-      }
-    }
-    const time = this.controllerEntity.get(ColonyTimeComponent)!;
-    const yearly = this.controllerEntity.get(YearlyStatsComponent)!;
-    const msPerBeeDay = COLONY.workerLifespanMs / 50;
-    const currentColonyDay = Math.floor(time.colonyElapsedMs / msPerBeeDay) + 1;
-    const { season: currentColonySeason } = getSeasonForColonyDay(currentColonyDay);
-    return {
-      beesTotal: workers + queens,
-      workers,
-      queens,
-      pollen: this.sumPollenStored(),
-      honey: this.sumHoneyStored(),
-      nectar: this.sumNectarStored(),
-      happinessPct: Math.min(
-        100,
-        Math.max(0, totalNeeds > 0 ? Math.round((happy / totalNeeds) * 100) : 100),
-      ),
-      broodOccupied,
-      broodTotal,
-      activeLevel: this.activeLevel,
-      transitionOverlay: this.transitionOverlay,
-      pendingCellTypeKey: this.pendingCellTypeKey,
-      cellTypeChangeError: this.cellTypeChangeError,
-      cellTypeChangeDiscardTarget: this.cellTypeChangeDiscardTarget,
-      currentColonyDay,
-      currentColonySeason,
-      yearNumber: yearly.yearNumber,
-      isYearReviewOpen: yearly.isYearReviewOpen,
-      yearlyReviewStats: {
-        honeyProcessedTotal: yearly.honeyProcessedTotal,
-        nectarCollectedTotal: yearly.nectarCollectedTotal,
-        pollenCollectedTotal: yearly.pollenCollectedTotal,
-        beesHatchedTotal: yearly.beesHatchedTotal,
-        remainingBees: yearly.remainingBeesAtYearEnd,
-        happyBeeSecondsTotal: yearly.happyBeeSecondsTotal,
-      },
-      successionModal: this.successionModal,
-      optionalSuccessionAvailable:
-        this.successionModal == null &&
-        queens > 0 &&
-        workers + queens > COLONY.successionOptionalBeeThreshold,
-    };
+    return buildColonyUiSnapshot(this);
   }
 
   requestLevelChange(delta: 1 | -1): void {
@@ -709,172 +626,45 @@ export class ColonyRuntime {
    * Opens optional succession ignoring bee threshold and queen presence (for dev shortcuts / QA).
    */
   debugOpenSuccessionOptional(): void {
-    if (this.successionModal != null) {
-      return;
-    }
-    const snap = this.getUiSnapshot();
-    const honey = this.sumHoneyStored();
-    this.successionModal = {
-      mandatory: false,
-      reason: "hiveExpanded",
-      honeyBudget: honey,
-      beesTotal: snap.beesTotal,
-      colonyDay: snap.currentColonyDay,
-    };
-    this.emitUiSnapshotImmediate();
+    debugOpenSuccessionOptionalImpl(this);
   }
 
   /**
    * Opens the optional succession modal (player-initiated while hive is large).
    */
   requestOptionalSuccession(): void {
-    if (this.successionModal != null) {
-      return;
-    }
-    const snap = this.getUiSnapshot();
-    if (snap.queens < 1 || snap.beesTotal <= COLONY.successionOptionalBeeThreshold) {
-      return;
-    }
-    const honey = this.sumHoneyStored();
-    this.successionModal = {
-      mandatory: false,
-      reason: "hiveExpanded",
-      honeyBudget: honey,
-      beesTotal: snap.beesTotal,
-      colonyDay: snap.currentColonyDay,
-    };
-    this.emitUiSnapshotImmediate();
+    requestOptionalSuccessionImpl(this);
   }
 
   /**
    * Forces mandatory succession (queen death or end of reign).
    */
   triggerMandatorySuccession(reason: SuccessionReason): void {
-    if (this.successionModal != null) {
-      return;
-    }
-    const snap = this.getUiSnapshot();
-    const honey = this.sumHoneyStored();
-    this.successionModal = {
-      mandatory: true,
-      reason,
-      honeyBudget: honey,
-      beesTotal: snap.beesTotal,
-      colonyDay: snap.currentColonyDay,
-    };
-    for (const a of this.scene.actors) {
-      if (a.get(BeeRoleComponent)?.role === "queen") {
-        a.kill();
-        break;
-      }
-    }
-    this.emitUiSnapshotImmediate();
+    triggerMandatorySuccessionImpl(this, reason);
   }
 
   dismissSuccessionModal(): void {
-    if (this.successionModal?.mandatory) {
-      return;
-    }
-    this.successionModal = null;
-    this.emitUiSnapshotImmediate();
+    dismissSuccessionModalImpl(this);
   }
 
   /**
    * Persists lineage meta and resets the colony to a fresh hive (new queen).
    */
   applySuccessionChoice(entry: Omit<LineageEntry, "generationIndex">): void {
-    const meta = readMetaProgressFromStorage();
-    const snap = this.getUiSnapshot();
-    const next = appendLineageEntry(meta, {
-      ...entry,
-      generationIndex: meta.lineage.length,
-    });
-    next.lastSuccessionSummary = {
-      endedAtIso: new Date().toISOString(),
-      colonyDay: snap.currentColonyDay,
-      beesTotal: snap.beesTotal,
-      honeyProducedThisRun:
-        this.controllerEntity.get(HoneyRunComponent)?.honeyProducedThisRun ?? 0,
-      successionReason: entry.successionReason,
-    };
-    writeMetaProgressToStorage(next);
-    this.successionModal = null;
-    this.resetWorldAfterSuccession();
+    applySuccessionChoiceToColony(this, entry);
   }
 
   /**
    * Clears the simulation and re-seeds level 0 (after lineage write).
    */
   resetWorldAfterSuccession(): void {
-    const world = this.scene.world;
-    for (const e of [...world.entities]) {
-      e.kill();
-    }
-    for (const a of [...this.scene.actors]) {
-      a.kill();
-    }
-    this.cellsByKey.clear();
-    this.pendingCellTypeKey = null;
-    this.cellTypeChangeError = null;
-    this.cellTypeChangeDiscardTarget = null;
-    this.hoverHiveKey = null;
-    this.transitionOverlay = 0;
-
-    this.controllerEntity = new Entity({
-      name: "colony-controller",
-      components: [
-        new ActiveLevelComponent(),
-        new QueenTimerComponent(),
-        new ColonyTimeComponent(),
-        new YearlyStatsComponent(),
-        new HoneyRunComponent(),
-      ],
-    });
-    this.controllerEntity.addTag("colonyController");
-    world.add(this.controllerEntity);
-    this.controllerEntity.get(QueenTimerComponent)!.layCooldownMs = 3500;
-
-    this.seasonSystem?.resetForNewColony();
-    this.scene.camera.pos = vec(0, 0);
-    this.seedLevelZero();
-    refreshActiveColonyConstantsFromMeta();
-    this.emitUiSnapshotImmediate();
+    resetWorldAfterSuccessionImpl(this);
   }
 
-  private seedLevelZero(): void {
-    const C = getActiveColonyConstants();
-    const seeds: { coord: HiveCoord; type: "brood" | "pollen" | "nectar" }[] = [
-      { coord: { q: 0, r: 0, level: 0 }, type: "brood" },
-      { coord: { q: 1, r: 0, level: 0 }, type: "pollen" },
-      { coord: { q: -1, r: 0, level: 0 }, type: "nectar" },
-    ];
-    for (const s of seeds) {
-      this.createCellEntity(s.coord, {
-        built: true,
-        stage: "empty",
-        buildProgress: 1,
-        cellType: s.type,
-        ...(s.type === "pollen" ? { pollenStored: C.initialPollen } : {}),
-        ...(s.type === "nectar"
-          ? {
-              nectarStored: Math.min(C.nectarCellCapacity, 8),
-              honeyStored: 0,
-            }
-          : {}),
-      });
-    }
-    this.spawnBee("queen", 0, { q: 0, r: 0 });
-    const msPerDay = C.workerLifespanMs / 50;
-    const spread =
-      COLONY.bootstrapWorkerAgeMaxDays - COLONY.bootstrapWorkerAgeMinDays + 1;
-    for (const hex of [
-      { q: 0, r: 1 },
-      { q: 1, r: -1 },
-    ] as const) {
-      const w = this.spawnBee("worker", 0, hex);
-      const dayRoll =
-        COLONY.bootstrapWorkerAgeMinDays + Math.floor(Math.random() * spread);
-      w.get(BeeAgeComponent)!.ageMs = (dayRoll - 1) * msPerDay;
-    }
+  /**
+   * Resets seasonal state after succession (internal hook for {@link resetWorldAfterSuccession}).
+   */
+  resetSeasonForNewColonyAfterSuccession(): void {
+    this.seasonSystem?.resetForNewColony();
   }
 }

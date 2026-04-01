@@ -2,6 +2,7 @@ import { Color, DisplayMode, Engine, FadeInOut } from "excalibur";
 import { acknowledgeCurrentReleaseIfUnset } from "./changelog/last-seen-release";
 import { startBackgroundMusic } from "./audio/background-music";
 import { gameLoader } from "./resources";
+import { setPendingGameStart } from "./game-session";
 import { MyLevel } from "./level";
 import { mountUi } from "./ui/main-ui";
 
@@ -18,7 +19,7 @@ export const startGameFromMenu = (loadSaveSlotId: string | null): void => {
   acknowledgeCurrentReleaseIfUnset();
   started = true;
   document.body.classList.add("bee-happy-game-started");
-  MyLevel.loadSaveSlotId = loadSaveSlotId;
+  setPendingGameStart({ loadSaveSlotId });
 
   const game = new Engine({
     width: 800,

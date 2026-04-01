@@ -12,9 +12,21 @@ import {
   HoneyRunComponent,
   YearlyStatsComponent,
 } from "../components/colony-components";
-import { asActor } from "../../actor-utils";
 import { getActiveColonyConstants } from "../../colony-active-constants";
 import type { ColonyRuntime } from "../../colony-runtime";
+import {
+  anyNectarDepositCapacity,
+  anyPollenDepositCapacity,
+  findNearestNectarDeposit,
+  findNearestPollenDeposit,
+} from "../../economy/deposit-queries";
+import { hasHoneyJobAtCell } from "../../economy/honey-job-queries";
+import {
+  countOpenJobsByKind,
+  findEntityById,
+  releaseJob,
+} from "../../economy/job-queries";
+import { cancelWinterForageJobs } from "../../economy/winter-forage";
 import { hiveKey, type HiveCoord } from "../../../grid/hive-levels";
 import { hexToWorld } from "../../../grid/hex-grid";
 import { findHexPathWorldPointsWithLevels } from "../../pathfinding/hex-path";
@@ -24,31 +36,11 @@ import {
   nectarCellCanAcceptNectarDeposit,
   nectarCellReadyForHoneyProcessing,
 } from "../../nectar-cell-helpers";
-import {
-  cellBlocksNectarDepositDueToRetype,
-  cellBlocksPollenDepositDueToRetype,
-} from "../../cell-retype-capacity";
-import { releaseJobBees } from "../job-release";
 import { getSeasonForColonyDay } from "../../seasons";
 import {
   advanceBeeVerticalTransition,
   startLevelTransitionTowardActorIfNeeded,
 } from "../../bee-vertical-move";
-
-const findEntityById = (world: World, id: number) =>
-  asActor(world.entities.find((e) => e.id === id));
-
-const releaseJob = (world: World, job: JobComponent): void => {
-  releaseJobBees(world, job);
-};
-
-const countOpenJobsByKind = (world: World, kind: JobComponent["kind"]): number =>
-  world.entities.filter((e) => {
-    const j = e.get(JobComponent);
-    return j && j.kind === kind && j.status !== "done";
-  }).length;
-
-type DepositPick = { key: string; q: number; r: number; level: number };
 
 /**
  * Foraging (pollen/nectar/water), deposit legs, and honey processing.
@@ -78,16 +70,7 @@ export class EconomySystem extends System {
     const { season } = getSeasonForColonyDay(currentColonyDay);
 
     if (season === "Winter") {
-      for (const ent of this.world.entities) {
-        const job = ent.get(JobComponent);
-        if (!job || job.status === "done") {
-          continue;
-        }
-        if (job.kind === "foragePollen" || job.kind === "forageNectar") {
-          releaseJob(this.world, job);
-          ent.kill();
-        }
-      }
+      cancelWinterForageJobs(this.world);
     }
 
     const idleWorkers = this.colony.scene.actors.filter((a) => {
@@ -100,8 +83,8 @@ export class EconomySystem extends System {
       );
     }).length;
     if (idleWorkers > 0 && season !== "Winter") {
-      const pollenHasCapacity = this.anyPollenDepositCapacity();
-      const nectarHasCapacity = this.anyNectarDepositCapacity();
+      const pollenHasCapacity = anyPollenDepositCapacity(this.colony);
+      const nectarHasCapacity = anyNectarDepositCapacity(this.colony);
       let openPollen = countOpenJobsByKind(this.world, "foragePollen");
       let openNectar = countOpenJobsByKind(this.world, "forageNectar");
       const openTotal = openPollen + openNectar;
@@ -159,108 +142,13 @@ export class EconomySystem extends System {
     this.checkFullNectarCells();
   }
 
-  private anyPollenDepositCapacity(): boolean {
-    const C = getActiveColonyConstants();
-    for (const [key, e] of this.colony.cellsByKey) {
-      const st = e.get(CellStateComponent)!;
-      if (
-        st.built &&
-        st.cellType === "pollen" &&
-        st.pollenStored < C.pollenCellCapacity &&
-        !cellBlocksPollenDepositDueToRetype(key, st)
-      ) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private anyNectarDepositCapacity(): boolean {
-    for (const [key, e] of this.colony.cellsByKey) {
-      const st = e.get(CellStateComponent)!;
-      if (
-        st.built &&
-        nectarCellCanAcceptNectarDeposit(st) &&
-        !cellBlocksNectarDepositDueToRetype(key, st)
-      ) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private findNearestPollenDeposit(
-    beeWorldX: number,
-    beeWorldY: number,
-  ): DepositPick | null {
-    const C = getActiveColonyConstants();
-    let best: DepositPick | null = null;
-    let bestD = Infinity;
-    for (const [cellKey, e] of this.colony.cellsByKey) {
-      const coord = e.get(CellCoordComponent)!;
-      const st = e.get(CellStateComponent)!;
-      if (
-        !st.built ||
-        st.cellType !== "pollen" ||
-        st.pollenStored >= C.pollenCellCapacity ||
-        cellBlocksPollenDepositDueToRetype(cellKey, st)
-      ) {
-        continue;
-      }
-      const c = hexToWorld({ q: coord.q, r: coord.r }, C.hexSize);
-      const d = Math.hypot(c.x - beeWorldX, c.y - beeWorldY);
-      if (d < bestD) {
-        bestD = d;
-        best = {
-          key: hiveKey({ q: coord.q, r: coord.r, level: coord.level }),
-          q: coord.q,
-          r: coord.r,
-          level: coord.level,
-        };
-      }
-    }
-    return best;
-  }
-
-  private findNearestNectarDeposit(
-    beeWorldX: number,
-    beeWorldY: number,
-  ): DepositPick | null {
-    const C = getActiveColonyConstants();
-    let best: DepositPick | null = null;
-    let bestD = Infinity;
-    for (const [cellKey, e] of this.colony.cellsByKey) {
-      const coord = e.get(CellCoordComponent)!;
-      const st = e.get(CellStateComponent)!;
-      if (
-        !st.built ||
-        !nectarCellCanAcceptNectarDeposit(st) ||
-        cellBlocksNectarDepositDueToRetype(cellKey, st)
-      ) {
-        continue;
-      }
-      const c = hexToWorld({ q: coord.q, r: coord.r }, C.hexSize);
-      const d = Math.hypot(c.x - beeWorldX, c.y - beeWorldY);
-      if (d < bestD) {
-        bestD = d;
-        best = {
-          key: hiveKey({ q: coord.q, r: coord.r, level: coord.level }),
-          q: coord.q,
-          r: coord.r,
-          level: coord.level,
-        };
-      }
-    }
-    return best;
-  }
-
   private beginDepositPhase(job: JobComponent, bee: import("excalibur").Actor): void {
     const C = getActiveColonyConstants();
     const pick =
       job.kind === "foragePollen"
-        ? this.findNearestPollenDeposit(bee.pos.x, bee.pos.y)
+        ? findNearestPollenDeposit(this.colony, bee.pos.x, bee.pos.y)
         : job.kind === "forageNectar"
-          ? this.findNearestNectarDeposit(bee.pos.x, bee.pos.y)
+          ? findNearestNectarDeposit(this.colony, bee.pos.x, bee.pos.y)
           : null;
     if (!pick) {
       job.foragePhase = "capacityWait";
@@ -581,7 +469,10 @@ export class EconomySystem extends System {
       if (st.pendingCellType != null) {
         continue;
       }
-      if (nectarCellReadyForHoneyProcessing(st) && !this.hasHoneyJobAt(coord)) {
+      if (
+        nectarCellReadyForHoneyProcessing(st) &&
+        !hasHoneyJobAtCell(this.world, coord)
+      ) {
         st.honeyProcessingProgress = 0;
         st.honeyProcessingDirty = false;
         const j = new JobComponent(
@@ -595,29 +486,5 @@ export class EconomySystem extends System {
         this.colony.createJob(j);
       }
     }
-  }
-
-  private hasHoneyJobAt(coord: CellCoordComponent): boolean {
-    const key = hiveKey({
-      q: coord.q,
-      r: coord.r,
-      level: coord.level,
-    });
-    for (const e of this.world.entities) {
-      const j = e.get(JobComponent);
-      if (
-        j &&
-        j.kind === "honeyProcess" &&
-        j.status !== "done" &&
-        hiveKey({
-          q: j.targetQ,
-          r: j.targetR,
-          level: j.targetLevel,
-        }) === key
-      ) {
-        return true;
-      }
-    }
-    return false;
   }
 }
