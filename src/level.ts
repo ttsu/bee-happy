@@ -14,7 +14,7 @@ import { applyColonySave, getColonySaveForSlot } from "./colony/colony-save";
 import { ActiveLevelComponent } from "./colony/ecs/components/colony-components";
 import { setColonyBridge } from "./colony-bridge";
 import { drawBeeJobLabels, drawBeeUnhappyThoughtBubbles } from "./render/bee-job-label";
-import { drawHiveCells } from "./render/cell-renderer-actor";
+import { drawHiveCellOverlays, drawHiveCells } from "./render/cell-renderer-actor";
 
 /**
  * Main hive scene: camera pan vs tap placement, colony simulation, and UI snapshots.
@@ -143,7 +143,8 @@ export class MyLevel extends Scene {
   }
 
   /**
-   * Draw hive cells before actors so bees render on top (scene order: preDraw → world draw → postDraw).
+   * Draw hive cell bodies and eligible-placement hex outlines before actors (scene order:
+   * preDraw → world draw → postDraw).
    */
   override onPreDraw(ctx: ExcaliburGraphicsContext, _elapsed: number): void {
     ctx.save();
@@ -153,11 +154,12 @@ export class MyLevel extends Scene {
     ctx.restore();
   }
 
-  /** Job labels after actors so they appear above bees and cells. */
+  /** Hover hex ring above bees; job labels on top. */
   override onPostDraw(ctx: ExcaliburGraphicsContext, _elapsed: number): void {
     ctx.save();
     ctx.resetTransform();
     this.camera.draw(ctx);
+    drawHiveCellOverlays(ctx, this.colony);
     drawBeeJobLabels(ctx, this.colony);
     drawBeeUnhappyThoughtBubbles(ctx, this.colony);
     ctx.restore();

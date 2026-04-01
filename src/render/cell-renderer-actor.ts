@@ -14,7 +14,7 @@ import {
 import { COLONY } from "../colony/constants";
 import { eligibleFoundationCoordsForLevel } from "../colony/placement";
 import { hiveKey, parseHiveKey, type HiveCoord } from "../grid/hive-levels";
-import { HEX_DIRECTIONS, hexToWorld } from "../grid/hex-grid";
+import { hexToWorld } from "../grid/hex-grid";
 import { cellSpritesImage } from "../resources";
 
 const hexCorners = (cx: number, cy: number, r: number): [number, number][] => {
@@ -145,15 +145,9 @@ const larvaeFeedingProgress = (st: InstanceType<typeof CellStateComponent>): num
   return Math.min(1, Math.max(0, delivered / total));
 };
 
-/** Thin outline when the pointer is over a hive hex (not selected). */
+/** Outline when the pointer is over a hive hex (built cell or eligible empty slot). */
 const HOVER_HEX_OUTLINE = Color.fromRGB(255, 255, 255, 0.72);
 const HOVER_HEX_STROKE_PX = 1.75;
-/** Slightly stronger outline for the cell awaiting type selection. */
-const SELECTED_HEX_OUTLINE = Color.fromHex("#f1c40f");
-const SELECTED_HEX_STROKE_PX = 2.25;
-/** Queued cell type change (brood deferred or storage being emptied). */
-const PENDING_RETYPE_OUTLINE = Color.fromHex("#e67e22");
-const PENDING_RETYPE_STROKE_PX = 2;
 
 /** Subtle stroke for empty hexes where a foundation may be placed. */
 const ELIGIBLE_BUILD_OUTLINE = Color.fromRGB(130, 145, 160, 0.45);
@@ -357,36 +351,6 @@ const drawCellInteriorFromState = (
   drawCellSpriteSheetFrame(ctx, center, 1, 1);
 };
 
-const BUILT_EXTERIOR_OUTLINE = Color.fromHex("#d4a12a");
-const BUILT_EXTERIOR_STROKE_PX = 4;
-const BUILT_EXTERIOR_JOIN_OVERLAP_PX = 2;
-const DIRECTION_TO_EDGE_INDEX: readonly number[] = [5, 4, 3, 2, 1, 0];
-
-/** Slightly extends thick edge strokes so corners overlap without seams. */
-const drawOverlappedEdge = (
-  ctx: ExcaliburGraphicsContext,
-  a: [number, number],
-  b: [number, number],
-  color: Color,
-  strokePx: number,
-): void => {
-  const dx = b[0] - a[0];
-  const dy = b[1] - a[1];
-  const len = Math.hypot(dx, dy);
-  if (len <= 1e-6) {
-    return;
-  }
-  const ux = dx / len;
-  const uy = dy / len;
-  const extend = BUILT_EXTERIOR_JOIN_OVERLAP_PX;
-  ctx.drawLine(
-    vec(a[0] - ux * extend, a[1] - uy * extend),
-    vec(b[0] + ux * extend, b[1] + uy * extend),
-    color,
-    strokePx,
-  );
-};
-
 /**
  * Draws pollen in pollen cells; nectar or per-cell honey in nectar cells (mutually exclusive with nectar).
  */
@@ -445,39 +409,14 @@ const drawHexRing = (
   }
 };
 
-/**
- * Soft outer glow + crisp edge for built cells that still need a type assignment.
- * Layered strokes approximate shadow blur (no canvas shadow on this graphics path).
- */
-const UNASSIGNED_TYPE_GLOW_RGB = { r: 212, g: 168, b: 72 } as const;
-const UNASSIGNED_TYPE_INNER_STROKE_PX = 1.65;
-const drawHexRingShadowBlur = (
-  ctx: ExcaliburGraphicsContext,
-  corners: [number, number][],
-): void => {
-  const { r, g, b } = UNASSIGNED_TYPE_GLOW_RGB;
-  const layers: readonly { strokePx: number; alpha: number }[] = [
-    { strokePx: UNASSIGNED_TYPE_INNER_STROKE_PX + 6.5, alpha: 0.04 },
-    { strokePx: UNASSIGNED_TYPE_INNER_STROKE_PX + 4.5, alpha: 0.055 },
-    { strokePx: UNASSIGNED_TYPE_INNER_STROKE_PX + 3, alpha: 0.075 },
-    { strokePx: UNASSIGNED_TYPE_INNER_STROKE_PX + 1.5, alpha: 0.11 },
-    { strokePx: UNASSIGNED_TYPE_INNER_STROKE_PX, alpha: 0.82 },
-  ];
-  for (const { strokePx, alpha } of layers) {
-    drawHexRing(ctx, corners, Color.fromRGB(r, g, b, alpha), strokePx);
-  }
-};
+/** Hex corner radius for eligible placement outlines and hover (matches former grid geometry). */
+const HEX_CORNER_R_FACTOR = 0.92;
 
 /**
- * Draws hive cells for the active level (called from {@link Scene.onPostDraw}).
+ * Foundation placement eligibility for the active level (shared by cell draw passes).
  */
-export const drawHiveCells = (
-  ctx: ExcaliburGraphicsContext,
-  colony: ColonyRuntime,
-): void => {
+const getActiveLevelEligibleContext = (colony: ColonyRuntime) => {
   const lvl = colony.activeLevel;
-  const S = COLONY.hexSize;
-
   const lookup = {
     has: (k: string) => colony.cellsByKey.has(k),
     getBuilt: (k: string) => colony.cellsByKey.get(k)?.get(CellStateComponent),
@@ -491,9 +430,22 @@ export const drawHiveCells = (
     }
   }
   const eligibleForLevel = eligibleFoundationCoordsForLevel(lvl, lookup, builtCoords);
+  const eligibleKeys = new Set(eligibleForLevel.map((c) => hiveKey(c)));
+  return { lvl, eligibleForLevel, eligibleKeys };
+};
+
+/**
+ * Draws hive cells for the active level (called from {@link Scene.onPreDraw}).
+ */
+export const drawHiveCells = (
+  ctx: ExcaliburGraphicsContext,
+  colony: ColonyRuntime,
+): void => {
+  const S = COLONY.hexSize;
+  const { lvl, eligibleForLevel } = getActiveLevelEligibleContext(colony);
   for (const coord of eligibleForLevel) {
     const w = hexToWorld({ q: coord.q, r: coord.r }, S);
-    const corners = hexCorners(w.x, w.y, S * 0.92);
+    const corners = hexCorners(w.x, w.y, S * HEX_CORNER_R_FACTOR);
     for (let i = 0; i < 6; i++) {
       const a = corners[i]!;
       const b = corners[(i + 1) % 6]!;
@@ -505,11 +457,6 @@ export const drawHiveCells = (
       );
     }
   }
-  const builtCellKeys = new Set(
-    builtCoords.filter((coord) => coord.level === lvl).map((coord) => hiveKey(coord)),
-  );
-
-  const eligibleKeys = new Set(eligibleForLevel.map((c) => hiveKey(c)));
 
   for (const [, ent] of colony.cellsByKey) {
     const c = ent.get(CellCoordComponent)!;
@@ -518,26 +465,6 @@ export const drawHiveCells = (
     }
     const st = ent.get(CellStateComponent)!;
     const w = hexToWorld({ q: c.q, r: c.r }, S);
-    const corners = hexCorners(w.x, w.y, S * 0.92);
-    const stroke = Color.fromHex("#555555");
-    for (let i = 0; i < 6; i++) {
-      const a = corners[i]!;
-      const b = corners[(i + 1) % 6]!;
-      ctx.drawLine(vec(a[0], a[1]), vec(b[0], b[1]), stroke, 1.5);
-    }
-    if (st.built) {
-      for (let i = 0; i < HEX_DIRECTIONS.length; i++) {
-        const dir = HEX_DIRECTIONS[i]!;
-        const neighborKey = hiveKey({ q: c.q + dir.q, r: c.r + dir.r, level: c.level });
-        if (builtCellKeys.has(neighborKey)) {
-          continue;
-        }
-        const edgeIndex = DIRECTION_TO_EDGE_INDEX[i]!;
-        const a = corners[edgeIndex]!;
-        const b = corners[(edgeIndex + 1) % 6]!;
-        drawOverlappedEdge(ctx, a, b, BUILT_EXTERIOR_OUTLINE, BUILT_EXTERIOR_STROKE_PX);
-      }
-    }
     drawCellInteriorFromState(ctx, w, st);
     if (st.built && (st.cellType === "pollen" || st.cellType === "nectar")) {
       drawCellStorageLabels(ctx, w, st);
@@ -552,36 +479,30 @@ export const drawHiveCells = (
         drawBroodGrowthRing(ctx, w, ringR, larvaeFeedingProgress(st), "larvae");
       }
     }
-    if (st.built && st.cellType === "none" && !st.pendingCellType) {
-      drawHexRingShadowBlur(ctx, corners);
-    }
-    if (st.pendingCellType) {
-      drawHexRing(ctx, corners, PENDING_RETYPE_OUTLINE, PENDING_RETYPE_STROKE_PX);
-    }
   }
+};
 
-  const highlightKeys = new Set<string>();
-  if (colony.pendingCellTypeKey) {
-    highlightKeys.add(colony.pendingCellTypeKey);
+/**
+ * Hover ring for the active level. Runs in {@link Scene.onPostDraw} so it draws above bee actors.
+ */
+export const drawHiveCellOverlays = (
+  ctx: ExcaliburGraphicsContext,
+  colony: ColonyRuntime,
+): void => {
+  const key = colony.hoverHiveKey;
+  if (!key) {
+    return;
   }
-  if (colony.hoverHiveKey) {
-    highlightKeys.add(colony.hoverHiveKey);
+  const S = COLONY.hexSize;
+  const { lvl, eligibleKeys } = getActiveLevelEligibleContext(colony);
+  const coord = parseHiveKey(key);
+  if (coord.level !== lvl) {
+    return;
   }
-  for (const key of highlightKeys) {
-    const coord = parseHiveKey(key);
-    if (coord.level !== lvl) {
-      continue;
-    }
-    if (!colony.cellsByKey.has(key) && !eligibleKeys.has(key)) {
-      continue;
-    }
-    const w = hexToWorld({ q: coord.q, r: coord.r }, S);
-    const corners = hexCorners(w.x, w.y, S * 0.92);
-    const isSelected = colony.pendingCellTypeKey === key;
-    if (isSelected) {
-      drawHexRing(ctx, corners, SELECTED_HEX_OUTLINE, SELECTED_HEX_STROKE_PX);
-    } else {
-      drawHexRing(ctx, corners, HOVER_HEX_OUTLINE, HOVER_HEX_STROKE_PX);
-    }
+  if (!colony.cellsByKey.has(key) && !eligibleKeys.has(key)) {
+    return;
   }
+  const w = hexToWorld({ q: coord.q, r: coord.r }, S);
+  const corners = hexCorners(w.x, w.y, S * HEX_CORNER_R_FACTOR);
+  drawHexRing(ctx, corners, HOVER_HEX_OUTLINE, HOVER_HEX_STROKE_PX);
 };
