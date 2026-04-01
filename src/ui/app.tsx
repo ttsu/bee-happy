@@ -17,6 +17,7 @@ import { TutorialOverlay } from "./tutorial-overlay";
 import { SuccessionModal } from "./succession-modal";
 import { LineageViewer } from "./lineage-viewer";
 import { readMetaProgressFromStorage } from "../colony/meta/meta-progress";
+import { CellTypePicker } from "./cell-type-picker";
 
 const LEVELS = [-2, -1, 0, 1, 2] as const;
 const DRAG_LEVEL_THRESHOLD_PX = 48;
@@ -430,65 +431,7 @@ export const App = () => {
           skipTutorial={tutorial.skipTutorial}
         />
       ) : null}
-      {snap.pendingCellTypeKey ? (
-        <div className="picker-backdrop" role="dialog" aria-modal>
-          <div className="picker-card">
-            <p>Choose cell type</p>
-            {snap.cellTypeChangeError ? (
-              <p className="picker-error" role="alert">
-                {snap.cellTypeChangeError}
-              </p>
-            ) : null}
-            <div className="picker-buttons">
-              <button
-                type="button"
-                className="picker-btn"
-                onClick={() => {
-                  const k = colony?.pendingCellTypeKey;
-                  if (k) {
-                    colony.requestCellTypeChange(k, "brood");
-                  }
-                }}
-              >
-                Brood
-              </button>
-              <button
-                type="button"
-                className="picker-btn"
-                onClick={() => {
-                  const k = colony?.pendingCellTypeKey;
-                  if (k) {
-                    colony.requestCellTypeChange(k, "pollen");
-                  }
-                }}
-              >
-                Pollen
-              </button>
-              <button
-                type="button"
-                className="picker-btn"
-                onClick={() => {
-                  const k = colony?.pendingCellTypeKey;
-                  if (k) {
-                    colony.requestCellTypeChange(k, "nectar");
-                  }
-                }}
-              >
-                Nectar / honey
-              </button>
-            </div>
-            <button
-              type="button"
-              className="picker-cancel"
-              onClick={() => {
-                colony?.dismissCellTypePicker();
-              }}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      ) : null}
+      {snap.pendingCellTypeKey ? <CellTypePicker snap={snap} colony={colony} /> : null}
       {snap.isYearReviewOpen ? (
         <div
           className="year-review-backdrop"

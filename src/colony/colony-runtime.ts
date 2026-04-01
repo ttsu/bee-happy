@@ -1,8 +1,8 @@
 import type { Engine } from "excalibur";
-import { Entity, type Scene } from "excalibur";
+import { Entity, vec, type Scene } from "excalibur";
 import { hexToWorld, worldToHex } from "../grid/hex-grid";
 import type { HexCoord } from "../grid/hex-grid";
-import { hiveKey } from "../grid/hive-levels";
+import { hiveKey, parseHiveKey } from "../grid/hive-levels";
 import type { HiveCoord } from "../grid/hive-levels";
 import { BeeActor } from "../render/bee-actor";
 import { refreshActiveColonyConstantsFromMeta } from "./colony-active-constants";
@@ -331,7 +331,65 @@ export class ColonyRuntime {
   }
 
   /**
-   * Handles a tap on the hive: assign type for a finished empty cell, or place a new foundation.
+   * Returns the hive key if tapping this hex should open the cell-type picker (built cell).
+   */
+  getOpenCellTypePickerKeyForTap(coord: HiveCoord): string | null {
+    const active = this.controllerEntity.get(ActiveLevelComponent)!;
+    if (active.transition !== "idle" || coord.level !== active.activeLevel) {
+      return null;
+    }
+    const key = hiveKey(coord);
+    const existing = this.cellsByKey.get(key);
+    if (!existing) {
+      return null;
+    }
+    const st = existing.get(CellStateComponent)!;
+    if (st.built && st.cellType === "none") {
+      return key;
+    }
+    if (st.built && st.cellType !== "none") {
+      return key;
+    }
+    return null;
+  }
+
+  /**
+   * Opens the anchored cell-type picker (tap on a built cell; same pointer-up path as placement).
+   */
+  openCellTypePicker(cellKey: string): void {
+    this.pendingCellTypeKey = cellKey;
+    this.cellTypeChangeError = null;
+    this.cellTypeChangeDiscardTarget = null;
+    this.emitUiSnapshotImmediate();
+  }
+
+  /**
+   * Page-space point → hive key under the active level (for dismiss hit-testing).
+   */
+  hiveKeyUnderPagePoint(pageX: number, pageY: number): string | null {
+    const w = this.engine.screen.pageToWorldCoordinates(vec(pageX, pageY));
+    const h = worldToHex(w, getActiveColonyConstants().hexSize);
+    return hiveKey({ q: h.q, r: h.r, level: this.activeLevel });
+  }
+
+  /**
+   * World center of the pending cell → page coordinates for the picker anchor.
+   */
+  getPendingCellTypeAnchorPage(): { pageX: number; pageY: number } | null {
+    if (!this.pendingCellTypeKey) {
+      return null;
+    }
+    const coord = parseHiveKey(this.pendingCellTypeKey);
+    const w = hexToWorld(
+      { q: coord.q, r: coord.r },
+      getActiveColonyConstants().hexSize,
+    );
+    const page = this.engine.screen.worldToPageCoordinates(vec(w.x, w.y));
+    return { pageX: page.x, pageY: page.y };
+  }
+
+  /**
+   * Handles a tap on the hive: open the cell-type picker on a built cell, or place a new foundation.
    */
   handleTapIntent(coord: HiveCoord): void {
     const active = this.controllerEntity.get(ActiveLevelComponent)!;
@@ -341,24 +399,10 @@ export class ColonyRuntime {
     if (coord.level !== active.activeLevel) {
       return;
     }
-    const key = hiveKey(coord);
-    const existing = this.cellsByKey.get(key);
-    if (existing) {
-      const st = existing.get(CellStateComponent)!;
-      if (st.built && st.cellType === "none") {
-        this.pendingCellTypeKey = key;
-        this.cellTypeChangeError = null;
-        this.cellTypeChangeDiscardTarget = null;
-        this.emitUiSnapshotImmediate();
-        return;
-      }
-      if (st.built && st.cellType !== "none") {
-        this.pendingCellTypeKey = key;
-        this.cellTypeChangeError = null;
-        this.cellTypeChangeDiscardTarget = null;
-        this.emitUiSnapshotImmediate();
-        return;
-      }
+    const pickerKey = this.getOpenCellTypePickerKeyForTap(coord);
+    if (pickerKey != null) {
+      this.openCellTypePicker(pickerKey);
+      return;
     }
     this.handlePlacementIntent(coord);
   }

@@ -43,6 +43,14 @@ export interface ColonyUiSnapshot {
   readonly activeLevel: number;
   readonly transitionOverlay: number;
   readonly pendingCellTypeKey: string | null;
+  /**
+   * Page-space point at the cell center for anchoring the type picker (when
+   * {@link pendingCellTypeKey} is set). Recomputed each snapshot while open.
+   */
+  readonly pendingCellTypeAnchor: {
+    readonly pageX: number;
+    readonly pageY: number;
+  } | null;
   /** Set when {@link ColonyRuntime.requestCellTypeChange} cannot apply (e.g. honey processing). */
   readonly cellTypeChangeError: string | null;
   /**

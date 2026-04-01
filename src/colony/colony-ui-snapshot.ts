@@ -77,6 +77,7 @@ export const buildColonyUiSnapshot = (colony: ColonyRuntime): ColonyUiSnapshot =
     activeLevel: colony.activeLevel,
     transitionOverlay: colony.transitionOverlay,
     pendingCellTypeKey: colony.pendingCellTypeKey,
+    pendingCellTypeAnchor: colony.getPendingCellTypeAnchorPage(),
     cellTypeChangeError: colony.cellTypeChangeError,
     cellTypeChangeDiscardTarget: colony.cellTypeChangeDiscardTarget,
     currentColonyDay,

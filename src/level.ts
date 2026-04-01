@@ -10,6 +10,7 @@ import {
 } from "excalibur";
 import { worldToHex } from "./grid/hex-grid";
 import { COLONY } from "./colony/constants";
+import { getActiveColonyConstants } from "./colony/colony-active-constants";
 import { ColonyRuntime } from "./colony/colony-runtime";
 import {
   applyColonySave,
@@ -89,6 +90,8 @@ export class MyLevel extends Scene {
     const page = primary.lastPagePos;
     const screen = engine.screen.pageToScreenCoordinates(page);
 
+    const hexSize = getActiveColonyConstants().hexSize;
+
     if (down) {
       if (!this.wasDown) {
         this.dragScreen = 0;
@@ -117,6 +120,9 @@ export class MyLevel extends Scene {
     } else {
       if (this.wasDown && this.dragScreen >= COLONY.panTapThresholdPx) {
         this.colony.events.emit({ type: "CameraPanned" });
+        if (this.colony.pendingCellTypeKey) {
+          this.colony.dismissCellTypePicker();
+        }
       }
       if (
         this.wasDown &&
@@ -124,7 +130,7 @@ export class MyLevel extends Scene {
         !pointers.isDragging(0)
       ) {
         const w = engine.screen.pageToWorldCoordinates(primary.lastPagePos);
-        const h = worldToHex(w, COLONY.hexSize);
+        const h = worldToHex(w, hexSize);
         this.colony.handleTapIntent({
           q: h.q,
           r: h.r,
