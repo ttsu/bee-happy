@@ -138,6 +138,7 @@ export const resetWorldAfterSuccession = (colony: ColonyRuntime): void => {
   colony.pendingCellTypeKey = null;
   colony.cellTypeChangeError = null;
   colony.cellTypeChangeDiscardTarget = null;
+  colony.selectedPlacementCellType = "brood";
   colony.hoverHiveKey = null;
   colony.transitionOverlay = 0;
 

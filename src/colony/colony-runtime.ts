@@ -76,6 +76,10 @@ export class ColonyRuntime {
    * discards stored goods instead of relocating (player confirmed).
    */
   cellTypeChangeDiscardTarget: "brood" | "pollen" | "nectar" | null = null;
+  /**
+   * Cell type applied to new foundations from the placement toolbar (tap empty hex).
+   */
+  selectedPlacementCellType: "brood" | "pollen" | "nectar" = "brood";
   /** Hive key under the pointer for hover outline (see {@link updateHoverFromPointer}). */
   hoverHiveKey: string | null = null;
   lastUiEmit = 0;
@@ -427,7 +431,7 @@ export class ColonyRuntime {
       built: false,
       stage: "foundation",
       buildProgress: 0,
-      cellType: "none",
+      cellType: this.selectedPlacementCellType,
     });
     this.events.emit({ type: "CellBuildStarted", cellKey: key });
     const job = new JobComponent(
@@ -635,6 +639,14 @@ export class ColonyRuntime {
     this.pendingCellTypeKey = null;
     this.cellTypeChangeError = null;
     this.cellTypeChangeDiscardTarget = null;
+    this.emitUiSnapshotImmediate();
+  }
+
+  /**
+   * Sets the cell type used for the next foundation placements (bottom toolbar).
+   */
+  setSelectedPlacementCellType(type: "brood" | "pollen" | "nectar"): void {
+    this.selectedPlacementCellType = type;
     this.emitUiSnapshotImmediate();
   }
 

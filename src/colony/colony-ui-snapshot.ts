@@ -80,6 +80,7 @@ export const buildColonyUiSnapshot = (colony: ColonyRuntime): ColonyUiSnapshot =
     pendingCellTypeAnchor: colony.getPendingCellTypeAnchorPage(),
     cellTypeChangeError: colony.cellTypeChangeError,
     cellTypeChangeDiscardTarget: colony.cellTypeChangeDiscardTarget,
+    selectedPlacementCellType: colony.selectedPlacementCellType,
     currentColonyDay,
     currentColonySeason,
     yearNumber: yearly.yearNumber,

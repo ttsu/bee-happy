@@ -141,6 +141,8 @@ export type ColonySaveV1 = {
     cellTypeChangeError: string | null;
     cellTypeChangeDiscardTarget: "brood" | "pollen" | "nectar" | null;
     transitionOverlay: number;
+    /** Omitted in older saves; load defaults to `"brood"`. */
+    selectedPlacementCellType?: "brood" | "pollen" | "nectar";
   };
   cells: { key: string; coord: HiveCoord; state: CellStateJson }[];
   /** Stable order: entity id at save time + job payload (ids remapped on load). */

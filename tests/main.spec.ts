@@ -21,6 +21,10 @@ test("HUD loads with Bee Happy title", async ({ page }) => {
   await page.getByRole("button", { name: /New game/i }).click();
   await expect(page.getByText(/Bees:/)).toBeVisible();
   await expect(page.locator(".season-day-banner").getByText("🌸 Spring")).toBeVisible();
+  await expect(
+    page.getByRole("radiogroup", { name: "Cell type to place" }),
+  ).toBeVisible();
+  await expect(page.getByRole("radio", { name: "Brood cell" })).toBeVisible();
 });
 
 test("What's new appears when last seen release is older than current", async ({

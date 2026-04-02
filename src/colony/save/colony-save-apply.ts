@@ -102,6 +102,7 @@ export function applyColonySave(colony: ColonyRuntime, payload: LoadPayload): vo
   colony.cellTypeChangeError = data.runtime.cellTypeChangeError;
   colony.cellTypeChangeDiscardTarget = data.runtime.cellTypeChangeDiscardTarget;
   colony.transitionOverlay = data.runtime.transitionOverlay;
+  colony.selectedPlacementCellType = data.runtime.selectedPlacementCellType ?? "brood";
 
   for (const e of world.entities) {
     const job = e.get(JobComponent);

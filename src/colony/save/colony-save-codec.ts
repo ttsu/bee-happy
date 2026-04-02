@@ -253,6 +253,7 @@ export function serializeColonySave(colony: ColonyRuntime): ColonySaveV1 {
       cellTypeChangeError: colony.cellTypeChangeError,
       cellTypeChangeDiscardTarget: colony.cellTypeChangeDiscardTarget,
       transitionOverlay: colony.transitionOverlay,
+      selectedPlacementCellType: colony.selectedPlacementCellType,
     },
     cells,
     jobs,

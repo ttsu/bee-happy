@@ -367,6 +367,77 @@ body:not(.bee-happy-game-started) #game-canvas {
   transform: scale(0.96);
 }
 
+.placement-cell-type-toolbar {
+  position: fixed;
+  z-index: 5;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  pointer-events: auto;
+  background: rgba(20, 28, 36, 0.88);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: none;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.35);
+}
+
+.placement-cell-type-toolbar-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(236, 240, 241, 0.75);
+  user-select: none;
+}
+
+.placement-cell-type-toolbar-options {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.placement-cell-type-option {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 2px solid transparent;
+  padding: 6px;
+  margin: 0;
+  cursor: pointer;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    border-color 0.12s ease,
+    background 0.12s ease,
+    transform 0.1s ease;
+}
+
+.placement-cell-type-option.is-selected {
+  border-color: rgba(130, 224, 170, 0.85);
+  background: rgba(130, 224, 170, 0.12);
+  box-shadow: 0 0 0 1px rgba(130, 224, 170, 0.25);
+}
+
+.placement-cell-type-option:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.placement-cell-type-option:active {
+  transform: scale(0.96);
+}
+
 .tutorial-overlay {
   position: fixed;
   inset: 0;

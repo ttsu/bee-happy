@@ -18,6 +18,7 @@ import { SuccessionModal } from "./succession-modal";
 import { LineageViewer } from "./lineage-viewer";
 import { readMetaProgressFromStorage } from "../colony/meta/meta-progress";
 import { CellTypePicker } from "./cell-type-picker";
+import { PlacementCellTypeToolbar } from "./placement-cell-type-toolbar";
 
 const LEVELS = [-2, -1, 0, 1, 2] as const;
 const DRAG_LEVEL_THRESHOLD_PX = 48;
@@ -423,6 +424,13 @@ export const App = () => {
         </div>
         <span className="level-strip-hint">tap or drag ↑↓</span>
       </div>
+      {colony &&
+      !snap.isYearReviewOpen &&
+      !snap.successionModal &&
+      !isSettingsOpen &&
+      !lineageOpen ? (
+        <PlacementCellTypeToolbar snap={snap} colony={colony} />
+      ) : null}
       {tutorial.showTutorial && !snap.isYearReviewOpen ? (
         <TutorialOverlay
           stepIndex={tutorial.stepIndex}

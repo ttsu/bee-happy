@@ -57,6 +57,8 @@ export interface ColonyUiSnapshot {
    * Matches the cell type button the player must press again to confirm discarding stored goods.
    */
   readonly cellTypeChangeDiscardTarget: "brood" | "pollen" | "nectar" | null;
+  /** Cell type used for new foundation placements (bottom toolbar). */
+  readonly selectedPlacementCellType: "brood" | "pollen" | "nectar";
   /** 1-based colony calendar day (same scale as worker bee-days). */
   readonly currentColonyDay: number;
   /** Current season within the 60-day seasonal cycle. */
