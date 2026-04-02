@@ -1,7 +1,14 @@
 {
-  "currentReleaseId": "0.13.0",
-  "asOfCommit": "f5a5b66",
+  "currentReleaseId": "0.14.0",
+  "asOfCommit": "e69b233",
   "releases": [
+    {
+      "id": "0.14.0",
+      "date": "2026-04-02",
+      "items": [
+        "A Build bar at the bottom of the screen lets you pick brood, pollen, or nectar cell types."
+      ]
+    },
     {
       "id": "0.13.0",
       "date": "2026-04-01",

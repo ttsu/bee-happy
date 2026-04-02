@@ -24,7 +24,7 @@ test("HUD loads with Bee Happy title", async ({ page }) => {
   await expect(
     page.getByRole("radiogroup", { name: "Cell type to place" }),
   ).toBeVisible();
-  await expect(page.getByRole("radio", { name: "Brood cell" })).toBeVisible();
+  await expect(page.getByRole("radio", { name: "Brood" })).toBeVisible();
 });
 
 test("What's new appears when last seen release is older than current", async ({
