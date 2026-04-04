@@ -1,7 +1,16 @@
 {
-  "currentReleaseId": "0.15.0",
-  "asOfCommit": "e388bfc",
+  "currentReleaseId": "0.16.0",
+  "asOfCommit": "5163b25",
   "releases": [
+    {
+      "id": "0.16.0",
+      "date": "2026-04-04",
+      "items": [
+        "When a new queen takes over in lineage mode, your hive is no longer wiped: built comb and cells stay, and the colony’s timeline keeps going.",
+        "About half your workers stay with the new queen.",
+        "Honey you spend rerolling or upgrading in the succession shop is removed from nectar cells when you confirm, so the budget matches what leaves your stores."
+      ]
+    },
     {
       "id": "0.15.0",
       "date": "2026-04-04",
