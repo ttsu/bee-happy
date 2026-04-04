@@ -1,7 +1,16 @@
 {
-  "currentReleaseId": "0.14.0",
-  "asOfCommit": "e69b233",
+  "currentReleaseId": "0.15.0",
+  "asOfCommit": "e388bfc",
   "releases": [
+    {
+      "id": "0.15.0",
+      "date": "2026-04-04",
+      "items": [
+        "The launch menu now offers Casual, Normal, and Custom ways to start a colony: Casual skips intruders and the lineage system; Normal keeps them on; Custom lets you set days per season, how many workers you start with, and those toggles before play.",
+        "Your choices are stored with that save; continue slots can show a crown when lineage is on and a marker when intruders are on.",
+        "Older colonies you already had keep the lineage system; only new games use the new defaults."
+      ]
+    },
     {
       "id": "0.14.0",
       "date": "2026-04-02",
