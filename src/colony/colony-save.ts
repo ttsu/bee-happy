@@ -14,6 +14,7 @@ export {
 export type {
   SaveIndexEntry,
   SaveIndexV1,
+  SaveSlotWithRuleFlags,
   Vec2Json,
   CellStateJson,
   JobComponentJson,
@@ -35,6 +36,7 @@ export { applyColonySave } from "./save/colony-save-apply";
 export {
   readSaveIndex,
   listSaveSlotsNewestFirst,
+  listSaveSlotsNewestFirstWithRuleFlags,
   getColonySaveForSlot,
   ensureActiveSaveSlotForNewGame,
   setActiveSaveSlotSession,

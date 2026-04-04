@@ -1,5 +1,6 @@
 import { System, SystemPriority, SystemType, type World } from "excalibur";
 import { getActiveColonyConstants } from "../../colony-active-constants";
+import { daysPerYearFromSeasonLength } from "../../game-settings";
 import type { ColonyRuntime } from "../../colony-runtime";
 import {
   CellStateComponent,
@@ -61,8 +62,10 @@ export class SeasonSystem extends System {
     const colonyConstants = getActiveColonyConstants();
     const msPerBeeDay = colonyConstants.workerLifespanMs / 50;
     const currentColonyDay = Math.floor(time.colonyElapsedMs / msPerBeeDay) + 1;
+    const daysPerSeason = this.colony.daysPerSeason;
+    const daysPerYear = daysPerYearFromSeasonLength(daysPerSeason);
 
-    const info = getSeasonForColonyDay(currentColonyDay);
+    const info = getSeasonForColonyDay(currentColonyDay, daysPerSeason);
 
     if (
       info.season === "Winter" &&
@@ -75,10 +78,13 @@ export class SeasonSystem extends System {
 
     if (this.prevColonyDay !== 0) {
       const crossedYear =
-        this.prevColonyDay % 60 === 0 && currentColonyDay > this.prevColonyDay;
+        this.prevColonyDay % daysPerYear === 0 && currentColonyDay > this.prevColonyDay;
 
       if (!yearly.isYearReviewOpen && crossedYear) {
-        if (yearly.yearNumber === colonyConstants.queenAgeOutYearNumber) {
+        if (
+          this.colony.lineageSystemEnabled &&
+          yearly.yearNumber === colonyConstants.queenAgeOutYearNumber
+        ) {
           this.colony.triggerMandatorySuccession("queenAgedOut");
         } else {
           yearly.remainingBeesAtYearEnd = this.countBees();

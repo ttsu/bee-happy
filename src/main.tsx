@@ -2,6 +2,7 @@ import {
   ensureActiveSaveSlotForNewGame,
   setActiveSaveSlotSession,
 } from "./colony/colony-save";
+import type { NewGameOptions } from "./colony/game-settings";
 import { BootRoot } from "./ui/boot-root";
 import { LaunchMenu } from "./ui/launch-menu";
 import { startGameFromMenu } from "./game-start";
@@ -11,9 +12,9 @@ if (document.getElementById("react-root")) {
   getReactRoot().render(
     <BootRoot>
       <LaunchMenu
-        onNewGame={() => {
+        onStartNewGame={(opts: NewGameOptions) => {
           ensureActiveSaveSlotForNewGame();
-          startGameFromMenu(null);
+          startGameFromMenu(null, opts);
         }}
         onContinue={(slotId) => {
           setActiveSaveSlotSession(slotId);

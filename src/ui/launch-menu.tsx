@@ -1,8 +1,9 @@
 import { useCallback, useState } from "react";
 import {
   deleteSaveSlot,
-  listSaveSlotsNewestFirst,
+  listSaveSlotsNewestFirstWithRuleFlags,
   type SaveIndexEntry,
+  type SaveSlotWithRuleFlags,
 } from "../colony/colony-save";
 import {
   CURRENT_RELEASE_ID,
@@ -13,11 +14,28 @@ import {
   readLastSeenReleaseId,
   writeLastSeenReleaseId,
 } from "../changelog/last-seen-release";
+import {
+  BUILDER_MODE_CASUAL_SETTINGS,
+  NORMAL_MODE_SETTINGS,
+  type NewGameOptions,
+} from "../colony/game-settings";
 import { WhatsNewModal } from "./whats-new-modal";
+import { NewGameOptionsModal } from "./new-game-options-modal";
 
 type Props = {
-  readonly onNewGame: () => void;
+  readonly onStartNewGame: (options: NewGameOptions) => void;
   readonly onContinue: (slotId: string) => void;
+};
+
+const ruleFlagsAriaLabel = (s: SaveSlotWithRuleFlags): string | undefined => {
+  const parts: string[] = [];
+  if (s.lineageSystemEnabled) {
+    parts.push("lineage system on");
+  }
+  if (s.intrudersEnabled) {
+    parts.push("intruders on");
+  }
+  return parts.length > 0 ? `Save options: ${parts.join(", ")}` : undefined;
 };
 
 const formatSavedLabel = (iso: string | undefined): string => {
@@ -41,17 +59,18 @@ const formatSavedLabel = (iso: string | undefined): string => {
 /**
  * First screen: start fresh or pick a saved colony from this browser.
  */
-export const LaunchMenu = ({ onNewGame, onContinue }: Props) => {
-  const [slots, setSlots] = useState<SaveIndexEntry[]>(() =>
-    listSaveSlotsNewestFirst(),
+export const LaunchMenu = ({ onStartNewGame, onContinue }: Props) => {
+  const [slots, setSlots] = useState<SaveSlotWithRuleFlags[]>(() =>
+    listSaveSlotsNewestFirstWithRuleFlags(),
   );
+  const [newGameOptionsOpen, setNewGameOptionsOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<SaveIndexEntry | null>(null);
   const [lastSeenReleaseId, setLastSeenReleaseId] = useState<string | null>(() =>
     readLastSeenReleaseId(),
   );
 
   const refreshSlots = useCallback(() => {
-    setSlots(listSaveSlotsNewestFirst());
+    setSlots(listSaveSlotsNewestFirstWithRuleFlags());
   }, []);
 
   const showWhatsNew =
@@ -91,7 +110,33 @@ export const LaunchMenu = ({ onNewGame, onContinue }: Props) => {
                       onContinue(s.slotId);
                     }}
                   >
-                    <span className="launch-save-label">{s.slotLabel}</span>
+                    <span className="launch-save-resume-top">
+                      <span className="launch-save-label">{s.slotLabel}</span>
+                      {s.lineageSystemEnabled || s.intrudersEnabled ? (
+                        <span
+                          className="launch-save-rule-flags"
+                          aria-label={ruleFlagsAriaLabel(s)}
+                        >
+                          {s.lineageSystemEnabled ? (
+                            <span
+                              className="launch-save-rule-flag launch-save-rule-flag--lineage"
+                              title="Lineage system enabled"
+                              aria-hidden
+                            >
+                              👑
+                            </span>
+                          ) : null}
+                          {s.intrudersEnabled ? (
+                            <span
+                              className="launch-save-rule-flag launch-save-rule-flag--intruders"
+                              title="Intruders enabled"
+                            >
+                              I
+                            </span>
+                          ) : null}
+                        </span>
+                      ) : null}
+                    </span>
                     <span className="launch-save-meta">
                       {formatSavedLabel(s.savedAtIso)}
                     </span>
@@ -118,18 +163,56 @@ export const LaunchMenu = ({ onNewGame, onContinue }: Props) => {
         )}
 
         <div className="launch-menu-actions">
+          <h2 className="launch-new-game-heading">New game</h2>
+          <button
+            type="button"
+            className="launch-menu-btn launch-menu-btn--primary"
+            onClick={() => {
+              onStartNewGame(BUILDER_MODE_CASUAL_SETTINGS);
+            }}
+          >
+            Casual Mode
+            <span className="launch-menu-hint">
+              No intruders or lineage; default season length and workers
+            </span>
+          </button>
           <button
             type="button"
             className="launch-menu-btn launch-menu-btn--neutral"
             onClick={() => {
-              onNewGame();
+              onStartNewGame(NORMAL_MODE_SETTINGS);
             }}
           >
-            New game
-            <span className="launch-menu-hint">Creates a new colony save</span>
+            Normal Mode
+            <span className="launch-menu-hint">
+              Intruders and lineage on; default season length and workers
+            </span>
+          </button>
+          <button
+            type="button"
+            className="launch-menu-btn launch-menu-btn--neutral"
+            onClick={() => {
+              setNewGameOptionsOpen(true);
+            }}
+          >
+            Custom Mode
+            <span className="launch-menu-hint">
+              Choose days per season, workers, and toggles
+            </span>
           </button>
         </div>
       </div>
+      {newGameOptionsOpen ? (
+        <NewGameOptionsModal
+          onCancel={() => {
+            setNewGameOptionsOpen(false);
+          }}
+          onConfirm={(options) => {
+            setNewGameOptionsOpen(false);
+            onStartNewGame(options);
+          }}
+        />
+      ) : null}
       {showWhatsNew ? (
         <WhatsNewModal
           releases={getUnseenReleases(lastSeenReleaseId)}

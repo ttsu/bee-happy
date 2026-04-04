@@ -22,6 +22,7 @@
 - Playwright tests use a **preview server** on port 4173 (not the dev server on 5173). The `npm run test` script handles building and serving automatically.
 - Playwright only runs the **chromium** project; Firefox and WebKit are commented out.
 - Husky + commitlint enforce [Conventional Commits](https://www.conventionalcommits.org/) on commit messages (set up automatically by `npm install` via the `prepare` script).
+- Commit body must be less than 100 characters per line
 
 ### Player-facing changelog (What’s new)
 

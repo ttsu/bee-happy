@@ -24,7 +24,7 @@ import type { ColonyRuntime } from "./colony-runtime";
  * Opens optional succession ignoring bee threshold and queen presence (for dev shortcuts / QA).
  */
 export const debugOpenSuccessionOptional = (colony: ColonyRuntime): void => {
-  if (colony.successionModal != null) {
+  if (!colony.lineageSystemEnabled || colony.successionModal != null) {
     return;
   }
   const snap = buildColonyUiSnapshot(colony);
@@ -43,7 +43,7 @@ export const debugOpenSuccessionOptional = (colony: ColonyRuntime): void => {
  * Opens the optional succession modal (player-initiated while hive is large).
  */
 export const requestOptionalSuccession = (colony: ColonyRuntime): void => {
-  if (colony.successionModal != null) {
+  if (!colony.lineageSystemEnabled || colony.successionModal != null) {
     return;
   }
   const snap = buildColonyUiSnapshot(colony);
@@ -68,7 +68,7 @@ export const triggerMandatorySuccession = (
   colony: ColonyRuntime,
   reason: SuccessionReason,
 ): void => {
-  if (colony.successionModal != null) {
+  if (!colony.lineageSystemEnabled || colony.successionModal != null) {
     return;
   }
   const snap = buildColonyUiSnapshot(colony);
@@ -158,7 +158,7 @@ export const resetWorldAfterSuccession = (colony: ColonyRuntime): void => {
 
   colony.resetSeasonForNewColonyAfterSuccession();
   colony.scene.camera.pos = vec(0, 0);
-  seedLevelZero(colony);
-  refreshActiveColonyConstantsFromMeta();
+  seedLevelZero(colony, colony.startingWorkers);
+  refreshActiveColonyConstantsFromMeta(colony.lineageSystemEnabled);
   colony.emitUiSnapshotImmediate();
 };

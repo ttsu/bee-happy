@@ -12,6 +12,7 @@ import type {
 } from "../ecs/components/colony-components";
 import type { SeasonSystemSave } from "../ecs/systems/season-system";
 import type { HiveCoord } from "../../grid/hive-levels";
+import type { GameSettings } from "../game-settings";
 import type { MetaProgressV1 } from "../meta/meta-progress";
 
 /** @deprecated Legacy single-save key; migrated into slots on first read of the index. */
@@ -32,6 +33,12 @@ export type SaveIndexEntry = {
   slotLabel: string;
   /** Last successful write time (from {@link ColonySaveV1.savedAtIso}). */
   savedAtIso: string;
+};
+
+/** Index row plus rule flags read from the slot JSON (for the launch menu). */
+export type SaveSlotWithRuleFlags = SaveIndexEntry & {
+  readonly lineageSystemEnabled: boolean;
+  readonly intrudersEnabled: boolean;
 };
 
 export type SaveIndexV1 = {
@@ -154,6 +161,8 @@ export type ColonySaveV1 = {
    * Omitted in older saves; load falls back to legacy meta storage then defaults.
    */
   meta?: MetaProgressV1;
+  /** Rules chosen at new game or carried from prior format; omitted in older saves. */
+  gameSettings?: GameSettings;
 };
 
 export type LoadPayload = {

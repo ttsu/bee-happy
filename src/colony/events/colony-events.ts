@@ -61,8 +61,14 @@ export interface ColonyUiSnapshot {
   readonly selectedPlacementCellType: "brood" | "pollen" | "nectar";
   /** 1-based colony calendar day (same scale as worker bee-days). */
   readonly currentColonyDay: number;
-  /** Current season within the 60-day seasonal cycle. */
+  /** Current season within the colony calendar year. */
   readonly currentColonySeason: Season;
+  /** Days per season for this colony (four seasons per year). */
+  readonly daysPerSeason: number;
+  /** When false, succession and lineage bonuses are disabled. */
+  readonly lineageSystemEnabled: boolean;
+  /** Reserved for future intruder encounters. */
+  readonly intrudersEnabled: boolean;
   /** 1-based colony year (increments when the player continues after the year review). */
   readonly yearNumber: number;
   /** When true, the year-end modal is open and simulation is paused. */

@@ -17,6 +17,7 @@ import {
   QueenTimerComponent,
   YearlyStatsComponent,
 } from "../ecs/components/colony-components";
+import { gameSettingsFromSave } from "../game-settings";
 import {
   defaultMetaProgress,
   metaProgressSchema,
@@ -40,7 +41,8 @@ export function syncMetaFromSaveData(data: ColonySaveV1): void {
   const metaParsed = metaProgressSchema.safeParse(rawMeta);
   const meta = metaParsed.success ? metaParsed.data : defaultMetaProgress();
   writeMetaProgressToStorage(meta);
-  refreshActiveColonyConstantsFromMeta();
+  const gs = gameSettingsFromSave(data.gameSettings);
+  refreshActiveColonyConstantsFromMeta(gs.lineageSystemEnabled);
 }
 
 function cellStateToJson(st: CellStateComponent): CellStateJson {
@@ -259,6 +261,12 @@ export function serializeColonySave(colony: ColonyRuntime): ColonySaveV1 {
     jobs,
     bees,
     meta: readMetaProgressFromStorage(),
+    gameSettings: {
+      intrudersEnabled: colony.intrudersEnabled,
+      lineageSystemEnabled: colony.lineageSystemEnabled,
+      daysPerSeason: colony.daysPerSeason,
+      startingWorkers: colony.startingWorkers,
+    },
   };
 }
 

@@ -67,12 +67,21 @@ export class AdultCareSystem extends System {
       }
       needs.hunger = Math.min(100, needs.hunger + C.hungerPerSec * ms);
       needs.thirst = Math.min(100, needs.thirst + C.thirstPerSec * ms);
+      const roleAfter = actor.get(BeeRoleComponent);
+      if (
+        roleAfter?.role === "queen" &&
+        !this.colony.lineageSystemEnabled &&
+        needs.hunger >= 99
+      ) {
+        needs.hunger = 99;
+      }
     }
 
     for (const actor of this.colony.scene.actors) {
       const needs = actor.get(BeeNeedsComponent);
       const role = actor.get(BeeRoleComponent);
       if (
+        this.colony.lineageSystemEnabled &&
         role?.role === "queen" &&
         needs &&
         needs.hunger >= 100 &&

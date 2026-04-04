@@ -67,7 +67,10 @@ export class EconomySystem extends System {
     const currentColonyDay = time
       ? Math.floor(time.colonyElapsedMs / msPerBeeDay) + 1
       : 1;
-    const { season } = getSeasonForColonyDay(currentColonyDay);
+    const { season } = getSeasonForColonyDay(
+      currentColonyDay,
+      this.colony.daysPerSeason,
+    );
 
     if (season === "Winter") {
       cancelWinterForageJobs(this.world);

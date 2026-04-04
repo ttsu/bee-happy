@@ -16,6 +16,8 @@ import {
   QueenTimerComponent,
   YearlyStatsComponent,
 } from "../ecs/components/colony-components";
+import { gameSettingsFromSave } from "../game-settings";
+import { refreshActiveColonyConstantsFromMeta } from "../colony-active-constants";
 import { applyCellStateJson, newJobFromJson } from "./colony-save-codec";
 import type { LoadPayload } from "./colony-save-types";
 
@@ -35,6 +37,10 @@ export function applyColonySave(colony: ColonyRuntime, payload: LoadPayload): vo
     a.kill();
   }
   colony.cellsByKey.clear();
+
+  const gs = gameSettingsFromSave(data.gameSettings);
+  colony.applyRuntimeGameSettings(gs);
+  refreshActiveColonyConstantsFromMeta(colony.lineageSystemEnabled);
 
   colony.controllerEntity = new Entity({
     name: "colony-controller",

@@ -12,10 +12,15 @@ let cached: EffectiveColonyConstants = buildEffectiveColonyConstants(
 /**
  * Recomputes effective simulation constants from persisted lineage meta.
  * Call after colony init and whenever meta lineage changes in-session.
+ *
+ * @param applyLineageMultipliers - When false, lineage bonuses are ignored (sandbox / lineage-off saves).
  */
-export function refreshActiveColonyConstantsFromMeta(): void {
+export function refreshActiveColonyConstantsFromMeta(
+  applyLineageMultipliers = true,
+): void {
   const meta = readMetaProgressFromStorage();
-  const m = aggregateLineageMultipliers(meta.lineage);
+  const lineage = applyLineageMultipliers ? meta.lineage : [];
+  const m = aggregateLineageMultipliers(lineage);
   cached = buildEffectiveColonyConstants(m);
 }
 

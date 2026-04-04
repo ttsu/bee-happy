@@ -1,9 +1,13 @@
+import type { NewGameOptions } from "./colony/game-settings";
+
 /**
  * Session payload set when starting the Excalibur engine from the launch menu,
  * consumed once when {@link MyLevel} initializes (replaces static scene class state).
  */
 export type PendingGameStart = {
   readonly loadSaveSlotId: string | null;
+  /** Set when starting a new colony from the menu (not when loading a save). */
+  readonly newGameOptions?: NewGameOptions;
 };
 
 let pending: PendingGameStart | null = null;

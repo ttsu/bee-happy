@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { ColonyUiSnapshot } from "../colony/events/colony-events";
+import { SEASON_LENGTH_DAYS } from "../colony/seasons";
 
 const successionReasonSchema = z.enum([
   "hiveExpanded",
@@ -39,6 +40,9 @@ export const colonyUiSnapshotSchema = z.object({
   selectedPlacementCellType: z.enum(["brood", "pollen", "nectar"]),
   currentColonyDay: z.number(),
   currentColonySeason: seasonSchema,
+  daysPerSeason: z.number(),
+  lineageSystemEnabled: z.boolean(),
+  intrudersEnabled: z.boolean(),
   yearNumber: z.number(),
   isYearReviewOpen: z.boolean(),
   yearlyReviewStats: yearlyReviewStatsSchema,
@@ -79,6 +83,9 @@ export const createDefaultColonyUiSnapshot = (): ColonyUiSnapshot => ({
   selectedPlacementCellType: "brood",
   currentColonyDay: 1,
   currentColonySeason: "Spring",
+  daysPerSeason: SEASON_LENGTH_DAYS,
+  lineageSystemEnabled: false,
+  intrudersEnabled: false,
   yearNumber: 1,
   isYearReviewOpen: false,
   yearlyReviewStats: {

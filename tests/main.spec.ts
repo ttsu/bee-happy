@@ -18,7 +18,7 @@ test("HUD loads with Bee Happy title", async ({ page }) => {
   );
   await page.goto("http://localhost:4173/");
   await expect(page.getByRole("heading", { name: "Bee Happy" })).toBeVisible();
-  await page.getByRole("button", { name: /New game/i }).click();
+  await page.getByRole("button", { name: /Casual Mode/i }).click();
   await expect(page.getByText(/Bees:/)).toBeVisible();
   await expect(page.locator(".season-day-banner").getByText("🌸 Spring")).toBeVisible();
   await expect(
@@ -61,7 +61,7 @@ test("Tutorial appears on first new game", async ({ page }) => {
     },
   );
   await page.goto("http://localhost:4173/");
-  await page.getByRole("button", { name: /New game/i }).click();
+  await page.getByRole("button", { name: /Casual Mode/i }).click();
   await expect(page.getByRole("heading", { name: "Tutorial" })).toBeVisible();
   await expect(page.getByText(/Welcome to Bee Happy/i)).toBeVisible();
 });

@@ -17,6 +17,10 @@ import {
   getColonySaveForSlot,
   syncMetaFromSaveData,
 } from "./colony/colony-save";
+import {
+  DEFAULT_NEW_GAME_SETTINGS,
+  gameSettingsFromSave,
+} from "./colony/game-settings";
 import { takePendingGameStart } from "./game-session";
 import {
   defaultMetaProgress,
@@ -54,7 +58,10 @@ export class MyLevel extends Scene {
     } else {
       writeMetaProgressToStorage(defaultMetaProgress());
     }
-    this.colony.initialize(this, engine, { mode: initMode });
+    const gameSettings = saveData
+      ? gameSettingsFromSave(saveData.gameSettings)
+      : (start?.newGameOptions ?? DEFAULT_NEW_GAME_SETTINGS);
+    this.colony.initialize(this, engine, { mode: initMode, gameSettings });
     if (saveData) {
       applyColonySave(this.colony, {
         data: saveData,
@@ -156,6 +163,9 @@ export class MyLevel extends Scene {
     const ctrl = kb.isHeld(Keys.ControlLeft) || kb.isHeld(Keys.ControlRight);
     const shift = kb.isHeld(Keys.ShiftLeft) || kb.isHeld(Keys.ShiftRight);
     if (!ctrl || !shift) {
+      return;
+    }
+    if (!this.colony.lineageSystemEnabled) {
       return;
     }
     if (kb.wasPressed(Keys.Digit1)) {

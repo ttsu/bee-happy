@@ -1,3 +1,4 @@
+import { gameSettingsFromSave } from "../game-settings";
 import { parseColonySaveJson } from "./colony-save-codec";
 import {
   ACTIVE_SAVE_SLOT_SESSION_KEY,
@@ -8,6 +9,7 @@ import {
   type ColonySaveV1,
   type SaveIndexEntry,
   type SaveIndexV1,
+  type SaveSlotWithRuleFlags,
 } from "./colony-save-types";
 
 function parseSaveIndexJson(raw: string | null): SaveIndexV1 | null {
@@ -115,6 +117,29 @@ export function getColonySaveForSlot(slotId: string): ColonySaveV1 | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * Same order as {@link listSaveSlotsNewestFirst}, with `gameSettings` flags from each slot file.
+ * Missing or unreadable slots yield both flags false.
+ */
+export function listSaveSlotsNewestFirstWithRuleFlags(): SaveSlotWithRuleFlags[] {
+  return listSaveSlotsNewestFirst().map((entry) => {
+    const data = getColonySaveForSlot(entry.slotId);
+    if (!data) {
+      return {
+        ...entry,
+        lineageSystemEnabled: false,
+        intrudersEnabled: false,
+      };
+    }
+    const gs = gameSettingsFromSave(data.gameSettings);
+    return {
+      ...entry,
+      lineageSystemEnabled: gs.lineageSystemEnabled,
+      intrudersEnabled: gs.intrudersEnabled,
+    };
+  });
 }
 
 function nextDefaultSlotLabel(slots: SaveIndexEntry[]): string {

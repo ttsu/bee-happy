@@ -129,7 +129,7 @@ export const App = () => {
   const [isStripDragging, setIsStripDragging] = useState(false);
   const [previewActiveLevel, setPreviewActiveLevel] = useState(snap.activeLevel);
   const [targetLevel, setTargetLevel] = useState<number | null>(null);
-  const seasonInfo = getSeasonForColonyDay(snap.currentColonyDay);
+  const seasonInfo = getSeasonForColonyDay(snap.currentColonyDay, snap.daysPerSeason);
   const tutorial = useTutorial(colony, snap);
   const activeLevelIndex = LEVELS.indexOf(
     previewActiveLevel as (typeof LEVELS)[number],
@@ -253,7 +253,7 @@ export const App = () => {
         <span className="season-day-divider" aria-hidden />
         <span>Day {seasonInfo.seasonDayOneBased}</span>
       </div>
-      {lineageCount > 0 ? (
+      {snap.lineageSystemEnabled && lineageCount > 0 ? (
         <button
           type="button"
           className="lineage-crown-button"

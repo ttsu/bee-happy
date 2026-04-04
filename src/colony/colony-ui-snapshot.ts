@@ -60,7 +60,11 @@ export const buildColonyUiSnapshot = (colony: ColonyRuntime): ColonyUiSnapshot =
   const yearly = colony.controllerEntity.get(YearlyStatsComponent)!;
   const msPerBeeDay = COLONY.workerLifespanMs / 50;
   const currentColonyDay = Math.floor(time.colonyElapsedMs / msPerBeeDay) + 1;
-  const { season: currentColonySeason } = getSeasonForColonyDay(currentColonyDay);
+  const daysPerSeason = colony.daysPerSeason;
+  const { season: currentColonySeason } = getSeasonForColonyDay(
+    currentColonyDay,
+    daysPerSeason,
+  );
   return {
     beesTotal: workers + queens,
     workers,
@@ -83,6 +87,9 @@ export const buildColonyUiSnapshot = (colony: ColonyRuntime): ColonyUiSnapshot =
     selectedPlacementCellType: colony.selectedPlacementCellType,
     currentColonyDay,
     currentColonySeason,
+    daysPerSeason,
+    lineageSystemEnabled: colony.lineageSystemEnabled,
+    intrudersEnabled: colony.intrudersEnabled,
     yearNumber: yearly.yearNumber,
     isYearReviewOpen: yearly.isYearReviewOpen,
     yearlyReviewStats: {
@@ -95,6 +102,7 @@ export const buildColonyUiSnapshot = (colony: ColonyRuntime): ColonyUiSnapshot =
     },
     successionModal: colony.successionModal,
     optionalSuccessionAvailable:
+      colony.lineageSystemEnabled &&
       colony.successionModal == null &&
       queens > 0 &&
       workers + queens > COLONY.successionOptionalBeeThreshold,

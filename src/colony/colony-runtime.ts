@@ -5,7 +5,11 @@ import type { HexCoord } from "../grid/hex-grid";
 import { hiveKey, parseHiveKey } from "../grid/hive-levels";
 import type { HiveCoord } from "../grid/hive-levels";
 import { BeeActor } from "../render/bee-actor";
-import { refreshActiveColonyConstantsFromMeta } from "./colony-active-constants";
+import { DEFAULT_NEW_GAME_SETTINGS, type GameSettings } from "./game-settings";
+import {
+  getActiveColonyConstants,
+  refreshActiveColonyConstantsFromMeta,
+} from "./colony-active-constants";
 import { ColonyEventBus, type ColonyUiSnapshot } from "./events/colony-events";
 import {
   ActiveLevelComponent,
@@ -30,7 +34,6 @@ import {
   resetWorldAfterSuccession as resetWorldAfterSuccessionImpl,
   triggerMandatorySuccession as triggerMandatorySuccessionImpl,
 } from "./colony-succession";
-import { getActiveColonyConstants } from "./colony-active-constants";
 import { canRelocateCellContentsForRetype } from "./cell-retype-capacity";
 import { CellRetypeSystem } from "./ecs/systems/cell-retype-system";
 import { canPlaceFoundation, eligibleFoundationCoordsForLevel } from "./placement";
@@ -47,6 +50,7 @@ import { WorkerLifecycleSystem } from "./ecs/systems/worker-lifecycle-system";
 import { GuardSystem } from "./ecs/systems/guard-system";
 import type { SeasonSystemSave } from "./ecs/systems/season-system";
 import { SeasonSystem } from "./ecs/systems/season-system";
+import { SEASON_LENGTH_DAYS } from "./seasons";
 
 /**
  * Central registry and helpers for hive cells, jobs, and colony controller ECS entities.
@@ -54,6 +58,8 @@ import { SeasonSystem } from "./ecs/systems/season-system";
 export type ColonyInitializeOptions = {
   /** Default: seed level 0 and spawn bees. Skip when loading from a save. */
   mode?: "new" | "load";
+  /** Rules for this colony (new-game options or values derived from the save file). */
+  gameSettings?: GameSettings;
 };
 
 export class ColonyRuntime {
@@ -64,6 +70,11 @@ export class ColonyRuntime {
    * Used by the UI to skip the first-play tutorial on Continue.
    */
   sessionStartedFromSave = false;
+  /** Persisted rules; see {@link GameSettings}. */
+  intrudersEnabled = DEFAULT_NEW_GAME_SETTINGS.intrudersEnabled;
+  lineageSystemEnabled = DEFAULT_NEW_GAME_SETTINGS.lineageSystemEnabled;
+  daysPerSeason = SEASON_LENGTH_DAYS;
+  startingWorkers = DEFAULT_NEW_GAME_SETTINGS.startingWorkers;
   controllerEntity!: Entity;
   scene!: Scene;
   engine!: Engine;
@@ -121,10 +132,16 @@ export class ColonyRuntime {
 
     this.controllerEntity.get(QueenTimerComponent)!.layCooldownMs = 3500;
 
-    refreshActiveColonyConstantsFromMeta();
+    const gs =
+      options?.gameSettings ??
+      (mode === "new"
+        ? DEFAULT_NEW_GAME_SETTINGS
+        : { ...DEFAULT_NEW_GAME_SETTINGS, lineageSystemEnabled: true });
+    this.applyRuntimeGameSettings(gs);
+    refreshActiveColonyConstantsFromMeta(this.lineageSystemEnabled);
 
     if (mode === "new") {
-      seedLevelZeroColony(this);
+      seedLevelZeroColony(this, this.startingWorkers);
     }
 
     world.add(new LevelSystem(world, this));
@@ -141,6 +158,14 @@ export class ColonyRuntime {
     world.add(new EconomySystem(world, this));
     world.add(new AdultCareSystem(world, this));
     world.add(new GuardSystem(world, this));
+  }
+
+  /** Copies persisted / menu settings onto the runtime (also used when loading a save). */
+  applyRuntimeGameSettings(gs: GameSettings): void {
+    this.intrudersEnabled = gs.intrudersEnabled;
+    this.lineageSystemEnabled = gs.lineageSystemEnabled;
+    this.daysPerSeason = gs.daysPerSeason;
+    this.startingWorkers = gs.startingWorkers;
   }
 
   getSeasonSystemStateForSave(): SeasonSystemSave {

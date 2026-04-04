@@ -2,6 +2,7 @@ import { Color, DisplayMode, Engine, FadeInOut } from "excalibur";
 import { acknowledgeCurrentReleaseIfUnset } from "./changelog/last-seen-release";
 import { startBackgroundMusic } from "./audio/background-music";
 import { gameLoader } from "./resources";
+import type { NewGameOptions } from "./colony/game-settings";
 import { setPendingGameStart } from "./game-session";
 import { MyLevel } from "./level";
 import { mountUi } from "./ui/main-ui";
@@ -11,15 +12,23 @@ let started = false;
 /**
  * Starts the Excalibur scene after the player picks an option on the launch menu.
  * @param loadSaveSlotId - When set, that slot is loaded; when null, a new colony is started (session slot is set separately for new games).
+ * @param newGameOptions - When starting a new colony, options from the launch menu.
  */
-export const startGameFromMenu = (loadSaveSlotId: string | null): void => {
+export const startGameFromMenu = (
+  loadSaveSlotId: string | null,
+  newGameOptions?: NewGameOptions,
+): void => {
   if (started) {
     return;
   }
   acknowledgeCurrentReleaseIfUnset();
   started = true;
   document.body.classList.add("bee-happy-game-started");
-  setPendingGameStart({ loadSaveSlotId });
+  setPendingGameStart(
+    loadSaveSlotId != null
+      ? { loadSaveSlotId }
+      : { loadSaveSlotId: null, newGameOptions },
+  );
 
   const game = new Engine({
     width: 800,
