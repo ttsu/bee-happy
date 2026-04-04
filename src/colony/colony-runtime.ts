@@ -729,14 +729,19 @@ export class ColonyRuntime {
   }
 
   /**
-   * Persists lineage meta and resets the colony to a fresh hive (new queen).
+   * Persists lineage meta, spends shop honey from cells, and keeps the nest with half the bees (new queen).
+   *
+   * @param honeySpentInShop - Honey removed from nectar cells for succession rerolls / upgrades.
    */
-  applySuccessionChoice(entry: Omit<LineageEntry, "generationIndex">): void {
-    applySuccessionChoiceToColony(this, entry);
+  applySuccessionChoice(
+    entry: Omit<LineageEntry, "generationIndex">,
+    honeySpentInShop: number,
+  ): void {
+    applySuccessionChoiceToColony(this, entry, honeySpentInShop);
   }
 
   /**
-   * Clears the simulation and re-seeds level 0 (after lineage write).
+   * Full colony wipe (clears cells, re-seeds level 0). Not used by normal succession.
    */
   resetWorldAfterSuccession(): void {
     resetWorldAfterSuccessionImpl(this);

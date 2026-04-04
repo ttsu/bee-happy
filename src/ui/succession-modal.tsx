@@ -128,14 +128,18 @@ export const SuccessionModal = ({ snap, onPersist }: Props) => {
     if (!colony) {
       return;
     }
-    colony.applySuccessionChoice({
-      affixId: opt.affix.id,
-      displayName: opt.affix.displayName,
-      tier: opt.tier,
-      magnitude: opt.magnitude,
-      successionReason: modal.reason,
-      recordedAtIso: new Date().toISOString(),
-    });
+    const honeySpent = Math.max(0, modal.honeyBudget - honeyLeft);
+    colony.applySuccessionChoice(
+      {
+        affixId: opt.affix.id,
+        displayName: opt.affix.displayName,
+        tier: opt.tier,
+        magnitude: opt.magnitude,
+        successionReason: modal.reason,
+        recordedAtIso: new Date().toISOString(),
+      },
+      honeySpent,
+    );
     onPersist();
   }, [colony, modal, onPersist, options, selected]);
 

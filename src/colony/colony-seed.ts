@@ -25,7 +25,31 @@ const starterWorkerHexes = (count: number): HexCoord[] => {
 };
 
 /**
- * Seeds level 0 with starter cells and bees (new game or after succession).
+ * Spawns a new queen at the hive center (level 0) and bootstrap workers on distinct hexes.
+ * Does not create cells — used after queen succession when the nest is preserved.
+ *
+ * @param workerCount - Number of workers (0 allowed: queen only).
+ */
+export const spawnQueenAndBootstrapWorkers = (
+  colony: ColonyRuntime,
+  workerCount: number,
+): void => {
+  const C = getActiveColonyConstants();
+  colony.spawnBee("queen", 0, { q: 0, r: 0 });
+  const msPerDay = C.workerLifespanMs / 50;
+  const spread =
+    COLONY.bootstrapWorkerAgeMaxDays - COLONY.bootstrapWorkerAgeMinDays + 1;
+  const hexes = starterWorkerHexes(workerCount);
+  for (const hex of hexes) {
+    const w = colony.spawnBee("worker", 0, hex);
+    const dayRoll =
+      COLONY.bootstrapWorkerAgeMinDays + Math.floor(Math.random() * spread);
+    w.get(BeeAgeComponent)!.ageMs = (dayRoll - 1) * msPerDay;
+  }
+};
+
+/**
+ * Seeds level 0 with starter cells and bees (new game only).
  *
  * @param workerCount - Number of workers (default 2). Queen is always one.
  */
@@ -51,15 +75,5 @@ export const seedLevelZero = (colony: ColonyRuntime, workerCount = 2): void => {
         : {}),
     });
   }
-  colony.spawnBee("queen", 0, { q: 0, r: 0 });
-  const msPerDay = C.workerLifespanMs / 50;
-  const spread =
-    COLONY.bootstrapWorkerAgeMaxDays - COLONY.bootstrapWorkerAgeMinDays + 1;
-  const hexes = starterWorkerHexes(workerCount);
-  for (const hex of hexes) {
-    const w = colony.spawnBee("worker", 0, hex);
-    const dayRoll =
-      COLONY.bootstrapWorkerAgeMinDays + Math.floor(Math.random() * spread);
-    w.get(BeeAgeComponent)!.ageMs = (dayRoll - 1) * msPerDay;
-  }
+  spawnQueenAndBootstrapWorkers(colony, workerCount);
 };
