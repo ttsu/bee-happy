@@ -1,7 +1,16 @@
 {
-  "currentReleaseId": "0.16.0",
-  "asOfCommit": "5163b25",
+  "currentReleaseId": "0.17.0",
+  "asOfCommit": "3c712a3",
   "releases": [
+    {
+      "id": "0.17.0",
+      "date": "2026-04-08",
+      "items": [
+        "The world around the hive uses a painted terrain map; you can only pan within that landscape.",
+        "Pollen and nectar foragers fly to random flower spots on the map instead of two fixed off-screen points.",
+        "Forage trips are faster with a smooth slow-down at each leg of the flight, and workers look a bit smaller when they’re far from the comb so the view stays readable."
+      ]
+    },
     {
       "id": "0.16.0",
       "date": "2026-04-04",
