@@ -1,5 +1,5 @@
 import type { Engine } from "excalibur";
-import { Entity, vec, type Scene } from "excalibur";
+import { Entity, vec, type Scene, type Vector } from "excalibur";
 import { hexToWorld, worldToHex } from "../grid/hex-grid";
 import type { HexCoord } from "../grid/hex-grid";
 import { hiveKey, parseHiveKey } from "../grid/hive-levels";
@@ -65,6 +65,11 @@ export type ColonyInitializeOptions = {
 export class ColonyRuntime {
   readonly events = new ColonyEventBus();
   readonly cellsByKey = new Map<string, Entity>();
+  /**
+   * World-space destinations (from the background Tiled map) that represent flowers.
+   * Used by foragers as outbound targets.
+   */
+  flowerDestinations: Vector[] = [];
   /**
    * True when this session was initialized from a save (`mode === "load"`).
    * Used by the UI to skip the first-play tutorial on Continue.
@@ -158,6 +163,30 @@ export class ColonyRuntime {
     world.add(new EconomySystem(world, this));
     world.add(new AdultCareSystem(world, this));
     world.add(new GuardSystem(world, this));
+  }
+
+  setFlowerDestinations(destinations: Vector[]): void {
+    this.flowerDestinations = destinations;
+  }
+
+  /**
+   * Approximate outer radius (world px) of the built comb footprint for the current level.
+   * Used for visuals like zooming out for foragers once they leave the comb.
+   */
+  getBuiltCombOuterRadiusPx(level = this.activeLevel): number {
+    const C = getActiveColonyConstants();
+    let maxCenterDist = 0;
+    for (const [, ent] of this.cellsByKey) {
+      const coord = ent.get(CellCoordComponent);
+      const st = ent.get(CellStateComponent);
+      if (!coord || !st || !st.built || coord.level !== level) {
+        continue;
+      }
+      const w = hexToWorld({ q: coord.q, r: coord.r }, C.hexSize);
+      maxCenterDist = Math.max(maxCenterDist, w.size);
+    }
+    // Add one hex radius so the "edge" is the outer boundary of the outermost built cell.
+    return maxCenterDist + C.hexSize;
   }
 
   /** Copies persisted / menu settings onto the runtime (also used when loading a save). */

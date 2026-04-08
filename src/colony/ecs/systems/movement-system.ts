@@ -6,6 +6,7 @@ import {
   JobComponent,
 } from "../components/colony-components";
 import { COLONY } from "../../constants";
+import { pathLegSpeedMultiplier } from "../../movement-easing";
 import type { ColonyRuntime } from "../../colony-runtime";
 import {
   advanceBeeVerticalTransition,
@@ -153,7 +154,21 @@ export class MovementSystem extends System {
     const target = job.pathPoints[idx]!;
     const to = target.sub(actor.pos);
     const dist = to.size;
-    const step = COLONY.beeSpeed * elapsed;
+    if (w.pathLegEasingIndexSnapshot !== w.pathIndex) {
+      w.pathLegEasingInitialDist = Math.max(dist, 0.5);
+      w.pathLegEasingIndexSnapshot = w.pathIndex;
+    }
+    const ease = pathLegSpeedMultiplier(
+      dist,
+      w.pathLegEasingInitialDist,
+      COLONY.pathLegEasingMinSpeedMultiplier,
+    );
+    const forageFlight = job.kind === "foragePollen" || job.kind === "forageNectar";
+    const step =
+      COLONY.beeSpeed *
+      (forageFlight ? COLONY.forageFlightSpeedMultiplier : 1) *
+      ease *
+      elapsed;
     if (dist <= step + 2) {
       actor.pos = target.clone();
       const prevLevel = lvl.level;

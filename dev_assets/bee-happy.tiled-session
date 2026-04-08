@@ -1,0 +1,46 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "terrain.tmx",
+    "expandedProjectPaths": [
+        "."
+    ],
+    "fileStates": {
+        "": {
+            "scaleInDock": 0.2421
+        },
+        "terrain.tmx": {
+            "scale": 0.25,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 2240,
+                "y": 2066
+            }
+        },
+        "terrain.tsx": {
+            "scaleInDock": 0.35,
+            "scaleInEditor": 0.6004
+        }
+    },
+    "last.imagePath": "/Users/tim/projects/bee-happy/dev_assets",
+    "map.height": 30,
+    "map.lastUsedFormat": "tmx",
+    "map.tileHeight": 128,
+    "map.tileWidth": 128,
+    "openFiles": [
+        "terrain.tsx",
+        "terrain.tmx"
+    ],
+    "project": "bee-happy.tiled-project",
+    "recentFiles": [
+        "terrain.tsx",
+        "terrain.tmx"
+    ],
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.tileSize": {
+        "height": 128,
+        "width": 128
+    }
+}

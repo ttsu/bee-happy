@@ -20,6 +20,7 @@ import {
 } from "../colony/ecs/components/colony-components";
 import { COLONY } from "../colony/constants";
 import { getWorkerVisualScale } from "../colony/worker-lifecycle";
+import { getColonyBridge } from "../colony-bridge";
 import { beeSpriteSheet } from "../resources";
 
 /**
@@ -27,8 +28,11 @@ import { beeSpriteSheet } from "../resources";
  */
 export class BeeActor extends Actor {
   private static readonly WORKER_BASE_SCALE = 0.25;
+  private static readonly OUTSIDE_HIVE_SCALE_MULTIPLIER = 0.4;
   private static readonly WIGGLE_AMPLITUDE_RADIANS = 0.08;
   private static readonly WIGGLE_CYCLES_PER_SECOND = 8;
+  private static readonly HIVE_ZOOM_BAND_INNER_PX = 40;
+  private static readonly HIVE_ZOOM_BAND_OUTER_PX = 220;
   private readonly groundedSprite: Sprite;
   private readonly wingFlapAnimation: Animation;
   private readonly lastPos: Vector;
@@ -82,14 +86,43 @@ export class BeeActor extends Actor {
     }
 
     const vertScale = this.verticalTransitionScaleMultiplier();
+    const hiveScale = this.hiveProximityScaleMultiplier();
     const age = this.get(BeeAgeComponent);
     if (age) {
       const s = getWorkerVisualScale(age.ageMs);
       const b = BeeActor.WORKER_BASE_SCALE;
-      this.scale = vec(b * s * vertScale, b * s * vertScale);
+      this.scale = vec(b * s * vertScale * hiveScale, b * s * vertScale * hiveScale);
     } else {
-      this.scale = vec(0.5 * vertScale, 0.5 * vertScale);
+      this.scale = vec(0.5 * vertScale * hiveScale, 0.5 * vertScale * hiveScale);
     }
+  }
+
+  private hiveProximityScaleMultiplier(): number {
+    // Keep this purely location-based (not scoped to the current job/phase).
+    if (this.get(BeeRoleComponent)?.role !== "worker") {
+      return 1;
+    }
+
+    const colony = getColonyBridge();
+    if (!colony) {
+      return 1;
+    }
+
+    const beeLevel = this.get(BeeLevelComponent)?.level ?? colony.activeLevel;
+    const combOuter = colony.getBuiltCombOuterRadiusPx(beeLevel);
+    if (combOuter <= 0) {
+      return 1;
+    }
+
+    // Smoothly transition scale based on distance from the comb edge.
+    const d = this.pos.size;
+    const inner = combOuter + BeeActor.HIVE_ZOOM_BAND_INNER_PX;
+    const outer = combOuter + BeeActor.HIVE_ZOOM_BAND_OUTER_PX;
+    const tRaw = (d - inner) / Math.max(1, outer - inner);
+    const t = Math.min(1, Math.max(0, tRaw));
+    const smooth = t * t * (3 - 2 * t); // smoothstep
+
+    return 1 - smooth * (1 - BeeActor.OUTSIDE_HIVE_SCALE_MULTIPLIER);
   }
 
   private isVerticalLevelTransition(): boolean {
@@ -111,13 +144,7 @@ export class BeeActor extends Actor {
   }
 
   private isForageFlight(): boolean {
-    const work = this.get(BeeWorkComponent);
-    if (!work?.currentJobEntityId || !this.scene) {
-      return false;
-    }
-    const job = this.scene.world.entities
-      .find((entity) => entity.id === work.currentJobEntityId)
-      ?.get(JobComponent);
+    const job = this.getActiveJob();
     if (!job) {
       return false;
     }
@@ -133,6 +160,18 @@ export class BeeActor extends Actor {
       job.foragePhase === "depositing" ||
       job.foragePhase === "return" ||
       job.foragePhase === "wait"
+    );
+  }
+
+  private getActiveJob(): JobComponent | null {
+    const work = this.get(BeeWorkComponent);
+    if (!work?.currentJobEntityId || !this.scene) {
+      return null;
+    }
+    return (
+      this.scene.world.entities
+        .find((entity) => entity.id === work.currentJobEntityId)
+        ?.get(JobComponent) ?? null
     );
   }
 }

@@ -1,4 +1,5 @@
 import {
+  BoundingBox,
   Color,
   Engine,
   Keys,
@@ -30,12 +31,15 @@ import { ActiveLevelComponent } from "./colony/ecs/components/colony-components"
 import { setColonyBridge } from "./colony-bridge";
 import { drawBeeJobLabels, drawBeeUnhappyThoughtBubbles } from "./render/bee-job-label";
 import { drawHiveCellOverlays, drawHiveCells } from "./render/cell-renderer-actor";
+import { terrainMapResource } from "./resources";
+import { getFlowerDestinations } from "./tiled/flower-destinations";
 
 /**
  * Main hive scene: camera pan vs tap placement, colony simulation, and UI snapshots.
  */
 export class MyLevel extends Scene {
   readonly colony = new ColonyRuntime();
+  private static readonly TILED_BACKGROUND_SCALE = 0.5;
   private lastPanScreen: { x: number; y: number } | null = null;
   private dragScreen = 0;
   private wasDown = false;
@@ -46,9 +50,32 @@ export class MyLevel extends Scene {
    */
   private reseedPanAfterTouchStart = false;
 
+  private addTiledBackground(): void {
+    // Add the Tiled background behind gameplay actors/overlays and keep it centered on world 0,0.
+    const mapW = terrainMapResource.map.width * terrainMapResource.map.tilewidth;
+    const mapH = terrainMapResource.map.height * terrainMapResource.map.tileheight;
+    const bgScale = MyLevel.TILED_BACKGROUND_SCALE;
+    const scaledW = mapW * bgScale;
+    const scaledH = mapH * bgScale;
+    const mapPos = vec(-scaledW / 2, -scaledH / 2);
+
+    terrainMapResource.addToScene(this, { pos: mapPos });
+    for (const layer of terrainMapResource.getTileLayers()) {
+      layer.tilemap.scale = vec(bgScale, bgScale);
+    }
+
+    // Prevent the player from panning beyond the edges of the tiled background.
+    this.camera.strategy.limitCameraBounds(
+      new BoundingBox(mapPos.x, mapPos.y, mapPos.x + scaledW, mapPos.y + scaledH),
+    );
+
+    this.colony.setFlowerDestinations(getFlowerDestinations(terrainMapResource));
+  }
+
   override onInitialize(engine: Engine): void {
     this.backgroundColor = Color.fromHex("#1b2838");
     this.camera.pos = vec(0, 0);
+
     const start = takePendingGameStart();
     const loadSlotId = start?.loadSaveSlotId ?? null;
     const saveData = loadSlotId != null ? getColonySaveForSlot(loadSlotId) : null;
@@ -68,6 +95,11 @@ export class MyLevel extends Scene {
         seasonSystem: saveData.seasonSystem,
       });
     }
+
+    // `applyColonySave()` clears all actors/entities, so add the background after it (and after
+    // `initialize()` for new games) to ensure it always appears.
+    this.addTiledBackground();
+
     setColonyBridge(this.colony);
   }
 

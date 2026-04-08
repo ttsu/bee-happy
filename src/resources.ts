@@ -1,4 +1,5 @@
 import { ImageSource, Sound, SpriteSheet } from "excalibur";
+import { TiledResource } from "@excaliburjs/plugin-tiled";
 import { BeeHappyLoader } from "./load/bee-happy-loader";
 
 /** Scene boot loader; add ImageSource/Sound assets here when needed. */
@@ -29,6 +30,15 @@ export const backgroundMusicSound = new Sound({
   volume: 0.45,
 });
 
+export const terrainMapResource = new TiledResource("/tiled/terrain.tmx", {
+  // Ensure the background is below all other gameplay visuals.
+  startZIndex: -10_000,
+  // We'll apply our own camera bounds based on the map size/position, but keep
+  // the plugin's default wiring behavior.
+  useTilemapCameraStrategy: false,
+});
+
 gameLoader.addResource(beeImage);
 gameLoader.addResource(cellSpritesImage);
 gameLoader.addResource(backgroundMusicSound);
+gameLoader.addResource(terrainMapResource);

@@ -32,6 +32,7 @@ import { hexToWorld } from "../../../grid/hex-grid";
 import { findHexPathWorldPointsWithLevels } from "../../pathfinding/hex-path";
 import { beeStartHiveCoord } from "../../self-feed-target";
 import { JobPriority } from "../../job-priority";
+import { pathLegSpeedMultiplier } from "../../movement-easing";
 import {
   nectarCellCanAcceptNectarDeposit,
   nectarCellReadyForHoneyProcessing,
@@ -41,6 +42,14 @@ import {
   advanceBeeVerticalTransition,
   startLevelTransitionTowardActorIfNeeded,
 } from "../../bee-vertical-move";
+
+/** Resets per-leg easing when the forage move context (phase/target) changes. */
+function syncForageMoveLeg(job: JobComponent, legKey: string, dist: number): void {
+  if (job.forageMoveEasingKey !== legKey) {
+    job.forageMoveEasingKey = legKey;
+    job.forageMoveLegInitialDist = Math.max(dist, 0.5);
+  }
+}
 
 /**
  * Foraging (pollen/nectar/water), deposit legs, and honey processing.
@@ -54,6 +63,14 @@ export class EconomySystem extends System {
     private readonly colony: ColonyRuntime,
   ) {
     super();
+  }
+
+  private pickRandomFlowerDestination(): { x: number; y: number } | null {
+    const flowers = this.colony.flowerDestinations;
+    if (flowers.length === 0) {
+      return null;
+    }
+    return flowers[Math.floor(Math.random() * flowers.length)] ?? null;
   }
 
   override update(elapsed: number): void {
@@ -113,13 +130,14 @@ export class EconomySystem extends System {
           1,
         );
         j.foragePhase = "outbound";
+        const flower = this.pickRandomFlowerDestination();
         if (kind === "foragePollen") {
-          j.scratchX = 200;
-          j.scratchY = -180;
+          j.scratchX = flower?.x ?? 200;
+          j.scratchY = flower?.y ?? -180;
           openPollen += 1;
         } else {
-          j.scratchX = -220;
-          j.scratchY = 160;
+          j.scratchX = flower?.x ?? -220;
+          j.scratchY = flower?.y ?? 160;
           openNectar += 1;
         }
         this.colony.createJob(j);
@@ -200,12 +218,19 @@ export class EconomySystem extends System {
     }
 
     if (job.foragePhase === "outbound") {
-      const step = C.beeSpeed * 1.2 * elapsed;
       const to = out.sub(bee.pos);
-      if (to.size < 12) {
+      const dist = to.size;
+      if (dist < 12) {
         job.foragePhase = "wait";
         job.forageWaitMs = C.forageWaitMs;
       } else {
+        syncForageMoveLeg(job, "out", dist);
+        const ease = pathLegSpeedMultiplier(
+          dist,
+          job.forageMoveLegInitialDist,
+          C.pathLegEasingMinSpeedMultiplier,
+        );
+        const step = C.beeSpeed * 1.2 * C.forageFlightSpeedMultiplier * ease * elapsed;
         bee.pos = bee.pos.add(to.normalize().scale(step));
       }
     } else if (job.foragePhase === "wait") {
@@ -220,7 +245,6 @@ export class EconomySystem extends System {
         this.beginDepositPhase(job, bee);
       }
     } else if (job.foragePhase === "return") {
-      const step = C.beeSpeed * 1.2 * elapsed;
       const key = job.depositTargetKey;
       if (key) {
         const cellEnt = this.colony.getCellAt(key);
@@ -233,9 +257,18 @@ export class EconomySystem extends System {
         const coord = cellEnt.get(CellCoordComponent)!;
         const dest = hexToWorld({ q: coord.q, r: coord.r }, C.hexSize);
         const to = dest.sub(bee.pos);
-        if (to.size < 18) {
+        const dist = to.size;
+        if (dist < 18) {
           job.foragePhase = "depositing";
         } else {
+          syncForageMoveLeg(job, `ret:${key}`, dist);
+          const ease = pathLegSpeedMultiplier(
+            dist,
+            job.forageMoveLegInitialDist,
+            C.pathLegEasingMinSpeedMultiplier,
+          );
+          const step =
+            C.beeSpeed * 1.2 * C.forageFlightSpeedMultiplier * ease * elapsed;
           bee.pos = bee.pos.add(to.normalize().scale(step));
         }
       } else {
@@ -277,7 +310,6 @@ export class EconomySystem extends System {
         return;
       }
       const dest = hexToWorld({ q: coord.q, r: coord.r }, C.hexSize);
-      const step = C.beeSpeed * 1.2 * elapsed;
       const to = dest.sub(bee.pos);
       if (to.size < 18) {
         const yearlyStats = this.colony.controllerEntity.get(YearlyStatsComponent);
@@ -308,6 +340,14 @@ export class EconomySystem extends System {
         releaseJob(this.world, job);
         ent.kill();
       } else {
+        const dist = to.size;
+        syncForageMoveLeg(job, `dep:${key}`, dist);
+        const ease = pathLegSpeedMultiplier(
+          dist,
+          job.forageMoveLegInitialDist,
+          C.pathLegEasingMinSpeedMultiplier,
+        );
+        const step = C.beeSpeed * 1.2 * C.forageFlightSpeedMultiplier * ease * elapsed;
         bee.pos = bee.pos.add(to.normalize().scale(step));
       }
     }
@@ -322,12 +362,19 @@ export class EconomySystem extends System {
     const C = getActiveColonyConstants();
     const out = vec(job.scratchX, job.scratchY);
     if (job.foragePhase === "outbound") {
-      const step = C.beeSpeed * 1.2 * elapsed;
       const to = out.sub(bee.pos);
-      if (to.size < 12) {
+      const dist = to.size;
+      if (dist < 12) {
         job.foragePhase = "wait";
         job.forageWaitMs = C.waterForageMs;
       } else {
+        syncForageMoveLeg(job, "w-out", dist);
+        const ease = pathLegSpeedMultiplier(
+          dist,
+          job.forageMoveLegInitialDist,
+          C.pathLegEasingMinSpeedMultiplier,
+        );
+        const step = C.beeSpeed * 1.2 * C.forageFlightSpeedMultiplier * ease * elapsed;
         bee.pos = bee.pos.add(to.normalize().scale(step));
       }
     } else if (job.foragePhase === "wait") {
@@ -375,7 +422,6 @@ export class EconomySystem extends System {
         job.adultFeedTargetBeeId = best?.id ?? null;
       }
     } else if (job.foragePhase === "return") {
-      const step = C.beeSpeed * 1.2 * elapsed;
       const target = job.adultFeedTargetBeeId
         ? this.colony.scene.actors.find((a) => a.id === job.adultFeedTargetBeeId)
         : undefined;
@@ -394,7 +440,8 @@ export class EconomySystem extends System {
         return;
       }
       const to = target.pos.sub(bee.pos);
-      if (to.size < 18) {
+      const dist = to.size;
+      if (dist < 18) {
         const wl = bee.get(BeeLevelComponent)!;
         const tl = target.get(BeeLevelComponent)?.level;
         if (tl != null && wl.level !== tl) {
@@ -409,6 +456,13 @@ export class EconomySystem extends System {
         releaseJob(this.world, job);
         ent.kill();
       } else {
+        syncForageMoveLeg(job, `wret:${job.adultFeedTargetBeeId ?? "?"}`, dist);
+        const ease = pathLegSpeedMultiplier(
+          dist,
+          job.forageMoveLegInitialDist,
+          C.pathLegEasingMinSpeedMultiplier,
+        );
+        const step = C.beeSpeed * 1.2 * C.forageFlightSpeedMultiplier * ease * elapsed;
         bee.pos = bee.pos.add(to.normalize().scale(step));
       }
     }

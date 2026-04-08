@@ -6,3 +6,9 @@ test-results
 package-lock.json
 *.min.js
 .cursor
+
+# Tiled files (XML), not TS/TSX
+dev_assets/*.tmx
+dev_assets/*.tsx
+public/tiled/*.tmx
+public/tiled/*.tsx

@@ -37,6 +37,8 @@ export type EffectiveColonyConstants = {
   readonly levelZoomPeak: number;
   readonly uiSnapshotMs: number;
   readonly beeSpeed: number;
+  readonly forageFlightSpeedMultiplier: number;
+  readonly pathLegEasingMinSpeedMultiplier: number;
   readonly beeLevelTransitionMs: number;
   readonly beeLevelTransitionZoomPeak: number;
   readonly selfFeedCrossLevelPenaltyPx: number;

@@ -78,6 +78,15 @@ export const COLONY = {
   uiSnapshotMs: 120,
   /** Bee movement speed (world units per ms). */
   beeSpeed: 0.09,
+  /**
+   * Multiplier on forage legs only (pollen/nectar/water outbound, return, deposit path).
+   * Other movement uses {@link beeSpeed} without this factor.
+   */
+  forageFlightSpeedMultiplier: 2.5,
+  /**
+   * Lower bound for {@link pathLegSpeedMultiplier} (0–1). Higher = less slowdown at leg ends.
+   */
+  pathLegEasingMinSpeedMultiplier: 0.22,
   /** Cross-hive-level move: wing-flap + zoom duration at the junction hex (ms). */
   beeLevelTransitionMs: 300,
   /** Peak extra scale during {@link beeLevelTransitionMs} (multiplier, e.g. 0.06 → up to 1.06×). */

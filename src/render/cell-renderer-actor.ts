@@ -150,8 +150,9 @@ const HOVER_HEX_OUTLINE = Color.fromRGB(255, 255, 255, 0.72);
 const HOVER_HEX_STROKE_PX = 1.75;
 
 /** Subtle stroke for empty hexes where a foundation may be placed. */
-const ELIGIBLE_BUILD_OUTLINE = Color.fromRGB(130, 145, 160, 0.45);
-const ELIGIBLE_BUILD_STROKE_PX = 1.25;
+// Brighter mint outline that contrasts with the green background but matches the game's accents.
+const ELIGIBLE_BUILD_OUTLINE = Color.fromRGB(130, 224, 170, 0.75);
+const ELIGIBLE_BUILD_STROKE_PX = 1.6;
 
 /** Centered labels for storage cells (pollen count, nectar + honey processing). */
 const cellStockFont = new Font({

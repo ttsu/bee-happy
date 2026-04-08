@@ -99,6 +99,10 @@ export class JobComponent extends Component {
   /** Scratch values for forage targets (world space). */
   scratchX = 0;
   scratchY = 0;
+  /** For forage easing: identifies current move leg; bump resets leg length. */
+  forageMoveEasingKey = "";
+  /** For forage easing: distance to target when {@link forageMoveEasingKey} was set. */
+  forageMoveLegInitialDist = 0;
   /**
    * Feed larvae: travel → timed gather at food cell → travel → timed deposit at brood.
    */
@@ -143,6 +147,13 @@ export class BeeWorkComponent extends Component {
   availability: BeeAvailability = "available";
   currentJobEntityId: number | null = null;
   pathIndex = 0;
+  /**
+   * Snapshot of {@link pathIndex} when {@link pathLegEasingInitialDist} was recorded
+   * (path-following easing per waypoint leg).
+   */
+  pathLegEasingIndexSnapshot = -1;
+  /** Distance to current waypoint when the active path leg began (world px). */
+  pathLegEasingInitialDist = 0;
   /** World target for idle wandering when unassigned and no eligible open jobs. */
   idleWanderTarget: Vector | null = null;
   /** Time left in the current idle rest (no movement); ms. */
