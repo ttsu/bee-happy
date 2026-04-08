@@ -1216,7 +1216,7 @@ body:not(.bee-happy-game-started) #game-canvas {
 }
 
 .whats-new-release-heading {
-  margin: 0 0 8px;
+  margin: 0 0 10px;
   font-size: 15px;
   font-weight: 700;
   display: flex;
@@ -1224,6 +1224,22 @@ body:not(.bee-happy-game-started) #game-canvas {
   align-items: baseline;
   justify-content: center;
   gap: 8px;
+}
+
+.whats-new-category {
+  margin-bottom: 12px;
+}
+
+.whats-new-category:last-child {
+  margin-bottom: 0;
+}
+
+.whats-new-category-heading {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #d5dbdb;
+  letter-spacing: 0.02em;
 }
 
 .whats-new-date {

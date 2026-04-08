@@ -1,12 +1,52 @@
 import { z } from "zod";
 import changelogRaw from "../data/player-changelog.json";
 
-const releaseEntrySchema = z.object({
-  id: z.string(),
-  date: z.string().optional(),
-  title: z.string().optional(),
-  items: z.array(z.string()),
-});
+/** Fixed display order for categorized release notes (emoji + label shown in UI). */
+export const PLAYER_CHANGELOG_CATEGORIES = [
+  { key: "newFeatures", label: "New Features", emoji: "✨" },
+  { key: "balanceChanges", label: "Balance Changes", emoji: "⚖️" },
+  {
+    key: "qualityOfLife",
+    label: "Quality of Life Improvements",
+    emoji: "💡",
+  },
+  { key: "bugFixes", label: "Bug Fixes", emoji: "🐛" },
+  { key: "performance", label: "Performance", emoji: "⚡" },
+] as const;
+
+export type PlayerChangelogCategoryKey =
+  (typeof PLAYER_CHANGELOG_CATEGORIES)[number]["key"];
+
+const optionalStringArray = z.array(z.string());
+
+const releaseEntrySchema = z
+  .object({
+    id: z.string(),
+    date: z.string().optional(),
+    title: z.string().optional(),
+    newFeatures: optionalStringArray.optional(),
+    balanceChanges: optionalStringArray.optional(),
+    qualityOfLife: optionalStringArray.optional(),
+    bugFixes: optionalStringArray.optional(),
+    performance: optionalStringArray.optional(),
+  })
+  .superRefine((entry, ctx) => {
+    const categoryKeys = PLAYER_CHANGELOG_CATEGORIES.map((c) => c.key);
+    let total = 0;
+    for (const k of categoryKeys) {
+      const arr = entry[k];
+      if (arr && arr.length > 0) {
+        total += arr.length;
+      }
+    }
+    if (total === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "At least one changelog category must include one or more items",
+        path: ["id"],
+      });
+    }
+  });
 
 export const playerChangelogSchema = z
   .object({
@@ -61,7 +101,7 @@ export const compareReleaseId = (a: string, b: string): number => {
  */
 export const getUnseenReleases = (
   lastSeenReleaseId: string | null,
-  cap = 3,
+  cap = 20,
 ): PlayerReleaseEntry[] => {
   if (lastSeenReleaseId === null) {
     return [];

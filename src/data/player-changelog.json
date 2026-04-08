@@ -5,25 +5,28 @@
     {
       "id": "0.17.0",
       "date": "2026-04-08",
-      "items": [
+      "newFeatures": [
         "The world around the hive uses a painted terrain map; you can only pan within that landscape.",
-        "Pollen and nectar foragers fly to random flower spots on the map instead of two fixed off-screen points.",
+        "Pollen and nectar foragers fly to random flower spots on the map instead of two fixed off-screen points."
+      ],
+      "qualityOfLife": [
         "Forage trips are faster with a smooth slow-down at each leg of the flight, and workers look a bit smaller when they’re far from the comb so the view stays readable."
       ]
     },
     {
       "id": "0.16.0",
       "date": "2026-04-04",
-      "items": [
-        "When a new queen takes over in lineage mode, your hive is no longer wiped: built comb and cells stay, and the colony’s timeline keeps going.",
-        "About half your workers stay with the new queen.",
+      "newFeatures": [
+        "When a new queen takes over in lineage mode, your hive is no longer wiped: built comb and cells stay, about half your workers stay with the new queen, and the colony’s timeline keeps going."
+      ],
+      "bugFixes": [
         "Honey you spend rerolling or upgrading in the succession shop is removed from nectar cells when you confirm, so the budget matches what leaves your stores."
       ]
     },
     {
       "id": "0.15.0",
       "date": "2026-04-04",
-      "items": [
+      "newFeatures": [
         "The launch menu now offers Casual, Normal, and Custom ways to start a colony: Casual skips intruders and the lineage system; Normal keeps them on; Custom lets you set days per season, how many workers you start with, and those toggles before play.",
         "Your choices are stored with that save; continue slots can show a crown when lineage is on and a marker when intruders are on.",
         "Older colonies you already had keep the lineage system; only new games use the new defaults."
@@ -32,14 +35,14 @@
     {
       "id": "0.14.0",
       "date": "2026-04-02",
-      "items": [
+      "qualityOfLife": [
         "A Build bar at the bottom of the screen lets you pick brood, pollen, or nectar cell types."
       ]
     },
     {
       "id": "0.13.0",
       "date": "2026-04-01",
-      "items": [
+      "qualityOfLife": [
         "Choosing brood, pollen, or nectar for a cell opens a compact menu above that cell with matching hive art, instead of a full-screen dimmed dialog.",
         "Tap an icon to confirm, or lift your finger on an icon after touching the cell; tap away on the map, pan the hive, or press Escape to close without picking."
       ]
@@ -47,56 +50,56 @@
     {
       "id": "0.12.0",
       "date": "2026-03-31",
-      "items": [
-        "The queen’s reign now ends with mandatory succession after three full years (60-day seasons each), instead of five."
+      "balanceChanges": [
+        "The queen’s reign now ends with mandatory succession after three full years (60-days each), instead of five."
       ]
     },
     {
       "id": "0.11.0",
       "date": "2026-03-31",
-      "items": [
+      "qualityOfLife": [
         "Built cells that still need a cell type get a soft golden outline so unfinished spots are easier to notice."
       ]
     },
     {
       "id": "0.10.0",
       "date": "2026-03-31",
-      "items": [
+      "newFeatures": [
         "You can keep several colony saves in this browser: pick one to continue, delete saves you do not need, or start a new game for another slot (new colonies appear in the list after the first autosave)."
       ]
     },
     {
       "id": "0.9.0",
       "date": "2026-03-31",
-      "items": [
+      "qualityOfLife": [
         "Bees moving between hive levels pause briefly at the junction with wing-flap animation and a subtle size pulse before they step onto the next comb."
       ]
     },
     {
       "id": "0.8.0",
       "date": "2026-03-30",
-      "items": [
+      "bugFixes": [
         "Unhappy bee thought bubbles now show the ‼️ reliably; they could look empty before."
       ]
     },
     {
       "id": "0.7.0",
       "date": "2026-03-31",
-      "items": [
+      "qualityOfLife": [
         "Unhappy bees (hungry or thirsty) show a small ‼️ thought bubble on the hive so you can spot who needs care."
       ]
     },
     {
       "id": "0.6.0",
       "date": "2026-03-30",
-      "items": [
+      "bugFixes": [
         "Hungry workers search every hive level for the nearest food and walk there—even if the pollen or nectar cell is on another comb."
       ]
     },
     {
       "id": "0.5.0",
       "date": "2026-03-30",
-      "items": [
+      "balanceChanges": [
         "Unprocessed nectar in the HUD is only what’s stored in nectar cells—workers eat from those cells or honey, not a separate colony nectar pool.",
         "Brood: eggs hatch a little faster; larvae need more pollen deliveries but fewer nectar ones; the queen attempts to lay more often.",
         "Hunger and thirst rise faster, but the “happy” band is wider; foraging trips are shorter and each return brings less pollen and nectar.",
@@ -106,7 +109,7 @@
     {
       "id": "0.4.0",
       "date": "2026-03-30",
-      "items": [
+      "qualityOfLife": [
         "Hive cells use new illustrated sprite art instead of flat colored circles.",
         "Brood, pollen, and nectar or honey cells change appearance as they fill or mature; foundations fade in while you build."
       ]
@@ -114,7 +117,7 @@
     {
       "id": "0.3.0",
       "date": "2026-03-30",
-      "items": [
+      "newFeatures": [
         "Starting a new colony (not Continue) launches an interactive tutorial: it walks you through building, brood and food cells, panning the view, and changing levels.",
         "You can skip the tutorial anytime; finishing or skipping is remembered in this browser."
       ]
@@ -122,7 +125,7 @@
     {
       "id": "0.2.0",
       "date": "2026-03-29",
-      "items": [
+      "qualityOfLife": [
         "A loading screen appears while the game prepares assets; the menu fades in when ready.",
         "Background music starts after you choose New game or Continue."
       ]
@@ -130,7 +133,7 @@
     {
       "id": "0.1.0",
       "date": "2026-03-29",
-      "items": [
+      "qualityOfLife": [
         "The launch screen can show a short list of gameplay changes after an update.",
         "Use Got it to dismiss; your browser remembers the last version you saw."
       ]
