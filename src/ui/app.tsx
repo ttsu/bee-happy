@@ -21,6 +21,7 @@ import { CellTypePicker } from "./cell-type-picker";
 import { PlacementCellTypeToolbar } from "./placement-cell-type-toolbar";
 import { registerSaveBeforeReload } from "../pwa/update-policy";
 import { UpdateAvailableBanner } from "./update-available-banner";
+import { ColonyHud } from "./colony-hud";
 
 const LEVELS = [-2, -1, 0, 1, 2] as const;
 const DRAG_LEVEL_THRESHOLD_PX = 48;
@@ -106,16 +107,6 @@ const readMiniLevelsFromBridge = (colony: ColonyRuntime | null): MiniLevel[] => 
 /**
  * Root React overlay: HUD, level strip, cell type picker, and transition dimmer.
  */
-const HUD_MINIMIZED_KEY = "bee-happy-hud-minimized";
-
-const readHudMinimized = (): boolean => {
-  try {
-    return localStorage.getItem(HUD_MINIMIZED_KEY) === "1";
-  } catch {
-    return false;
-  }
-};
-
 export const App = () => {
   const colony = useColonyBridge();
   const [snap, setSnap] = useState<ColonyUiSnapshot>(() =>
@@ -123,7 +114,6 @@ export const App = () => {
   );
   const [lineageOpen, setLineageOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [hudMinimized, setHudMinimized] = useState(readHudMinimized);
   const [miniLevels, setMiniLevels] = useState<MiniLevel[]>(() =>
     readMiniLevelsFromBridge(null),
   );
@@ -229,14 +219,6 @@ export const App = () => {
   }, [persistFullSave]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(HUD_MINIMIZED_KEY, hudMinimized ? "1" : "0");
-    } catch {
-      /* ignore quota / private mode */
-    }
-  }, [hudMinimized]);
-
-  useEffect(() => {
     if (targetLevel === null) {
       return;
     }
@@ -285,72 +267,7 @@ export const App = () => {
       >
         ⚙️
       </button>
-      <div className="hud">
-        <button
-          type="button"
-          className={`hud-card${hudMinimized ? " hud-card--minimized" : ""}`}
-          aria-expanded={!hudMinimized}
-          aria-label={hudMinimized ? "Show colony stats" : "Hide colony stats"}
-          onClick={() => {
-            setHudMinimized((m) => !m);
-          }}
-        >
-          <strong>Bee Happy</strong>
-          <div className="hud-stats" aria-hidden={hudMinimized}>
-            <div>Bees: {snap.beesTotal}</div>
-            <div>
-              Workers {snap.workers} · Queen {snap.queens}
-            </div>
-            <div>Pollen: {snap.pollen.toFixed(0)}</div>
-            <div>Honey: {snap.honey.toFixed(0)}</div>
-            <div>Nectar: {snap.nectar.toFixed(0)}</div>
-            <div className="hud-resource-row">
-              <span>Beeswax</span>
-              <div
-                className="hud-resource-bar"
-                role="meter"
-                aria-valuenow={snap.beeswax}
-                aria-valuemin={0}
-                aria-valuemax={snap.beeswaxCapacity}
-                aria-label="Beeswax"
-              >
-                <div
-                  className="hud-resource-bar-fill"
-                  style={{
-                    width: `${
-                      snap.beeswaxCapacity > 0
-                        ? Math.min(100, (snap.beeswax / snap.beeswaxCapacity) * 100)
-                        : 0
-                    }%`,
-                  }}
-                />
-              </div>
-              <span className="hud-resource-value">
-                {snap.beeswax.toFixed(0)}/{snap.beeswaxCapacity.toFixed(0)}
-              </span>
-            </div>
-            <div>Happiness: {snap.happinessPct}%</div>
-            <div>
-              Brood: {snap.broodOccupied}/{snap.broodTotal}
-            </div>
-            <div>Level: {snap.activeLevel}</div>
-            <div>Year: {snap.yearNumber}</div>
-            {snap.optionalSuccessionAvailable ? (
-              <div className="hud-succession-hint">
-                <button
-                  type="button"
-                  className="hud-ascend-btn"
-                  onClick={() => {
-                    colony?.requestOptionalSuccession();
-                  }}
-                >
-                  Ascend — new queen
-                </button>
-              </div>
-            ) : null}
-          </div>
-        </button>
-      </div>
+      <ColonyHud snap={snap} colony={colony} />
       <div
         className="level-strip"
         role="slider"

@@ -1,7 +1,14 @@
 {
-  "currentReleaseId": "0.19.0",
-  "asOfCommit": "21b06d8",
+  "currentReleaseId": "0.20.0",
+  "asOfCommit": "a72f75c",
   "releases": [
+    {
+      "id": "0.20.0",
+      "date": "2026-08-08",
+      "qualityOfLife": [
+        "The colony HUD is leaner: workers and stores only, with a compact icon strip when collapsed, labeled meters when expanded, and brief +/− flashes when values change."
+      ]
+    },
     {
       "id": "0.19.0",
       "date": "2026-08-08",
