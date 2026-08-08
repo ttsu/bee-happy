@@ -1,6 +1,6 @@
 {
   "currentReleaseId": "0.21.0",
-  "asOfCommit": "579bf89",
+  "asOfCommit": "a0cc43b",
   "releases": [
     {
       "id": "0.21.0",
@@ -14,7 +14,7 @@
       "id": "0.20.0",
       "date": "2026-08-08",
       "qualityOfLife": [
-        "The colony HUD is leaner: workers and stores only, with a compact icon strip when collapsed, labeled meters when expanded, and brief +/− flashes when values change. On phones the season chip sits above the HUD; on wide screens it stays on the right clear of settings."
+        "The colony HUD is leaner: workers and stores only, with a compact icon strip when collapsed, labeled meters when expanded, and brief +/\u2212 flashes when values change. On phones the season chip sits above the HUD; on wide screens it stays on the right clear of settings."
       ]
     },
     {
@@ -31,11 +31,11 @@
       "id": "0.18.0",
       "date": "2026-08-08",
       "balanceChanges": [
-        "Building new cells and changing cell types now costs beeswax; workers won’t start building without enough wax, and wax slowly refills based on how many workers you have."
+        "Building new cells and changing cell types now costs beeswax; workers won\u2019t start building without enough wax, and wax slowly refills based on how many workers you have."
       ],
       "qualityOfLife": [
         "The colony HUD shows a beeswax bar with your current supply and capacity.",
-        "The What’s new screen groups updates by category (new features, balance, fixes, and more)."
+        "The What\u2019s new screen groups updates by category (new features, balance, fixes, and more)."
       ]
     },
     {
@@ -46,14 +46,14 @@
         "Pollen and nectar foragers fly to random flower spots on the map instead of two fixed off-screen points."
       ],
       "qualityOfLife": [
-        "Forage trips are faster with a smooth slow-down at each leg of the flight, and workers look a bit smaller when they’re far from the comb so the view stays readable."
+        "Forage trips are faster with a smooth slow-down at each leg of the flight, and workers look a bit smaller when they\u2019re far from the comb so the view stays readable."
       ]
     },
     {
       "id": "0.16.0",
       "date": "2026-04-04",
       "newFeatures": [
-        "When a new queen takes over in lineage mode, your hive is no longer wiped: built comb and cells stay, about half your workers stay with the new queen, and the colony’s timeline keeps going."
+        "When a new queen takes over in lineage mode, your hive is no longer wiped: built comb and cells stay, about half your workers stay with the new queen, and the colony\u2019s timeline keeps going."
       ],
       "bugFixes": [
         "Honey you spend rerolling or upgrading in the succession shop is removed from nectar cells when you confirm, so the budget matches what leaves your stores."
@@ -87,7 +87,7 @@
       "id": "0.12.0",
       "date": "2026-03-31",
       "balanceChanges": [
-        "The queen’s reign now ends with mandatory succession after three full years (60-days each), instead of five."
+        "The queen\u2019s reign now ends with mandatory succession after three full years (60-days each), instead of five."
       ]
     },
     {
@@ -115,30 +115,30 @@
       "id": "0.8.0",
       "date": "2026-03-30",
       "bugFixes": [
-        "Unhappy bee thought bubbles now show the ‼️ reliably; they could look empty before."
+        "Unhappy bee thought bubbles now show the \u203c\ufe0f reliably; they could look empty before."
       ]
     },
     {
       "id": "0.7.0",
       "date": "2026-03-31",
       "qualityOfLife": [
-        "Unhappy bees (hungry or thirsty) show a small ‼️ thought bubble on the hive so you can spot who needs care."
+        "Unhappy bees (hungry or thirsty) show a small \u203c\ufe0f thought bubble on the hive so you can spot who needs care."
       ]
     },
     {
       "id": "0.6.0",
       "date": "2026-03-30",
       "bugFixes": [
-        "Hungry workers search every hive level for the nearest food and walk there—even if the pollen or nectar cell is on another comb."
+        "Hungry workers search every hive level for the nearest food and walk there\u2014even if the pollen or nectar cell is on another comb."
       ]
     },
     {
       "id": "0.5.0",
       "date": "2026-03-30",
       "balanceChanges": [
-        "Unprocessed nectar in the HUD is only what’s stored in nectar cells—workers eat from those cells or honey, not a separate colony nectar pool.",
+        "Unprocessed nectar in the HUD is only what\u2019s stored in nectar cells\u2014workers eat from those cells or honey, not a separate colony nectar pool.",
         "Brood: eggs hatch a little faster; larvae need more pollen deliveries but fewer nectar ones; the queen attempts to lay more often.",
-        "Hunger and thirst rise faster, but the “happy” band is wider; foraging trips are shorter and each return brings less pollen and nectar.",
+        "Hunger and thirst rise faster, but the \u201chappy\u201d band is wider; foraging trips are shorter and each return brings less pollen and nectar.",
         "Feeding an adult from a nectar cell uses less nectar per meal."
       ]
     },
