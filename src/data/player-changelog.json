@@ -6,7 +6,7 @@
       "id": "0.20.0",
       "date": "2026-08-08",
       "qualityOfLife": [
-        "The colony HUD is leaner: workers and stores only, with a compact icon strip when collapsed, labeled meters when expanded, and brief +/− flashes when values change."
+        "The colony HUD is leaner: workers and stores only, with a compact icon strip when collapsed, labeled meters when expanded, and brief +/− flashes when values change. On phones the season chip sits above the HUD; on wide screens it stays on the right clear of settings."
       ]
     },
     {

@@ -22,6 +22,13 @@ const SEASON_EMOJI: Readonly<Record<Season, string>> = {
 };
 
 /**
+ * Returns the emoji for a season (compact HUD / narrow banner).
+ *
+ * @param season - The canonical season id.
+ */
+export const getSeasonEmoji = (season: Season): string => SEASON_EMOJI[season];
+
+/**
  * Returns a display string for the season (emoji + name), e.g. `"☀️ Summer"`.
  *
  * @param season - The canonical season id.
