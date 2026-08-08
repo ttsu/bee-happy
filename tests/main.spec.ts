@@ -20,11 +20,18 @@ test("HUD loads with Bee Happy title", async ({ page }) => {
   await page.goto("http://localhost:4173/");
   await expect(page.getByRole("heading", { name: "Bee Happy" })).toBeVisible();
   await page.getByRole("button", { name: /Casual Mode/i }).click();
-  await expect(page.getByRole("button", { name: "Collapse colony stats" })).toBeVisible();
-  await expect(page.locator(".hud-stats .hud-stat-label", { hasText: "Workers" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Collapse colony stats" }),
+  ).toBeVisible();
+  await expect(
+    page.locator(".hud-stats .hud-stat-label", { hasText: "Workers" }),
+  ).toBeVisible();
   await expect(page.getByRole("meter", { name: "Beeswax" })).toBeVisible();
   await expect(page.getByRole("meter", { name: "Happiness" })).toBeVisible();
-  await expect(page.locator(".season-day-banner").getByText("🌸 Spring")).toBeVisible();
+  await expect(page.locator(".season-day-banner .season-day-season-full")).toHaveText(
+    "🌸 Spring",
+  );
+  await expect(page.locator(".season-day-banner .season-day-year")).toBeVisible();
   await expect(
     page.getByRole("radiogroup", { name: "Cell type to place" }),
   ).toBeVisible();
@@ -33,6 +40,17 @@ test("HUD loads with Bee Happy title", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Expand colony stats" })).toBeVisible();
   await expect(page.locator(".hud-strip")).toBeVisible();
   await expect(page.getByRole("meter", { name: "Beeswax" })).not.toBeVisible();
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.locator(".season-day-season-full")).toBeHidden();
+  await expect(page.locator(".season-day-year")).toBeHidden();
+  await expect(page.locator(".season-day-season-compact")).toBeVisible();
+  await expect(page.locator(".season-day-banner")).toContainText("Day");
+  const bannerBox = await page.locator(".season-day-banner").boundingBox();
+  const hudBox = await page.locator(".hud").boundingBox();
+  expect(bannerBox).toBeTruthy();
+  expect(hudBox).toBeTruthy();
+  expect(hudBox!.y).toBeGreaterThan(bannerBox!.y + bannerBox!.height - 1);
 });
 
 test("What's new appears when last seen release is older than current", async ({

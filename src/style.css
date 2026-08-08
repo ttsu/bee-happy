@@ -46,6 +46,11 @@ body:not(.bee-happy-game-started) #game-canvas {
   z-index: 3;
 }
 
+/* Wide: HUD top-left; season banner right-justified clear of settings/lineage. */
+.top-chrome {
+  pointer-events: none;
+}
+
 .hud {
   position: fixed;
   top: 12px;
@@ -57,8 +62,9 @@ body:not(.bee-happy-game-started) #game-canvas {
 .season-day-banner {
   position: fixed;
   top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: auto;
+  right: 68px; /* 12px + 44px settings + 12px gap */
+  transform: none;
   z-index: 4;
   pointer-events: none;
   background: rgba(20, 28, 36, 0.92);
@@ -73,12 +79,67 @@ body:not(.bee-happy-game-started) #game-canvas {
   line-height: 1.2;
   letter-spacing: 0.02em;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  max-width: calc(100vw - 12px - 68px - 12px);
+}
+
+.top-chrome--with-lineage .season-day-banner {
+  right: 120px; /* settings + lineage crowns */
+  max-width: calc(100vw - 12px - 120px - 12px);
+}
+
+.season-day-season-compact {
+  display: none;
 }
 
 .season-day-divider {
   width: 1px;
   height: 16px;
   background: rgba(236, 240, 241, 0.28);
+}
+
+/* Narrow (phone portrait): compact left banner, HUD stacked under it. */
+@media (max-width: 700px) {
+  .top-chrome {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    right: 68px;
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    pointer-events: none;
+  }
+
+  .top-chrome--with-lineage {
+    right: 120px;
+  }
+
+  .season-day-banner {
+    position: static;
+    right: auto;
+    max-width: 100%;
+    padding: 6px 10px;
+    gap: 6px;
+    font-size: 14px;
+  }
+
+  .season-day-season-full,
+  .season-day-year,
+  .season-day-divider--wide-only {
+    display: none;
+  }
+
+  .season-day-season-compact {
+    display: inline;
+  }
+
+  .hud {
+    position: static;
+    top: auto;
+    left: auto;
+  }
 }
 
 .update-available-banner {
@@ -277,12 +338,13 @@ body:not(.bee-happy-game-started) #game-canvas {
   position: absolute;
   left: calc(100% + 4px);
   top: 50%;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   pointer-events: none;
-  animation: hud-delta-fade 1s ease-out forwards;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+  animation: hud-delta-fade 1.1s ease-out forwards;
 }
 
 .hud-strip-item .hud-delta {
@@ -292,15 +354,16 @@ body:not(.bee-happy-game-started) #game-canvas {
 }
 
 .hud-delta--up {
-  color: #7dcea0;
+  color: #00ff00;
 }
 
 .hud-delta--down {
-  color: #f1948a;
+  color: #ff0000;
 }
 
 @keyframes hud-delta-fade {
-  0% {
+  0%,
+  55% {
     opacity: 1;
     transform: translateY(-40%);
   }
@@ -311,7 +374,8 @@ body:not(.bee-happy-game-started) #game-canvas {
 }
 
 @keyframes hud-delta-fade-strip {
-  0% {
+  0%,
+  55% {
     opacity: 1;
     transform: translate(-50%, -90%);
   }

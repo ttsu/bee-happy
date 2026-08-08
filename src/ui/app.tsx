@@ -5,7 +5,11 @@ import { serializeColonySave, writeColonySaveToStorage } from "../colony/colony-
 import { createDefaultColonyUiSnapshot } from "../schemas/colony-snapshot";
 import { useColonyBridge } from "./colony-bridge-context";
 import { BUILD_HASH_SHORT } from "../build-info";
-import { getSeasonDisplayLabel, getSeasonForColonyDay } from "../colony/seasons";
+import {
+  getSeasonDisplayLabel,
+  getSeasonEmoji,
+  getSeasonForColonyDay,
+} from "../colony/seasons";
 import {
   CellCoordComponent,
   CellStateComponent,
@@ -237,12 +241,36 @@ export const App = () => {
         style={{ opacity: snap.transitionOverlay }}
         aria-hidden
       />
-      <div className="season-day-banner" aria-live="polite">
-        <span>{getSeasonDisplayLabel(seasonInfo.season)}</span>
-        <span className="season-day-divider" aria-hidden />
-        <span>Year {snap.yearNumber}</span>
-        <span className="season-day-divider" aria-hidden />
-        <span>Day {seasonInfo.seasonDayOneBased}</span>
+      <div
+        className={`top-chrome${
+          snap.lineageSystemEnabled && lineageCount > 0
+            ? " top-chrome--with-lineage"
+            : ""
+        }`}
+      >
+        <div
+          className="season-day-banner"
+          aria-live="polite"
+          aria-label={`${getSeasonDisplayLabel(seasonInfo.season)}, Year ${snap.yearNumber}, Day ${seasonInfo.seasonDayOneBased}`}
+        >
+          <span className="season-day-season-full" aria-hidden>
+            {getSeasonDisplayLabel(seasonInfo.season)}
+          </span>
+          <span className="season-day-season-compact" aria-hidden>
+            {getSeasonEmoji(seasonInfo.season)}
+          </span>
+          <span
+            className="season-day-divider season-day-divider--wide-only"
+            aria-hidden
+          />
+          <span className="season-day-year">Year {snap.yearNumber}</span>
+          <span
+            className="season-day-divider season-day-divider--wide-only"
+            aria-hidden
+          />
+          <span>Day {seasonInfo.seasonDayOneBased}</span>
+        </div>
+        <ColonyHud snap={snap} colony={colony} />
       </div>
       {snap.lineageSystemEnabled && lineageCount > 0 ? (
         <button
@@ -267,7 +295,6 @@ export const App = () => {
       >
         ⚙️
       </button>
-      <ColonyHud snap={snap} colony={colony} />
       <div
         className="level-strip"
         role="slider"
