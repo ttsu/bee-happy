@@ -7,7 +7,7 @@ const DELTA_TICK_MS = 1100;
 
 type HudMetricKey = "workers" | "pollen" | "honey" | "nectar" | "beeswax" | "happiness";
 
-type HudIconKind = HudMetricKey | "brood";
+export type HudIconKind = HudMetricKey | "brood";
 
 const HUD_METRIC_KEYS: readonly HudMetricKey[] = [
   "workers",
@@ -52,7 +52,7 @@ const formatDelta = (delta: number): string => (delta > 0 ? `+${delta}` : `${del
 const meterPct = (value: number, capacity: number): number =>
   capacity > 0 ? Math.min(100, Math.max(0, (value / capacity) * 100)) : 0;
 
-const HudIcon = ({
+export const HudIcon = ({
   kind,
   label,
 }: {
@@ -172,6 +172,8 @@ const HudResourceMeter = ({
   fillClass,
   displayValue,
   tick,
+  markerRatio,
+  markerTitle,
 }: {
   readonly label: string;
   readonly icon: HudIconKind;
@@ -180,30 +182,45 @@ const HudResourceMeter = ({
   readonly fillClass: string;
   readonly displayValue: string;
   readonly tick?: DeltaTick;
-}) => (
-  <div className="hud-resource-row">
-    <span className="hud-stat-label">
-      <HudIcon kind={icon} label={label} />
-      {label}
-    </span>
-    <div
-      className="hud-resource-bar"
-      role="meter"
-      aria-valuenow={value}
-      aria-valuemin={0}
-      aria-valuemax={capacity}
-      aria-label={label}
-    >
+  /** 0–1 position for an optional vertical marker on the bar. */
+  readonly markerRatio?: number;
+  readonly markerTitle?: string;
+}) => {
+  const markerPct =
+    markerRatio == null ? null : Math.min(100, Math.max(0, markerRatio * 100));
+  return (
+    <div className="hud-resource-row">
+      <span className="hud-stat-label">
+        <HudIcon kind={icon} label={label} />
+        {label}
+      </span>
       <div
-        className={`hud-resource-bar-fill ${fillClass}`}
-        style={{ width: `${meterPct(value, capacity)}%` }}
-      />
+        className="hud-resource-bar"
+        role="meter"
+        aria-valuenow={value}
+        aria-valuemin={0}
+        aria-valuemax={capacity}
+        aria-label={label}
+        title={markerTitle}
+      >
+        <div
+          className={`hud-resource-bar-fill ${fillClass}`}
+          style={{ width: `${meterPct(value, capacity)}%` }}
+        />
+        {markerPct != null ? (
+          <div
+            className="hud-resource-bar-marker"
+            style={{ left: `${markerPct}%` }}
+            aria-hidden
+          />
+        ) : null}
+      </div>
+      <span className="hud-resource-value">
+        <MetricValue value={displayValue} tick={tick} />
+      </span>
     </div>
-    <span className="hud-resource-value">
-      <MetricValue value={displayValue} tick={tick} />
-    </span>
-  </div>
-);
+  );
+};
 
 const HudBroodMeter = ({
   pupae,
@@ -427,6 +444,16 @@ export const ColonyHud = ({ snap, colony }: Props) => {
                 fillClass="hud-resource-bar-fill--honey"
                 displayValue={`${honey}/${honeyCap}`}
                 tick={deltas.honey}
+                markerRatio={
+                  snap.honeyCapacity > 0
+                    ? snap.winterHoneyNeed / snap.honeyCapacity
+                    : undefined
+                }
+                markerTitle={
+                  snap.winterHoneyNeed > 0
+                    ? `Winter need: ${Math.ceil(snap.winterHoneyNeed)} honey`
+                    : undefined
+                }
               />
               <HudResourceMeter
                 label="Nectar"

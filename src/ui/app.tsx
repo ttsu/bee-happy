@@ -26,6 +26,7 @@ import { PlacementCellTypeToolbar } from "./placement-cell-type-toolbar";
 import { registerSaveBeforeReload } from "../pwa/update-policy";
 import { UpdateAvailableBanner } from "./update-available-banner";
 import { ColonyHud } from "./colony-hud";
+import { DemandPanel } from "./demand-panel";
 
 const LEVELS = [-2, -1, 0, 1, 2] as const;
 const DRAG_LEVEL_THRESHOLD_PX = 48;
@@ -272,6 +273,7 @@ export const App = () => {
         </div>
         <ColonyHud snap={snap} colony={colony} />
       </div>
+      <DemandPanel snap={snap} />
       {snap.lineageSystemEnabled && lineageCount > 0 ? (
         <button
           type="button"

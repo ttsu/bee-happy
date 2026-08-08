@@ -87,6 +87,14 @@ export interface ColonyUiSnapshot {
   readonly currentColonySeason: Season;
   /** Days per season for this colony (four seasons per year). */
   readonly daysPerSeason: number;
+  /** 0–1 build demand for pollen cells (Demand panel). */
+  readonly demandPollen: number;
+  /** 0–1 build demand for nectar cells (Demand panel). */
+  readonly demandNectar: number;
+  /** 0–1 build demand for brood cells (Demand panel). */
+  readonly demandBrood: number;
+  /** Honey stock needed to feed all bees for a full Winter (HUD tick). */
+  readonly winterHoneyNeed: number;
   /** When false, succession and lineage bonuses are disabled. */
   readonly lineageSystemEnabled: boolean;
   /** Reserved for future intruder encounters. */

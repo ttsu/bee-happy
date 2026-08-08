@@ -11,6 +11,7 @@
     "build": "npm run lint && tsc && vite build",
     "serve": "vite preview",
     "test": "npm run build && npx playwright test",
+    "test:unit": "node --experimental-strip-types --test src/colony/demand/colony-demand.test.ts",
     "test:integration-update": "npx playwright test --update-snapshots",
     "commitlint": "commitlint",
     "prepare": "husky"
