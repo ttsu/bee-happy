@@ -168,45 +168,157 @@ body:not(.bee-happy-game-started) #game-canvas {
 
 .hud-card {
   pointer-events: auto;
-  appearance: none;
-  -webkit-appearance: none;
-  border: none;
-  margin: 0;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
   background: rgba(20, 28, 36, 0.92);
   color: #ecf0f1;
-  padding: 12px 16px;
+  padding: 8px 10px;
   border-radius: 10px;
-  min-width: 200px;
-  font-size: 14px;
-  line-height: 1.45;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.35;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
-}
-
-.hud-card:focus-visible {
-  outline: 2px solid #82e0aa;
-  outline-offset: 2px;
-}
-
-.hud-card strong {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 15px;
+  overflow: visible;
 }
 
 .hud-card--minimized {
-  min-width: auto;
-  padding: 8px 12px;
+  padding: 6px 8px;
 }
 
-.hud-card--minimized strong {
-  margin-bottom: 0;
+.hud-toggle {
+  appearance: none;
+  -webkit-appearance: none;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
-.hud-card--minimized .hud-stats {
-  display: none;
+.hud-toggle:focus-visible {
+  outline: 2px solid #82e0aa;
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.hud-chevron {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1;
+  color: #cbd5e1;
+  opacity: 0.85;
+}
+
+.hud-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+}
+
+.hud-strip-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.hud-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 196px;
+}
+
+.hud-stat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hud-stat-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #e2e8f0;
+}
+
+.hud-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  color: #f5d76e;
+  flex: 0 0 auto;
+}
+
+.hud-metric-value {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.hud-metric-number {
+  font-variant-numeric: tabular-nums;
+}
+
+.hud-delta {
+  position: absolute;
+  left: calc(100% + 4px);
+  top: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: hud-delta-fade 1s ease-out forwards;
+}
+
+.hud-strip-item .hud-delta {
+  left: 50%;
+  top: 0;
+  animation-name: hud-delta-fade-strip;
+}
+
+.hud-delta--up {
+  color: #7dcea0;
+}
+
+.hud-delta--down {
+  color: #f1948a;
+}
+
+@keyframes hud-delta-fade {
+  0% {
+    opacity: 1;
+    transform: translateY(-40%);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-120%);
+  }
+}
+
+@keyframes hud-delta-fade-strip {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -90%);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -160%);
+  }
 }
 
 .hud-resource-row {
@@ -214,7 +326,7 @@ body:not(.bee-happy-game-started) #game-canvas {
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 8px;
-  margin: 4px 0;
+  margin: 2px 0;
 }
 
 .hud-resource-bar {
@@ -228,8 +340,15 @@ body:not(.bee-happy-game-started) #game-canvas {
 .hud-resource-bar-fill {
   height: 100%;
   border-radius: 4px;
-  background: linear-gradient(90deg, #c4956a, #d4a574);
   transition: width 0.12s ease-out;
+}
+
+.hud-resource-bar-fill--beeswax {
+  background: linear-gradient(90deg, #c4956a, #d4a574);
+}
+
+.hud-resource-bar-fill--happiness {
+  background: linear-gradient(90deg, #f5b041, #82e0aa);
 }
 
 .hud-resource-value {
@@ -1383,6 +1502,10 @@ body:not(.bee-happy-game-started) #game-canvas {
 .hud-succession-hint {
   margin-top: 8px;
   pointer-events: auto;
+}
+
+.hud-succession-hint .hud-ascend-btn {
+  width: 100%;
 }
 
 .hud-ascend-btn {
