@@ -4,6 +4,7 @@ import { COLONY } from "./constants";
 import {
   ActiveLevelComponent,
   BeeRoleComponent,
+  BeeswaxComponent,
   CellStateComponent,
   ColonyTimeComponent,
   HoneyRunComponent,
@@ -20,6 +21,8 @@ import {
   type SuccessionReason,
 } from "./meta/meta-progress";
 import { seedLevelZero, spawnQueenAndBootstrapWorkers } from "./colony-seed";
+import { beeswaxCapacity } from "./beeswax";
+import { getActiveColonyConstants } from "./colony-active-constants";
 import { buildColonyUiSnapshot } from "./colony-ui-snapshot";
 import type { ColonyRuntime } from "./colony-runtime";
 
@@ -107,6 +110,12 @@ const applySuccessionKeepNestInColony = (
   const time = new ColonyTimeComponent();
   time.colonyElapsedMs = colonyElapsedMs;
 
+  const waxSrc = old.get(BeeswaxComponent);
+  const wax = new BeeswaxComponent();
+  if (waxSrc) {
+    wax.stored = waxSrc.stored;
+  }
+
   colony.controllerEntity = new Entity({
     name: "colony-controller",
     components: [
@@ -115,6 +124,7 @@ const applySuccessionKeepNestInColony = (
       time,
       yearly,
       new HoneyRunComponent(),
+      wax,
     ],
   });
   colony.controllerEntity.addTag("colonyController");
@@ -129,6 +139,9 @@ const applySuccessionKeepNestInColony = (
   colony.transitionOverlay = 0;
 
   spawnQueenAndBootstrapWorkers(colony, workersToKeep);
+
+  const C = getActiveColonyConstants();
+  wax.stored = Math.min(wax.stored, beeswaxCapacity(colony.countWorkers(), C));
 
   refreshActiveColonyConstantsFromMeta(colony.lineageSystemEnabled);
   colony.emitUiSnapshotImmediate();
@@ -268,6 +281,7 @@ export const resetWorldAfterSuccession = (colony: ColonyRuntime): void => {
       new ColonyTimeComponent(),
       new YearlyStatsComponent(),
       new HoneyRunComponent(),
+      new BeeswaxComponent(),
     ],
   });
   colony.controllerEntity.addTag("colonyController");

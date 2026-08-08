@@ -76,4 +76,5 @@ export const seedLevelZero = (colony: ColonyRuntime, workerCount = 2): void => {
     });
   }
   spawnQueenAndBootstrapWorkers(colony, workerCount);
+  colony.seedInitialBeeswax();
 };

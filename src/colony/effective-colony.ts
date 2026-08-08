@@ -7,6 +7,11 @@ export type EffectiveColonyConstants = {
   readonly buildReachPx: number;
   readonly buildWorkRadiusPx: number;
   readonly initialPollen: number;
+  readonly waxCapacityPerWorker: number;
+  readonly waxRatePerWorkerPerSec: number;
+  readonly initialBeeswax: number;
+  readonly cellBuildWaxCost: number;
+  readonly cellRetypeWaxCost: number;
   readonly eggDurationMs: number;
   readonly larvaePollenUnitsNeeded: number;
   readonly larvaeNectarUnitsNeeded: number;

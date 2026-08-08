@@ -37,6 +37,10 @@ export interface ColonyUiSnapshot {
   readonly honey: number;
   /** Unprocessed nectar stored in nectar cells (not honey). */
   readonly nectar: number;
+  /** Hive beeswax pool (building / retyping). */
+  readonly beeswax: number;
+  /** Max beeswax given current worker count. */
+  readonly beeswaxCapacity: number;
   readonly happinessPct: number;
   readonly broodOccupied: number;
   readonly broodTotal: number;

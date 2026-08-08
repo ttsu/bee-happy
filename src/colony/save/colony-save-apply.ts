@@ -9,6 +9,7 @@ import {
   BeeCarryComponent,
   BeeNeedsComponent,
   BeeWorkComponent,
+  BeeswaxComponent,
   CellStateComponent,
   ColonyTimeComponent,
   HoneyRunComponent,
@@ -18,6 +19,7 @@ import {
 } from "../ecs/components/colony-components";
 import { gameSettingsFromSave } from "../game-settings";
 import { refreshActiveColonyConstantsFromMeta } from "../colony-active-constants";
+import { beeswaxCapacity } from "../beeswax";
 import { applyCellStateJson, newJobFromJson } from "./colony-save-codec";
 import type { LoadPayload } from "./colony-save-types";
 
@@ -42,6 +44,11 @@ export function applyColonySave(colony: ColonyRuntime, payload: LoadPayload): vo
   colony.applyRuntimeGameSettings(gs);
   refreshActiveColonyConstantsFromMeta(colony.lineageSystemEnabled);
 
+  const C = getActiveColonyConstants();
+  const waxStored = data.beeswax?.stored ?? C.initialBeeswax;
+  const wax = new BeeswaxComponent();
+  wax.stored = waxStored;
+
   colony.controllerEntity = new Entity({
     name: "colony-controller",
     components: [
@@ -50,6 +57,7 @@ export function applyColonySave(colony: ColonyRuntime, payload: LoadPayload): vo
       Object.assign(new ColonyTimeComponent(), data.colonyTime),
       Object.assign(new YearlyStatsComponent(), data.yearly),
       new HoneyRunComponent(),
+      wax,
     ],
   });
   colony.controllerEntity.addTag("colonyController");
@@ -101,6 +109,8 @@ export function applyColonySave(colony: ColonyRuntime, payload: LoadPayload): vo
     const work = actor.get(BeeWorkComponent)!;
     work.currentJobEntityId = oldJobId != null ? (jobMap.get(oldJobId) ?? null) : null;
   }
+
+  wax.stored = Math.min(wax.stored, beeswaxCapacity(colony.countWorkers(), C));
 
   scene.camera.pos = vec(data.camera.x, data.camera.y);
 

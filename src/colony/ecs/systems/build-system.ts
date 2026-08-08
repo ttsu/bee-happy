@@ -10,24 +10,10 @@ import { getActiveColonyConstants } from "../../colony-active-constants";
 import type { ColonyRuntime } from "../../colony-runtime";
 import { hiveKey } from "../../../grid/hive-levels";
 import { hexToWorld } from "../../../grid/hex-grid";
+import { releaseJobBees } from "../job-release";
 
 const findEntityById = (world: World, id: number) =>
   asActor(world.entities.find((e) => e.id === id));
-
-const releaseJobBees = (world: World, job: JobComponent): void => {
-  for (const id of job.reservedBeeIds) {
-    const bee = world.entities.find((e) => e.id === id);
-    const w = bee?.get(BeeWorkComponent);
-    if (w) {
-      w.availability = "available";
-      w.currentJobEntityId = null;
-      w.pathIndex = 0;
-      w.idleWanderTarget = null;
-      w.idleWanderPauseRemainingMs = 0;
-    }
-  }
-  job.reservedBeeIds = [];
-};
 
 /**
  * Advances foundation builds while workers are in range; completes build jobs.
@@ -84,7 +70,21 @@ export class BuildSystem extends System {
         }
       }
       if (builders > 0) {
-        cell.buildProgress += (elapsed / 1000) * (builders / C.cellBuildTargetSec);
+        const progressDelta = (elapsed / 1000) * (builders / C.cellBuildTargetSec);
+        const waxNeeded = progressDelta * C.cellBuildWaxCost;
+        const stored = this.colony.getBeeswaxStored();
+        if (stored <= 0) {
+          releaseJobBees(this.world, job);
+          job.status = "open";
+        } else if (stored < waxNeeded) {
+          cell.buildProgress += stored / C.cellBuildWaxCost;
+          this.colony.tryConsumeBeeswax(stored);
+          releaseJobBees(this.world, job);
+          job.status = "open";
+        } else {
+          cell.buildProgress += progressDelta;
+          this.colony.tryConsumeBeeswax(waxNeeded);
+        }
       }
       if (cell.buildProgress >= 1) {
         cell.built = true;

@@ -14,8 +14,10 @@ import { ColonyEventBus, type ColonyUiSnapshot } from "./events/colony-events";
 import {
   ActiveLevelComponent,
   BeeLevelComponent,
+  BeeRoleComponent,
   CellCoordComponent,
   CellStateComponent,
+  BeeswaxComponent,
   ColonyTimeComponent,
   HoneyRunComponent,
   JobComponent,
@@ -48,6 +50,8 @@ import { LevelSystem } from "./ecs/systems/level-system";
 import { MovementSystem } from "./ecs/systems/movement-system";
 import { WorkerLifecycleSystem } from "./ecs/systems/worker-lifecycle-system";
 import { GuardSystem } from "./ecs/systems/guard-system";
+import { BeeswaxSystem } from "./ecs/systems/beeswax-system";
+import { beeswaxCapacity } from "./beeswax";
 import type { SeasonSystemSave } from "./ecs/systems/season-system";
 import { SeasonSystem } from "./ecs/systems/season-system";
 import { SEASON_LENGTH_DAYS } from "./seasons";
@@ -130,6 +134,7 @@ export class ColonyRuntime {
         new ColonyTimeComponent(),
         new YearlyStatsComponent(),
         new HoneyRunComponent(),
+        new BeeswaxComponent(),
       ],
     });
     this.controllerEntity.addTag("colonyController");
@@ -154,6 +159,7 @@ export class ColonyRuntime {
     const season = new SeasonSystem(world, this);
     this.seasonSystem = season;
     world.add(season);
+    world.add(new BeeswaxSystem(world, this));
     world.add(new JobAssignmentSystem(world, this));
     world.add(new MovementSystem(world, this));
     world.add(new IdleWanderSystem(world, this));
@@ -246,6 +252,46 @@ export class ColonyRuntime {
       }
     }
     return total;
+  }
+
+  /** Live worker bee count (queen excluded). */
+  countWorkers(): number {
+    let workers = 0;
+    for (const a of this.scene.actors) {
+      const br = a.get(BeeRoleComponent);
+      if (br?.role === "worker") {
+        workers += 1;
+      }
+    }
+    return workers;
+  }
+
+  getBeeswaxStored(): number {
+    return this.controllerEntity.get(BeeswaxComponent)?.stored ?? 0;
+  }
+
+  getBeeswaxCapacity(): number {
+    const C = getActiveColonyConstants();
+    return beeswaxCapacity(this.countWorkers(), C);
+  }
+
+  tryConsumeBeeswax(amount: number): boolean {
+    const wax = this.controllerEntity.get(BeeswaxComponent);
+    if (!wax || wax.stored < amount) {
+      return false;
+    }
+    wax.stored -= amount;
+    return true;
+  }
+
+  /** Seeds starting beeswax for a new colony (after workers are spawned). */
+  seedInitialBeeswax(): void {
+    const wax = this.controllerEntity.get(BeeswaxComponent);
+    if (!wax) {
+      return;
+    }
+    const C = getActiveColonyConstants();
+    wax.stored = Math.min(C.initialBeeswax, beeswaxCapacity(this.countWorkers(), C));
   }
 
   get activeLevel(): number {
@@ -503,6 +549,12 @@ export class ColonyRuntime {
    * Applies a new cell type and resets incompatible state (inventory, brood timers).
    */
   applyResolvedCellType(cellKey: string, newType: "brood" | "pollen" | "nectar"): void {
+    const C = getActiveColonyConstants();
+    if (!this.tryConsumeBeeswax(C.cellRetypeWaxCost)) {
+      this.cellTypeChangeError = "Not enough beeswax to change this cell type.";
+      this.emitUiSnapshotImmediate();
+      return;
+    }
     const ent = this.cellsByKey.get(cellKey);
     if (!ent) {
       return;
@@ -567,6 +619,16 @@ export class ColonyRuntime {
     );
   }
 
+  private blockCellRetypeForInsufficientWax(): boolean {
+    const C = getActiveColonyConstants();
+    if (this.getBeeswaxStored() >= C.cellRetypeWaxCost) {
+      return false;
+    }
+    this.cellTypeChangeError = "Not enough beeswax to change this cell type.";
+    this.emitUiSnapshotImmediate();
+    return true;
+  }
+
   /**
    * Validates rules from the cell-type picker and applies, defers, or enqueues relocation.
    */
@@ -623,6 +685,9 @@ export class ColonyRuntime {
     }
 
     if (st.cellType === "brood" && st.stage === "empty") {
+      if (this.blockCellRetypeForInsufficientWax()) {
+        return;
+      }
       this.applyResolvedCellType(cellKey, targetType);
       this.pendingCellTypeKey = null;
       this.cellTypeChangeDiscardTarget = null;
@@ -659,12 +724,18 @@ export class ColonyRuntime {
       }
       if (!canMove && discardConfirmed) {
         this.cellTypeChangeDiscardTarget = null;
+        if (this.blockCellRetypeForInsufficientWax()) {
+          return;
+        }
         this.applyResolvedCellType(cellKey, targetType);
         this.pendingCellTypeKey = null;
         this.emitUiSnapshotImmediate();
         return;
       }
       this.cellTypeChangeDiscardTarget = null;
+      if (this.blockCellRetypeForInsufficientWax()) {
+        return;
+      }
       st.pendingCellType = targetType;
       const job = new JobComponent(
         "clearCellForRetype",
@@ -681,6 +752,9 @@ export class ColonyRuntime {
     }
 
     this.cellTypeChangeDiscardTarget = null;
+    if (this.blockCellRetypeForInsufficientWax()) {
+      return;
+    }
     this.applyResolvedCellType(cellKey, targetType);
     this.pendingCellTypeKey = null;
     this.emitUiSnapshotImmediate();
