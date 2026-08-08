@@ -1,7 +1,18 @@
 {
-  "currentReleaseId": "0.17.0",
-  "asOfCommit": "3c712a3",
+  "currentReleaseId": "0.18.0",
+  "asOfCommit": "065e546",
   "releases": [
+    {
+      "id": "0.18.0",
+      "date": "2026-08-08",
+      "balanceChanges": [
+        "Building new cells and changing cell types now costs beeswax; workers won’t start building without enough wax, and wax slowly refills based on how many workers you have."
+      ],
+      "qualityOfLife": [
+        "The colony HUD shows a beeswax bar with your current supply and capacity.",
+        "The What’s new screen groups updates by category (new features, balance, fixes, and more)."
+      ]
+    },
     {
       "id": "0.17.0",
       "date": "2026-04-08",
