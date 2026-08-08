@@ -44,8 +44,10 @@ jobs:
           source-dir: dist
           preview-branch: gh-pages
           umbrella-dir: pr
-          wait-for-pages-deployment: true
+          pages-base-url: beehappy.timtsu.com
+          wait-for-pages-deployment: false
 
       - name: Add preview link to job summary
         if: steps.preview.outputs.deployment-action == 'deploy'
-        run: echo "### Preview ready: ${{ steps.preview.outputs.preview-url }}" >> $GITHUB_STEP_SUMMARY
+        run: |
+          echo "Preview ready: ${{ steps.preview.outputs.preview-url }}" >> "$GITHUB_STEP_SUMMARY"
