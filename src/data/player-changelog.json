@@ -1,7 +1,14 @@
 {
-  "currentReleaseId": "0.20.0",
-  "asOfCommit": "a72f75c",
+  "currentReleaseId": "0.21.0",
+  "asOfCommit": "579bf89",
   "releases": [
+    {
+      "id": "0.21.0",
+      "date": "2026-08-08",
+      "qualityOfLife": [
+        "Expanded colony stats now show fill bars for pollen, honey, and nectar against cell capacity, plus a stacked brood bar for pupae, larvae, and empty cells."
+      ]
+    },
     {
       "id": "0.20.0",
       "date": "2026-08-08",
