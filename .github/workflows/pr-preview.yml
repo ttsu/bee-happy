@@ -1,0 +1,51 @@
+name: Deploy PR preview
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - closed
+
+concurrency:
+  group: preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  deploy-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        if: github.event.action != 'closed'
+        run: npm ci
+
+      - name: Typecheck and Build
+        if: github.event.action != 'closed'
+        run: npx tsc && npx vite build
+
+      - name: Deploy preview
+        uses: rossjrw/pr-preview-action@v1
+        id: preview
+        with:
+          source-dir: dist
+          preview-branch: gh-pages
+          umbrella-dir: pr
+          wait-for-pages-deployment: true
+
+      - name: Add preview link to job summary
+        if: steps.preview.outputs.deployment-action == 'deploy'
+        run: echo "### Preview ready: ${{ steps.preview.outputs.preview-url }}" >> $GITHUB_STEP_SUMMARY

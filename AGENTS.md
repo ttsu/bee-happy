@@ -24,6 +24,19 @@
 - Husky + commitlint enforce [Conventional Commits](https://www.conventionalcommits.org/) on commit messages (set up automatically by `npm install` via the `prepare` script).
 - Commit messages should be terse and direct. Each line MUST be less than 100 characters.
 
+### GitHub Pages deployment and PR previews
+
+Production and PR previews share the **`gh-pages`** branch (production at root, previews under `pr/pr-{number}/`).
+
+**One-time repo settings** (after merging deploy workflow changes):
+
+1. **Settings → Pages → Build and deployment → Source**: **Deploy from a branch** → `gh-pages` / `(root)` (not “GitHub Actions”).
+2. **Settings → Actions → General → Workflow permissions**: **Read and write permissions**.
+
+**Safe cutover:** merge to `main`, let the production workflow populate `gh-pages`, then switch the Pages source. Opening a PR runs [`.github/workflows/pr-preview.yml`](.github/workflows/pr-preview.yml) and posts a preview URL at `/pr/pr-{number}/` on the same domain; closing the PR removes that folder.
+
+**Custom domain:** set `pages-base-url` in `pr-preview.yml` if the default GitHub Pages URL is wrong for preview links.
+
 ### Player-facing changelog (What’s new)
 
 - Source of truth: [`src/data/player-changelog.json`](src/data/player-changelog.json). It is validated at build time with Zod ([`src/changelog/player-changelog.ts`](src/changelog/player-changelog.ts)). Keep **`releases` newest-first**; **`releases[0].id` must equal `currentReleaseId`**.
