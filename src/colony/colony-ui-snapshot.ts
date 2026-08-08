@@ -1,5 +1,6 @@
 import { COLONY } from "./constants";
 import { getActiveColonyConstants } from "./colony-active-constants";
+import { computeColonyDemand } from "./demand/colony-demand";
 import type { ColonyUiSnapshot } from "./events/colony-events";
 import {
   BeeNeedsComponent,
@@ -46,6 +47,9 @@ export const buildColonyUiSnapshot = (colony: ColonyRuntime): ColonyUiSnapshot =
   let broodPupae = 0;
   let broodLarvae = 0;
   let broodEmpty = 0;
+  let eggCount = 0;
+  let larvaePollenBacklog = 0;
+  let larvaeNectarBacklog = 0;
   let pollenCells = 0;
   let nectarCells = 0;
   for (const [, e] of colony.cellsByKey) {
@@ -69,6 +73,12 @@ export const buildColonyUiSnapshot = (colony: ColonyRuntime): ColonyUiSnapshot =
       // Eggs share the larvae stack segment in the expanded HUD.
       broodLarvae += 1;
       broodOccupied += 1;
+      if (st.stage === "egg") {
+        eggCount += 1;
+      } else {
+        larvaePollenBacklog += Math.max(0, st.larvaePollenRemaining);
+        larvaeNectarBacklog += Math.max(0, st.larvaeNectarRemaining);
+      }
     } else if (st.stage === "empty" || st.stage === "cleaning") {
       // Cleaning shares the empty stack segment (cell freeing up).
       broodEmpty += 1;
@@ -89,16 +99,39 @@ export const buildColonyUiSnapshot = (colony: ColonyRuntime): ColonyUiSnapshot =
     currentColonyDay,
     daysPerSeason,
   );
+  const pollen = colony.sumPollenStored();
+  const pollenCapacity = pollenCells * C.pollenCellCapacity;
+  const honey = colony.sumHoneyStored();
+  const honeyCapacity = nectarCells * C.honeyCellCapacity;
+  const nectar = colony.sumNectarStored();
+  const nectarCapacity = nectarCells * C.nectarCellCapacity;
+  const beesTotal = workers + queens;
+  const demand = computeColonyDemand({
+    beesTotal,
+    pollenStored: pollen,
+    pollenCapacity,
+    nectarStored: nectar,
+    honeyStored: honey,
+    honeyCapacity,
+    broodTotal,
+    broodEmpty,
+    eggCount,
+    larvaePollenBacklog,
+    larvaeNectarBacklog,
+    daysPerSeason,
+    season: currentColonySeason,
+    constants: C,
+  });
   return {
-    beesTotal: workers + queens,
+    beesTotal,
     workers,
     queens,
-    pollen: colony.sumPollenStored(),
-    pollenCapacity: pollenCells * C.pollenCellCapacity,
-    honey: colony.sumHoneyStored(),
-    honeyCapacity: nectarCells * C.honeyCellCapacity,
-    nectar: colony.sumNectarStored(),
-    nectarCapacity: nectarCells * C.nectarCellCapacity,
+    pollen,
+    pollenCapacity,
+    honey,
+    honeyCapacity,
+    nectar,
+    nectarCapacity,
     beeswax: colony.getBeeswaxStored(),
     beeswaxCapacity: colony.getBeeswaxCapacity(),
     happinessPct: Math.min(
@@ -120,6 +153,10 @@ export const buildColonyUiSnapshot = (colony: ColonyRuntime): ColonyUiSnapshot =
     currentColonyDay,
     currentColonySeason,
     daysPerSeason,
+    demandPollen: demand.demandPollen,
+    demandNectar: demand.demandNectar,
+    demandBrood: demand.demandBrood,
+    winterHoneyNeed: demand.winterHoneyNeed,
     lineageSystemEnabled: colony.lineageSystemEnabled,
     intrudersEnabled: colony.intrudersEnabled,
     yearNumber: yearly.yearNumber,

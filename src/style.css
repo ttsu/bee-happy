@@ -394,11 +394,24 @@ body:not(.bee-happy-game-started) #game-canvas {
 }
 
 .hud-resource-bar {
+  position: relative;
   height: 8px;
   min-width: 72px;
   border-radius: 4px;
   background: rgba(15, 23, 42, 0.55);
   overflow: hidden;
+}
+
+.hud-resource-bar-marker {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #ecf0f1;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45);
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 1;
 }
 
 .hud-resource-bar--stacked {
@@ -684,6 +697,85 @@ body:not(.bee-happy-game-started) #game-canvas {
 
 .cell-type-option:active {
   transform: scale(0.96);
+}
+
+.demand-panel {
+  position: fixed;
+  left: 12px;
+  bottom: max(96px, calc(72px + env(safe-area-inset-bottom)));
+  z-index: 5;
+  pointer-events: none;
+  padding: 8px 10px 6px;
+  min-width: 0;
+}
+
+.demand-panel-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(236, 240, 241, 0.75);
+  text-align: center;
+  margin-bottom: 6px;
+  user-select: none;
+}
+
+.demand-panel-bars {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 10px;
+}
+
+.demand-bar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.demand-bar-track {
+  width: 12px;
+  height: 52px;
+  border-radius: 4px;
+  background: rgba(15, 23, 42, 0.55);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.demand-bar-fill {
+  width: 100%;
+  border-radius: 3px 3px 0 0;
+  transition: height 0.12s ease-out;
+  min-height: 0;
+}
+
+.demand-bar-fill--pollen {
+  background: #f7dc6f;
+}
+
+.demand-bar-fill--nectar {
+  background: #82e0aa;
+}
+
+.demand-bar-fill--brood {
+  background: #d7bde2;
+}
+
+@media (max-width: 700px) {
+  .demand-panel {
+    left: 8px;
+    bottom: max(108px, calc(84px + env(safe-area-inset-bottom)));
+    padding: 6px 8px 4px;
+  }
+
+  .demand-bar-track {
+    width: 10px;
+    height: 44px;
+  }
 }
 
 .placement-cell-type-toolbar {

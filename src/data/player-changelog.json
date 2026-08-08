@@ -6,7 +6,8 @@
       "id": "0.21.0",
       "date": "2026-08-08",
       "qualityOfLife": [
-        "Expanded colony stats now show fill bars for pollen, honey, and nectar against cell capacity, plus a stacked brood bar for pupae, larvae, and empty cells."
+        "Expanded colony stats now show fill bars for pollen, honey, and nectar against cell capacity, plus a stacked brood bar for pupae, larvae, and empty cells.",
+        "A Demand panel at the bottom left shows when to build more pollen, nectar, or brood cells, and the honey bar marks how much honey you need for winter."
       ]
     },
     {
