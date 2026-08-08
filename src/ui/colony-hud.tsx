@@ -3,7 +3,7 @@ import type { ColonyRuntime } from "../colony/colony-runtime";
 import type { ColonyUiSnapshot } from "../colony/events/colony-events";
 
 const HUD_MINIMIZED_KEY = "bee-happy-hud-minimized";
-const DELTA_TICK_MS = 1000;
+const DELTA_TICK_MS = 1100;
 
 type HudMetricKey = "workers" | "pollen" | "honey" | "nectar" | "beeswax" | "happiness";
 
