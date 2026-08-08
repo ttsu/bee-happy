@@ -72,6 +72,8 @@ export const buildColonyUiSnapshot = (colony: ColonyRuntime): ColonyUiSnapshot =
     pollen: colony.sumPollenStored(),
     honey: colony.sumHoneyStored(),
     nectar: colony.sumNectarStored(),
+    beeswax: colony.getBeeswaxStored(),
+    beeswaxCapacity: colony.getBeeswaxCapacity(),
     happinessPct: Math.min(
       100,
       Math.max(0, totalNeeds > 0 ? Math.round((happy / totalNeeds) * 100) : 100),

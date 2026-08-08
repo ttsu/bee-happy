@@ -295,6 +295,31 @@ export const App = () => {
             <div>Pollen: {snap.pollen.toFixed(0)}</div>
             <div>Honey: {snap.honey.toFixed(0)}</div>
             <div>Nectar: {snap.nectar.toFixed(0)}</div>
+            <div className="hud-resource-row">
+              <span>Beeswax</span>
+              <div
+                className="hud-resource-bar"
+                role="meter"
+                aria-valuenow={snap.beeswax}
+                aria-valuemin={0}
+                aria-valuemax={snap.beeswaxCapacity}
+                aria-label="Beeswax"
+              >
+                <div
+                  className="hud-resource-bar-fill"
+                  style={{
+                    width: `${
+                      snap.beeswaxCapacity > 0
+                        ? Math.min(100, (snap.beeswax / snap.beeswaxCapacity) * 100)
+                        : 0
+                    }%`,
+                  }}
+                />
+              </div>
+              <span className="hud-resource-value">
+                {snap.beeswax.toFixed(0)}/{snap.beeswaxCapacity.toFixed(0)}
+              </span>
+            </div>
             <div>Happiness: {snap.happinessPct}%</div>
             <div>
               Brood: {snap.broodOccupied}/{snap.broodTotal}

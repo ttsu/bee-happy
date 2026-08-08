@@ -213,6 +213,11 @@ export class HoneyRunComponent extends Component {
   honeyProducedThisRun = 0;
 }
 
+/** Hive-wide beeswax pool used for building and retyping cells. */
+export class BeeswaxComponent extends Component {
+  stored = 0;
+}
+
 export class YearlyStatsComponent extends Component {
   /** 1-based colony year (increments when the player continues after review). */
   yearNumber = 1;

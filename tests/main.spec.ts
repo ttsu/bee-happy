@@ -20,6 +20,7 @@ test("HUD loads with Bee Happy title", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Bee Happy" })).toBeVisible();
   await page.getByRole("button", { name: /Casual Mode/i }).click();
   await expect(page.getByText(/Bees:/)).toBeVisible();
+  await expect(page.getByRole("meter", { name: "Beeswax" })).toBeVisible();
   await expect(page.locator(".season-day-banner").getByText("🌸 Spring")).toBeVisible();
   await expect(
     page.getByRole("radiogroup", { name: "Cell type to place" }),

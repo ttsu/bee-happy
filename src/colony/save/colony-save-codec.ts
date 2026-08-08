@@ -13,6 +13,7 @@ import {
   CellCoordComponent,
   CellStateComponent,
   ColonyTimeComponent,
+  BeeswaxComponent,
   JobComponent,
   QueenTimerComponent,
   YearlyStatsComponent,
@@ -171,6 +172,7 @@ export function serializeColonySave(colony: ColonyRuntime): ColonySaveV1 {
   const queen = colony.controllerEntity.get(QueenTimerComponent)!;
   const time = colony.controllerEntity.get(ColonyTimeComponent)!;
   const yearly = colony.controllerEntity.get(YearlyStatsComponent)!;
+  const beeswax = colony.controllerEntity.get(BeeswaxComponent)!;
 
   const cells: ColonySaveV1["cells"] = [];
   for (const [key, ent] of colony.cellsByKey) {
@@ -239,6 +241,7 @@ export function serializeColonySave(colony: ColonyRuntime): ColonySaveV1 {
     },
     queenTimer: { layCooldownMs: queen.layCooldownMs },
     colonyTime: { colonyElapsedMs: time.colonyElapsedMs },
+    beeswax: { stored: beeswax.stored },
     yearly: {
       yearNumber: yearly.yearNumber,
       isYearReviewOpen: yearly.isYearReviewOpen,

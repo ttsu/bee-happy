@@ -100,6 +100,9 @@ export class JobAssignmentSystem extends System {
       if (still <= 0) {
         continue;
       }
+      if (job.kind === "buildCell" && this.colony.getBeeswaxStored() <= 0) {
+        continue;
+      }
       const anchor = this.resolveJobAnchorWorld(job);
       const goal: HiveCoord = {
         q: job.targetQ,
