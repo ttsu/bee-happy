@@ -34,9 +34,15 @@ export interface ColonyUiSnapshot {
   readonly workers: number;
   readonly queens: number;
   readonly pollen: number;
+  /** Max pollen across built pollen cells. */
+  readonly pollenCapacity: number;
   readonly honey: number;
+  /** Max honey if all built nectar cells held honey. */
+  readonly honeyCapacity: number;
   /** Unprocessed nectar stored in nectar cells (not honey). */
   readonly nectar: number;
+  /** Max nectar if all built nectar cells held nectar. */
+  readonly nectarCapacity: number;
   /** Hive beeswax pool (building / retyping). */
   readonly beeswax: number;
   /** Max beeswax given current worker count. */
@@ -44,6 +50,18 @@ export interface ColonyUiSnapshot {
   readonly happinessPct: number;
   readonly broodOccupied: number;
   readonly broodTotal: number;
+  /** Sealed brood cells (pupae) for the expanded HUD stacked bar. */
+  readonly broodPupae: number;
+  /**
+   * Open brood for the stacked bar: larvae plus eggs.
+   * Eggs are grouped with larvae so the bar stays pupae / larvae / empty.
+   */
+  readonly broodLarvae: number;
+  /**
+   * Free brood capacity for the stacked bar: empty plus cleaning cells.
+   * Cleaning is grouped with empty (cell becoming available).
+   */
+  readonly broodEmpty: number;
   readonly activeLevel: number;
   readonly transitionOverlay: number;
   readonly pendingCellTypeKey: string | null;
