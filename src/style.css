@@ -81,6 +81,65 @@ body:not(.bee-happy-game-started) #game-canvas {
   background: rgba(236, 240, 241, 0.28);
 }
 
+.update-available-banner {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  width: min(420px, calc(100vw - 24px));
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(20, 28, 36, 0.96);
+  color: #ecf0f1;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+}
+
+.update-available-banner-text {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.update-available-banner-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.update-available-banner-btn {
+  flex: 1;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.update-available-banner-btn--primary {
+  background: #27ae60;
+  color: #fff;
+}
+
+.update-available-banner-btn--primary:hover {
+  background: #2ecc71;
+}
+
+.update-available-banner-btn--secondary {
+  background: rgba(236, 240, 241, 0.12);
+  color: #ecf0f1;
+}
+
+.update-available-banner-btn--secondary:hover {
+  background: rgba(236, 240, 241, 0.2);
+}
+
 .settings-button {
   position: fixed;
   top: 12px;

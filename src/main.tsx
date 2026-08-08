@@ -6,7 +6,10 @@ import type { NewGameOptions } from "./colony/game-settings";
 import { BootRoot } from "./ui/boot-root";
 import { LaunchMenu } from "./ui/launch-menu";
 import { startGameFromMenu } from "./game-start";
+import { startPwaUpdateSupervisor } from "./pwa/register-pwa-updates";
 import { getReactRoot } from "./ui/react-root";
+
+startPwaUpdateSupervisor();
 
 if (document.getElementById("react-root")) {
   getReactRoot().render(
