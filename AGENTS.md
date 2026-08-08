@@ -35,7 +35,7 @@ Production and PR previews share the **`gh-pages`** branch (production at root, 
 
 **Safe cutover:** merge to `main`, let the production workflow populate `gh-pages`, then switch the Pages source. Opening a PR runs [`.github/workflows/pr-preview.yml`](.github/workflows/pr-preview.yml) and posts a preview URL at `/pr/pr-{number}/` on the same domain; closing the PR removes that folder.
 
-**Custom domain:** set `pages-base-url` in `pr-preview.yml` if the default GitHub Pages URL is wrong for preview links.
+**Custom domain:** `pages-base-url` is set to `https://beehappy.timtsu.com` in `pr-preview.yml`. Update it if the domain changes.
 
 ### Player-facing changelog (What’s new)
 
