@@ -26,6 +26,10 @@ test("HUD loads with Bee Happy title", async ({ page }) => {
   await expect(
     page.locator(".hud-stats .hud-stat-label", { hasText: "Workers" }),
   ).toBeVisible();
+  await expect(page.getByRole("meter", { name: "Pollen" })).toBeVisible();
+  await expect(page.getByRole("meter", { name: "Honey" })).toBeVisible();
+  await expect(page.getByRole("meter", { name: "Nectar" })).toBeVisible();
+  await expect(page.getByRole("meter", { name: /Brood:/ })).toBeVisible();
   await expect(page.getByRole("meter", { name: "Beeswax" })).toBeVisible();
   await expect(page.getByRole("meter", { name: "Happiness" })).toBeVisible();
   await expect(page.locator(".season-day-banner .season-day-season-full")).toHaveText(

@@ -401,10 +401,57 @@ body:not(.bee-happy-game-started) #game-canvas {
   overflow: hidden;
 }
 
+.hud-resource-bar--stacked {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+}
+
 .hud-resource-bar-fill {
   height: 100%;
   border-radius: 4px;
   transition: width 0.12s ease-out;
+}
+
+.hud-resource-bar--stacked .hud-resource-bar-fill {
+  border-radius: 0;
+  flex: 0 0 auto;
+}
+
+.hud-resource-bar--stacked .hud-resource-bar-fill:first-child {
+  border-radius: 4px 0 0 4px;
+}
+
+.hud-resource-bar--stacked .hud-resource-bar-fill:last-child {
+  border-radius: 0 4px 4px 0;
+}
+
+.hud-resource-bar--stacked .hud-resource-bar-fill:only-child {
+  border-radius: 4px;
+}
+
+.hud-resource-bar-fill--pollen {
+  background: linear-gradient(90deg, #f4d03f, #f7dc6f);
+}
+
+.hud-resource-bar-fill--honey {
+  background: linear-gradient(90deg, #d68910, #e8a317);
+}
+
+.hud-resource-bar-fill--nectar {
+  background: linear-gradient(90deg, #58d68d, #82e0aa);
+}
+
+.hud-resource-bar-fill--brood-pupae {
+  background: #d7bde2;
+}
+
+.hud-resource-bar-fill--brood-larvae {
+  background: #f8c471;
+}
+
+.hud-resource-bar-fill--brood-empty {
+  background: rgba(250, 219, 216, 0.45);
 }
 
 .hud-resource-bar-fill--beeswax {

@@ -7,6 +7,8 @@ const DELTA_TICK_MS = 1100;
 
 type HudMetricKey = "workers" | "pollen" | "honey" | "nectar" | "beeswax" | "happiness";
 
+type HudIconKind = HudMetricKey | "brood";
+
 const HUD_METRIC_KEYS: readonly HudMetricKey[] = [
   "workers",
   "pollen",
@@ -47,11 +49,14 @@ const metricsFromSnap = (snap: ColonyUiSnapshot): HudMetrics => ({
 
 const formatDelta = (delta: number): string => (delta > 0 ? `+${delta}` : `${delta}`);
 
+const meterPct = (value: number, capacity: number): number =>
+  capacity > 0 ? Math.min(100, Math.max(0, (value / capacity) * 100)) : 0;
+
 const HudIcon = ({
   kind,
   label,
 }: {
-  readonly kind: HudMetricKey;
+  readonly kind: HudIconKind;
   readonly label: string;
 }) => (
   <span className={`hud-icon hud-icon--${kind}`} aria-hidden title={label}>
@@ -112,6 +117,17 @@ const HudIcon = ({
         <circle cx="10.2" cy="6.6" r="0.8" fill="#ecf0f1" />
       </svg>
     ) : null}
+    {kind === "brood" ? (
+      <svg viewBox="0 0 16 16" width="14" height="14">
+        <path
+          d="M8 1.5 13.5 4.5v7L8 14.5 2.5 11.5v-7L8 1.5z"
+          fill="#f8c471"
+          stroke="#d7bde2"
+          strokeWidth="1"
+        />
+        <circle cx="8" cy="8" r="2.2" fill="#d7bde2" />
+      </svg>
+    ) : null}
   </span>
 );
 
@@ -147,6 +163,104 @@ const MetricValue = ({
     <DeltaBadge tick={tick} />
   </span>
 );
+
+const HudResourceMeter = ({
+  label,
+  icon,
+  value,
+  capacity,
+  fillClass,
+  displayValue,
+  tick,
+}: {
+  readonly label: string;
+  readonly icon: HudIconKind;
+  readonly value: number;
+  readonly capacity: number;
+  readonly fillClass: string;
+  readonly displayValue: string;
+  readonly tick?: DeltaTick;
+}) => (
+  <div className="hud-resource-row">
+    <span className="hud-stat-label">
+      <HudIcon kind={icon} label={label} />
+      {label}
+    </span>
+    <div
+      className="hud-resource-bar"
+      role="meter"
+      aria-valuenow={value}
+      aria-valuemin={0}
+      aria-valuemax={capacity}
+      aria-label={label}
+    >
+      <div
+        className={`hud-resource-bar-fill ${fillClass}`}
+        style={{ width: `${meterPct(value, capacity)}%` }}
+      />
+    </div>
+    <span className="hud-resource-value">
+      <MetricValue value={displayValue} tick={tick} />
+    </span>
+  </div>
+);
+
+const HudBroodMeter = ({
+  pupae,
+  larvae,
+  empty,
+  capacity,
+  occupied,
+}: {
+  readonly pupae: number;
+  readonly larvae: number;
+  readonly empty: number;
+  readonly capacity: number;
+  readonly occupied: number;
+}) => {
+  const pupaePct = meterPct(pupae, capacity);
+  const larvaePct = meterPct(larvae, capacity);
+  const emptyPct = meterPct(empty, capacity);
+  return (
+    <div className="hud-resource-row">
+      <span className="hud-stat-label">
+        <HudIcon kind="brood" label="Brood" />
+        Brood
+      </span>
+      <div
+        className="hud-resource-bar hud-resource-bar--stacked"
+        role="meter"
+        aria-valuenow={occupied}
+        aria-valuemin={0}
+        aria-valuemax={capacity}
+        aria-label={`Brood: ${pupae} pupae, ${larvae} larvae, ${empty} empty`}
+        title={`Pupae ${pupae} · Larvae ${larvae} · Empty ${empty}`}
+      >
+        {pupaePct > 0 ? (
+          <div
+            className="hud-resource-bar-fill hud-resource-bar-fill--brood-pupae"
+            style={{ width: `${pupaePct}%` }}
+          />
+        ) : null}
+        {larvaePct > 0 ? (
+          <div
+            className="hud-resource-bar-fill hud-resource-bar-fill--brood-larvae"
+            style={{ width: `${larvaePct}%` }}
+          />
+        ) : null}
+        {emptyPct > 0 ? (
+          <div
+            className="hud-resource-bar-fill hud-resource-bar-fill--brood-empty"
+            style={{ width: `${emptyPct}%` }}
+          />
+        ) : null}
+      </div>
+      <span className="hud-resource-value">
+        <MetricValue value={`${occupied}/${Math.round(capacity)}`} tick={undefined} />
+      </span>
+    </div>
+  );
+};
 
 /**
  * Colony resource HUD: collapsed icon strip or expanded labeled rows, with delta ticks.
@@ -230,15 +344,14 @@ export const ColonyHud = ({ snap, colony }: Props) => {
 
   const workers = snap.workers;
   const pollen = Math.round(snap.pollen);
+  const pollenCap = Math.round(snap.pollenCapacity);
   const honey = Math.round(snap.honey);
+  const honeyCap = Math.round(snap.honeyCapacity);
   const nectar = Math.round(snap.nectar);
+  const nectarCap = Math.round(snap.nectarCapacity);
   const beeswax = Math.round(snap.beeswax);
   const beeswaxCap = Math.round(snap.beeswaxCapacity);
   const happiness = snap.happinessPct;
-  const beeswaxPct =
-    snap.beeswaxCapacity > 0
-      ? Math.min(100, (snap.beeswax / snap.beeswaxCapacity) * 100)
-      : 0;
 
   const toggle = () => {
     setHudMinimized((m) => !m);
@@ -297,78 +410,58 @@ export const ColonyHud = ({ snap, colony }: Props) => {
                 </span>
                 <MetricValue value={String(workers)} tick={deltas.workers} />
               </div>
-              <div className="hud-stat-row">
-                <span className="hud-stat-label">
-                  <HudIcon kind="pollen" label="Pollen" />
-                  Pollen
-                </span>
-                <MetricValue value={String(pollen)} tick={deltas.pollen} />
-              </div>
-              <div className="hud-stat-row">
-                <span className="hud-stat-label">
-                  <HudIcon kind="honey" label="Honey" />
-                  Honey
-                </span>
-                <MetricValue value={String(honey)} tick={deltas.honey} />
-              </div>
-              <div className="hud-stat-row">
-                <span className="hud-stat-label">
-                  <HudIcon kind="nectar" label="Nectar" />
-                  Nectar
-                </span>
-                <MetricValue value={String(nectar)} tick={deltas.nectar} />
-              </div>
-              <div className="hud-resource-row">
-                <span className="hud-stat-label">
-                  <HudIcon kind="beeswax" label="Beeswax" />
-                  Beeswax
-                </span>
-                <div
-                  className="hud-resource-bar"
-                  role="meter"
-                  aria-valuenow={snap.beeswax}
-                  aria-valuemin={0}
-                  aria-valuemax={snap.beeswaxCapacity}
-                  aria-label="Beeswax"
-                >
-                  <div
-                    className="hud-resource-bar-fill hud-resource-bar-fill--beeswax"
-                    style={{ width: `${beeswaxPct}%` }}
-                  />
-                </div>
-                <span className="hud-resource-value">
-                  <MetricValue
-                    value={`${beeswax}/${beeswaxCap}`}
-                    tick={deltas.beeswax}
-                  />
-                </span>
-              </div>
-              <div className="hud-resource-row">
-                <span className="hud-stat-label">
-                  <HudIcon kind="happiness" label="Happiness" />
-                  Happiness
-                </span>
-                <div
-                  className="hud-resource-bar"
-                  role="meter"
-                  aria-valuenow={happiness}
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  aria-label="Happiness"
-                >
-                  <div
-                    className="hud-resource-bar-fill hud-resource-bar-fill--happiness"
-                    style={{ width: `${Math.min(100, Math.max(0, happiness))}%` }}
-                  />
-                </div>
-                <span className="hud-resource-value">
-                  <MetricValue
-                    value={String(happiness)}
-                    suffix="%"
-                    tick={deltas.happiness}
-                  />
-                </span>
-              </div>
+              <HudResourceMeter
+                label="Pollen"
+                icon="pollen"
+                value={snap.pollen}
+                capacity={snap.pollenCapacity}
+                fillClass="hud-resource-bar-fill--pollen"
+                displayValue={`${pollen}/${pollenCap}`}
+                tick={deltas.pollen}
+              />
+              <HudResourceMeter
+                label="Honey"
+                icon="honey"
+                value={snap.honey}
+                capacity={snap.honeyCapacity}
+                fillClass="hud-resource-bar-fill--honey"
+                displayValue={`${honey}/${honeyCap}`}
+                tick={deltas.honey}
+              />
+              <HudResourceMeter
+                label="Nectar"
+                icon="nectar"
+                value={snap.nectar}
+                capacity={snap.nectarCapacity}
+                fillClass="hud-resource-bar-fill--nectar"
+                displayValue={`${nectar}/${nectarCap}`}
+                tick={deltas.nectar}
+              />
+              <HudBroodMeter
+                pupae={snap.broodPupae}
+                larvae={snap.broodLarvae}
+                empty={snap.broodEmpty}
+                capacity={snap.broodTotal}
+                occupied={snap.broodOccupied}
+              />
+              <HudResourceMeter
+                label="Beeswax"
+                icon="beeswax"
+                value={snap.beeswax}
+                capacity={snap.beeswaxCapacity}
+                fillClass="hud-resource-bar-fill--beeswax"
+                displayValue={`${beeswax}/${beeswaxCap}`}
+                tick={deltas.beeswax}
+              />
+              <HudResourceMeter
+                label="Happiness"
+                icon="happiness"
+                value={happiness}
+                capacity={100}
+                fillClass="hud-resource-bar-fill--happiness"
+                displayValue={`${happiness}%`}
+                tick={deltas.happiness}
+              />
             </div>
           )}
         </button>
