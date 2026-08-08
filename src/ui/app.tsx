@@ -19,6 +19,8 @@ import { LineageViewer } from "./lineage-viewer";
 import { readMetaProgressFromStorage } from "../colony/meta/meta-progress";
 import { CellTypePicker } from "./cell-type-picker";
 import { PlacementCellTypeToolbar } from "./placement-cell-type-toolbar";
+import { registerSaveBeforeReload } from "../pwa/update-policy";
+import { UpdateAvailableBanner } from "./update-available-banner";
 
 const LEVELS = [-2, -1, 0, 1, 2] as const;
 const DRAG_LEVEL_THRESHOLD_PX = 48;
@@ -182,6 +184,13 @@ export const App = () => {
     setMiniLevels(readMiniLevelsFromBridge(colony));
     return off;
   }, [colony, isStripDragging]);
+
+  useEffect(() => {
+    registerSaveBeforeReload(persistFullSave);
+    return () => {
+      registerSaveBeforeReload(null);
+    };
+  }, [persistFullSave]);
 
   useEffect(() => {
     if (!colony) {
@@ -584,6 +593,7 @@ export const App = () => {
           </div>
         </div>
       ) : null}
+      <UpdateAvailableBanner onBeforeApply={persistFullSave} />
       <div className="build-hash" aria-hidden>
         {BUILD_HASH_SHORT}
       </div>

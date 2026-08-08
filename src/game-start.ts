@@ -4,6 +4,7 @@ import { startBackgroundMusic } from "./audio/background-music";
 import { gameLoader } from "./resources";
 import type { NewGameOptions } from "./colony/game-settings";
 import { setPendingGameStart } from "./game-session";
+import { setGameSessionActive } from "./pwa/update-policy";
 import { MyLevel } from "./level";
 import { mountUi } from "./ui/main-ui";
 
@@ -23,6 +24,7 @@ export const startGameFromMenu = (
   }
   acknowledgeCurrentReleaseIfUnset();
   started = true;
+  setGameSessionActive(true);
   document.body.classList.add("bee-happy-game-started");
   setPendingGameStart(
     loadSaveSlotId != null
