@@ -19,13 +19,13 @@ export const COLONY = {
   buildWorkRadiusPx: 26,
   initialPollen: 12,
   /** Max beeswax stored per worker bee. */
-  waxCapacityPerWorker: 5,
+  waxCapacityPerWorker: 4,
   /** Beeswax generated per second per worker bee. */
-  waxRatePerWorkerPerSec: 0.4,
+  waxRatePerWorkerPerSec: 0.28,
   /** Starting beeswax when a new colony is seeded. */
-  initialBeeswax: 6,
+  initialBeeswax: 5,
   /** Total beeswax consumed to finish one foundation build. */
-  cellBuildWaxCost: 4,
+  cellBuildWaxCost: 5,
   /** Beeswax consumed when a cell type change is applied. */
   cellRetypeWaxCost: 2,
   /** Brood: time as egg (ms) before larvae. */
