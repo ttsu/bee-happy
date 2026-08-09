@@ -249,27 +249,54 @@ export const App = () => {
             : ""
         }`}
       >
-        <div
-          className="season-day-banner"
-          aria-live="polite"
-          aria-label={`${getSeasonDisplayLabel(seasonInfo.season)}, Year ${snap.yearNumber}, Day ${seasonInfo.seasonDayOneBased}`}
-        >
-          <span className="season-day-season-full" aria-hidden>
-            {getSeasonDisplayLabel(seasonInfo.season)}
-          </span>
-          <span className="season-day-season-compact" aria-hidden>
-            {getSeasonEmoji(seasonInfo.season)}
-          </span>
-          <span
-            className="season-day-divider season-day-divider--wide-only"
-            aria-hidden
-          />
-          <span className="season-day-year">Year {snap.yearNumber}</span>
-          <span
-            className="season-day-divider season-day-divider--wide-only"
-            aria-hidden
-          />
-          <span>Day {seasonInfo.seasonDayOneBased}</span>
+        <div className="season-day-banner">
+          <div
+            className="season-day-banner-info"
+            aria-live="polite"
+            aria-label={`${getSeasonDisplayLabel(seasonInfo.season)}, Year ${snap.yearNumber}, Day ${seasonInfo.seasonDayOneBased}`}
+          >
+            <span className="season-day-season-full" aria-hidden>
+              {getSeasonDisplayLabel(seasonInfo.season)}
+            </span>
+            <span className="season-day-season-compact" aria-hidden>
+              {getSeasonEmoji(seasonInfo.season)}
+            </span>
+            <span
+              className="season-day-divider season-day-divider--wide-only"
+              aria-hidden
+            />
+            <span className="season-day-year">Year {snap.yearNumber}</span>
+            <span
+              className="season-day-divider season-day-divider--wide-only"
+              aria-hidden
+            />
+            <span>Day {seasonInfo.seasonDayOneBased}</span>
+          </div>
+          <button
+            type="button"
+            className="season-day-speed-toggle"
+            aria-label={
+              snap.simulationSpeed === 2
+                ? "Fast forward on, switch to normal speed"
+                : "Normal speed, switch to fast forward"
+            }
+            title={snap.simulationSpeed === 2 ? "Fast forward (2x)" : "Normal speed"}
+            aria-pressed={snap.simulationSpeed === 2}
+            disabled={!colony}
+            onClick={() => {
+              colony?.toggleSimulationSpeed();
+            }}
+          >
+            {snap.simulationSpeed === 2 ? (
+              <svg className="season-day-speed-icon" viewBox="0 0 24 24" aria-hidden>
+                <path d="M4 5.5v13l8.5-6.5L4 5.5zm9 0v13l8.5-6.5L13 5.5z" />
+              </svg>
+            ) : (
+              <svg className="season-day-speed-icon" viewBox="0 0 24 24" aria-hidden>
+                <path d="M8 5.5v13l11-6.5L8 5.5z" />
+              </svg>
+            )}
+          </button>
         </div>
         <ColonyHud snap={snap} colony={colony} />
       </div>

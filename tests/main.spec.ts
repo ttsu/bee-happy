@@ -36,6 +36,16 @@ test("HUD loads with Bee Happy title", async ({ page }) => {
     "🌸 Spring",
   );
   await expect(page.locator(".season-day-banner .season-day-year")).toBeVisible();
+  const speedToggle = page.getByRole("button", {
+    name: /Normal speed, switch to fast forward/i,
+  });
+  await expect(speedToggle).toBeVisible();
+  await speedToggle.click();
+  await expect(
+    page.getByRole("button", {
+      name: /Fast forward on, switch to normal speed/i,
+    }),
+  ).toBeVisible();
   await expect(
     page.getByRole("radiogroup", { name: "Cell type to place" }),
   ).toBeVisible();
