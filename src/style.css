@@ -550,11 +550,12 @@ body:not(.bee-happy-game-started) #game-canvas {
 
 .level-strip {
   position: fixed;
-  top: 50%;
+  top: auto;
+  bottom: max(12px, env(safe-area-inset-bottom));
   right: 12px;
   width: 72px;
   height: auto;
-  transform: translateY(-50%);
+  transform: none;
   z-index: 4;
   pointer-events: auto;
   display: flex;
@@ -697,6 +698,7 @@ body:not(.bee-happy-game-started) #game-canvas {
 @media (max-width: 640px) {
   .level-strip {
     right: 8px;
+    bottom: max(8px, env(safe-area-inset-bottom));
     width: 64px;
     padding: 6px 4px;
     gap: 4px;
