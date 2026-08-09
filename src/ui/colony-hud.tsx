@@ -274,26 +274,26 @@ export const HudIcon = ({
       ) : null}
       {kind === "brood" ? (
         <svg viewBox="0 0 16 16" width="14" height="14">
-          {/* Plump grub: thick mid-body + slightly fatter round tips */}
+          {/* Short thick grub: oversized round tips dominate the silhouette */}
           <path
-            d="M5.0 5.0A5.2 5.2 0 0 1 11.0 11.0"
+            d="M5.2 5.2A4.6 4.6 0 0 1 10.8 10.8"
             fill="none"
             stroke="#f5cba7"
-            strokeWidth="5.2"
+            strokeWidth="4"
             strokeLinecap="round"
           />
           <path
-            d="M5.0 5.0A5.2 5.2 0 0 1 11.0 11.0"
+            d="M5.2 5.2A4.6 4.6 0 0 1 10.8 10.8"
             fill="none"
             stroke="#fdebd0"
-            strokeWidth="3.9"
+            strokeWidth="2.9"
             strokeLinecap="round"
           />
-          <circle cx="5.0" cy="5.0" r="2.95" fill="#f5cba7" />
-          <circle cx="5.0" cy="5.0" r="2.35" fill="#fef5e7" />
-          <circle cx="11.0" cy="11.0" r="2.85" fill="#f5cba7" />
-          <circle cx="11.0" cy="11.0" r="2.3" fill="#fdebd0" />
-          <circle cx="5.7" cy="4.35" r="0.42" fill="#6e4c2a" opacity="0.45" />
+          <circle cx="5.2" cy="5.2" r="3.35" fill="#f5cba7" />
+          <circle cx="5.2" cy="5.2" r="2.7" fill="#fef5e7" />
+          <circle cx="10.8" cy="10.8" r="3.25" fill="#f5cba7" />
+          <circle cx="10.8" cy="10.8" r="2.65" fill="#fdebd0" />
+          <circle cx="5.95" cy="4.5" r="0.45" fill="#6e4c2a" opacity="0.45" />
         </svg>
       ) : null}
     </span>
