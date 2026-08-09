@@ -274,28 +274,26 @@ export const HudIcon = ({
       ) : null}
       {kind === "brood" ? (
         <svg viewBox="0 0 16 16" width="14" height="14">
-          <defs>
-            <mask id={`brood-crescent-${uid}`}>
-              <rect width="16" height="16" fill="#fff" />
-              {/* Cutout left + slightly up: open crescent, thicker body */}
-              <circle cx="5.4" cy="7.4" r="4.7" fill="#000" />
-            </mask>
-          </defs>
-          <circle
-            cx="9.2"
-            cy="8.2"
-            r="5.6"
-            fill="#f5cba7"
-            mask={`url(#brood-crescent-${uid})`}
+          {/* Plump grub: thick mid-body + slightly fatter round tips */}
+          <path
+            d="M5.0 5.0A5.2 5.2 0 0 1 11.0 11.0"
+            fill="none"
+            stroke="#f5cba7"
+            strokeWidth="5.2"
+            strokeLinecap="round"
           />
-          <circle
-            cx="9.2"
-            cy="8.2"
-            r="4.7"
-            fill="#fdebd0"
-            mask={`url(#brood-crescent-${uid})`}
+          <path
+            d="M5.0 5.0A5.2 5.2 0 0 1 11.0 11.0"
+            fill="none"
+            stroke="#fdebd0"
+            strokeWidth="3.9"
+            strokeLinecap="round"
           />
-          <circle cx="10.5" cy="4.1" r="0.5" fill="#6e4c2a" opacity="0.5" />
+          <circle cx="5.0" cy="5.0" r="2.95" fill="#f5cba7" />
+          <circle cx="5.0" cy="5.0" r="2.35" fill="#fef5e7" />
+          <circle cx="11.0" cy="11.0" r="2.85" fill="#f5cba7" />
+          <circle cx="11.0" cy="11.0" r="2.3" fill="#fdebd0" />
+          <circle cx="5.7" cy="4.35" r="0.42" fill="#6e4c2a" opacity="0.45" />
         </svg>
       ) : null}
     </span>
