@@ -60,12 +60,14 @@ const DropIcon = ({
   bodyId,
   rimId,
   highlightId,
+  clipId,
   stops,
   rimStops,
 }: {
   readonly bodyId: string;
   readonly rimId: string;
   readonly highlightId: string;
+  readonly clipId: string;
   readonly stops: readonly { readonly offset: string; readonly color: string }[];
   readonly rimStops: readonly {
     readonly offset: string;
@@ -75,12 +77,15 @@ const DropIcon = ({
 }) => (
   <svg viewBox="0 0 16 16" width="14" height="14">
     <defs>
-      <radialGradient id={bodyId} cx="34%" cy="28%" r="72%">
+      <clipPath id={clipId}>
+        <path d={DROP_PATH} />
+      </clipPath>
+      <radialGradient id={bodyId} cx="32%" cy="26%" r="78%">
         {stops.map((s) => (
           <stop key={s.offset} offset={s.offset} stopColor={s.color} />
         ))}
       </radialGradient>
-      <linearGradient id={rimId} x1="0%" y1="0%" x2="100%" y2="100%">
+      <linearGradient id={rimId} x1="15%" y1="5%" x2="90%" y2="95%">
         {rimStops.map((s) => (
           <stop
             key={s.offset}
@@ -90,49 +95,53 @@ const DropIcon = ({
           />
         ))}
       </linearGradient>
-      <radialGradient id={highlightId} cx="50%" cy="35%" r="55%">
-        <stop offset="0%" stopColor="#ffffff" stopOpacity="0.85" />
-        <stop offset="55%" stopColor="#ffffff" stopOpacity="0.2" />
+      <radialGradient id={highlightId} cx="50%" cy="30%" r="60%">
+        <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" />
+        <stop offset="40%" stopColor="#ffffff" stopOpacity="0.35" />
         <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
       </radialGradient>
     </defs>
     {/* Soft contact shadow for lift */}
-    <ellipse cx="8" cy="14.2" rx="3.2" ry="0.85" fill="#000000" opacity="0.22" />
-    {/* Deep base / underside */}
+    <ellipse cx="8" cy="14.15" rx="3.4" ry="0.9" fill="#000000" opacity="0.28" />
+    {/* Deep underside offset for thickness */}
     <path
       d={DROP_PATH}
       fill={stops[stops.length - 1]?.color ?? "#000"}
-      opacity="0.55"
+      opacity="0.65"
+      transform="translate(0 0.55)"
     />
     {/* Main body */}
     <path d={DROP_PATH} fill={`url(#${bodyId})`} />
-    {/* Refraction rim */}
+    {/* Inner refraction / glass rim */}
     <path
       d={DROP_PATH}
       fill="none"
       stroke={`url(#${rimId})`}
-      strokeWidth="1.15"
+      strokeWidth="1.25"
       strokeLinejoin="round"
     />
-    {/* Specular highlight (upper-left) */}
-    <ellipse
-      cx="6.1"
-      cy="6.4"
-      rx="1.85"
-      ry="2.55"
-      fill={`url(#${highlightId})`}
-      transform="rotate(-22 6.1 6.4)"
-    />
-    {/* Secondary caustic / refraction glint */}
-    <circle cx="9.6" cy="10.8" r="0.85" fill="#ffffff" opacity="0.28" />
-    <path
-      d="M9.8 4.6c1.1.9 1.7 1.9 1.9 2.9"
-      fill="none"
-      stroke="#ffffff"
-      strokeWidth="0.7"
-      strokeLinecap="round"
-      opacity="0.35"
-    />
+    <g clipPath={`url(#${clipId})`}>
+      {/* Specular highlight (upper-left) */}
+      <ellipse
+        cx="5.9"
+        cy="6.2"
+        rx="2.05"
+        ry="2.85"
+        fill={`url(#${highlightId})`}
+        transform="rotate(-24 5.9 6.2)"
+      />
+      {/* Bottom-right caustic */}
+      <circle cx="9.7" cy="11" r="1.05" fill="#ffffff" opacity="0.32" />
+      {/* Edge light streak */}
+      <path
+        d="M9.9 4.4c1.15 0.95 1.85 2.05 2.05 3.15"
+        fill="none"
+        stroke="#ffffff"
+        strokeWidth="0.85"
+        strokeLinecap="round"
+        opacity="0.42"
+      />
+    </g>
   </svg>
 );
 
@@ -161,14 +170,42 @@ export const HudIcon = ({
       ) : null}
       {kind === "pollen" ? (
         <svg viewBox="0 0 16 16" width="14" height="14">
-          {/* Three overlapping grains in a triangle; slight hue shift per grain */}
-          <circle cx="8" cy="5.1" r="3.35" fill="#f4d03f" />
-          <circle cx="5.25" cy="10.15" r="3.35" fill="#f5b041" />
-          <circle cx="10.75" cy="10.15" r="3.35" fill="#f9e79f" />
+          {/* Three grains in a triangle; slight overlap + hue shift */}
+          <circle cx="8" cy="5" r="3.25" fill="#f4d03f" />
+          <circle cx="5.2" cy="9.9" r="3.25" fill="#f5b041" />
+          <circle cx="10.8" cy="9.9" r="3.25" fill="#f9e79f" />
+          {/* Soft edge rings so grains separate at 14px */}
+          <circle
+            cx="8"
+            cy="5"
+            r="3.25"
+            fill="none"
+            stroke="#d4ac0d"
+            strokeWidth="0.4"
+            opacity="0.5"
+          />
+          <circle
+            cx="5.2"
+            cy="9.9"
+            r="3.25"
+            fill="none"
+            stroke="#d68910"
+            strokeWidth="0.4"
+            opacity="0.45"
+          />
+          <circle
+            cx="10.8"
+            cy="9.9"
+            r="3.25"
+            fill="none"
+            stroke="#b7950b"
+            strokeWidth="0.4"
+            opacity="0.4"
+          />
           {/* Soft grain highlights */}
-          <circle cx="7.15" cy="4.2" r="1.05" fill="#fdebd0" opacity="0.55" />
-          <circle cx="4.45" cy="9.25" r="0.95" fill="#fdebd0" opacity="0.4" />
-          <circle cx="9.9" cy="9.25" r="1" fill="#ffffff" opacity="0.35" />
+          <circle cx="7.2" cy="4.1" r="0.95" fill="#fdebd0" opacity="0.7" />
+          <circle cx="4.4" cy="9.05" r="0.85" fill="#fdebd0" opacity="0.5" />
+          <circle cx="10" cy="9.05" r="0.9" fill="#ffffff" opacity="0.5" />
         </svg>
       ) : null}
       {kind === "honey" ? (
@@ -176,15 +213,16 @@ export const HudIcon = ({
           bodyId={`honey-body-${uid}`}
           rimId={`honey-rim-${uid}`}
           highlightId={`honey-hl-${uid}`}
+          clipId={`honey-clip-${uid}`}
           stops={[
-            { offset: "0%", color: "#f8e39a" },
-            { offset: "42%", color: "#e8a317" },
-            { offset: "100%", color: "#9a6b0a" },
+            { offset: "0%", color: "#ffe9a8" },
+            { offset: "35%", color: "#e8a317" },
+            { offset: "100%", color: "#7d5608" },
           ]}
           rimStops={[
-            { offset: "0%", color: "#fff6d5", opacity: "0.7" },
-            { offset: "45%", color: "#e8a317", opacity: "0.05" },
-            { offset: "100%", color: "#5c3a05", opacity: "0.45" },
+            { offset: "0%", color: "#fff8e1", opacity: "0.85" },
+            { offset: "40%", color: "#e8a317", opacity: "0.08" },
+            { offset: "100%", color: "#4a3004", opacity: "0.55" },
           ]}
         />
       ) : null}
@@ -193,15 +231,16 @@ export const HudIcon = ({
           bodyId={`nectar-body-${uid}`}
           rimId={`nectar-rim-${uid}`}
           highlightId={`nectar-hl-${uid}`}
+          clipId={`nectar-clip-${uid}`}
           stops={[
-            { offset: "0%", color: "#fffce8" },
-            { offset: "38%", color: "#f9e79f" },
-            { offset: "100%", color: "#e8c547" },
+            { offset: "0%", color: "#ffffff" },
+            { offset: "32%", color: "#fbf3c2" },
+            { offset: "100%", color: "#e6c84a" },
           ]}
           rimStops={[
-            { offset: "0%", color: "#ffffff", opacity: "0.75" },
-            { offset: "45%", color: "#f9e79f", opacity: "0.05" },
-            { offset: "100%", color: "#c9a227", opacity: "0.4" },
+            { offset: "0%", color: "#ffffff", opacity: "0.9" },
+            { offset: "40%", color: "#f9e79f", opacity: "0.08" },
+            { offset: "100%", color: "#b7950b", opacity: "0.45" },
           ]}
         />
       ) : null}
