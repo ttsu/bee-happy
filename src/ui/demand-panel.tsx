@@ -5,7 +5,7 @@ type Props = {
   readonly snap: ColonyUiSnapshot;
 };
 
-type DemandKind = "pollen" | "nectar" | "brood";
+type DemandKind = "brood" | "pollen" | "nectar";
 
 const DEMAND_ROWS: readonly {
   readonly kind: DemandKind;
@@ -13,6 +13,12 @@ const DEMAND_ROWS: readonly {
   readonly label: string;
   readonly fillClass: string;
 }[] = [
+  {
+    kind: "brood",
+    icon: "brood",
+    label: "Brood",
+    fillClass: "demand-bar-fill--brood",
+  },
   {
     kind: "pollen",
     icon: "pollen",
@@ -24,12 +30,6 @@ const DEMAND_ROWS: readonly {
     icon: "nectar",
     label: "Nectar",
     fillClass: "demand-bar-fill--nectar",
-  },
-  {
-    kind: "brood",
-    icon: "brood",
-    label: "Brood",
-    fillClass: "demand-bar-fill--brood",
   },
 ] as const;
 
@@ -48,17 +48,18 @@ const demandLevelLabel = (value: number): string => {
 
 const demandValue = (snap: ColonyUiSnapshot, kind: DemandKind): number => {
   switch (kind) {
+    case "brood":
+      return snap.demandBrood;
     case "pollen":
       return snap.demandPollen;
     case "nectar":
       return snap.demandNectar;
-    case "brood":
-      return snap.demandBrood;
   }
 };
 
 /**
- * Bottom-left SimCity-style build demand meters (pollen / nectar / brood).
+ * Bottom-left SimCity-style build demand meters (brood / pollen / nectar).
+ * Order matches the Build bar cell-type options.
  */
 export const DemandPanel = ({ snap }: Props) => (
   <aside className="demand-panel hud-card" aria-label="Demand">
