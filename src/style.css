@@ -452,7 +452,7 @@ body:not(.bee-happy-game-started) #game-canvas {
 }
 
 .hud-resource-bar-fill--nectar {
-  background: linear-gradient(90deg, #58d68d, #82e0aa);
+  background: linear-gradient(90deg, #e8c547, #f9e79f);
 }
 
 .hud-resource-bar-fill--brood-pupae {
