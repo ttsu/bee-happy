@@ -26,12 +26,15 @@ test("HUD loads with Bee Happy title", async ({ page }) => {
   await expect(
     page.locator(".hud-stats .hud-stat-label", { hasText: "Workers" }),
   ).toBeVisible();
-  await expect(page.getByRole("meter", { name: "Pollen" })).toBeVisible();
-  await expect(page.getByRole("meter", { name: "Honey" })).toBeVisible();
-  await expect(page.getByRole("meter", { name: "Nectar" })).toBeVisible();
-  await expect(page.getByRole("meter", { name: /Brood:/ })).toBeVisible();
-  await expect(page.getByRole("meter", { name: "Beeswax" })).toBeVisible();
-  await expect(page.getByRole("meter", { name: "Happiness" })).toBeVisible();
+  const hud = page.locator(".hud");
+  await expect(hud.getByRole("meter", { name: "Pollen", exact: true })).toBeVisible();
+  await expect(hud.getByRole("meter", { name: "Honey", exact: true })).toBeVisible();
+  await expect(hud.getByRole("meter", { name: "Nectar", exact: true })).toBeVisible();
+  await expect(hud.getByRole("meter", { name: /Brood:/ })).toBeVisible();
+  await expect(hud.getByRole("meter", { name: "Beeswax", exact: true })).toBeVisible();
+  await expect(
+    hud.getByRole("meter", { name: "Happiness", exact: true }),
+  ).toBeVisible();
   await expect(page.locator(".season-day-banner .season-day-season-full")).toHaveText(
     "🌸 Spring",
   );
@@ -53,7 +56,9 @@ test("HUD loads with Bee Happy title", async ({ page }) => {
   await page.getByRole("button", { name: "Collapse colony stats" }).click();
   await expect(page.getByRole("button", { name: "Expand colony stats" })).toBeVisible();
   await expect(page.locator(".hud-strip")).toBeVisible();
-  await expect(page.getByRole("meter", { name: "Beeswax" })).not.toBeVisible();
+  await expect(
+    hud.getByRole("meter", { name: "Beeswax", exact: true }),
+  ).not.toBeVisible();
 
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.locator(".season-day-season-full")).toBeHidden();

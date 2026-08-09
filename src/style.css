@@ -65,7 +65,7 @@ body:not(.bee-happy-game-started) #game-canvas {
   left: auto;
   right: 68px; /* 12px + 44px settings + 12px gap */
   transform: none;
-  z-index: 4;
+  z-index: 5; /* above .level-strip so the speed toggle is clickable */
   pointer-events: none;
   background: rgba(20, 28, 36, 0.92);
   color: #ecf0f1;
