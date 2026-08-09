@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import type { ColonyRuntime } from "../colony/colony-runtime";
 import type { ColonyUiSnapshot } from "../colony/events/colony-events";
 
@@ -30,6 +30,9 @@ type Props = {
   readonly colony: ColonyRuntime | null;
 };
 
+const DROP_PATH =
+  "M8 2.5c2.8 3.2 4.5 5.2 4.5 7.2a4.5 4.5 0 1 1-9 0C3.5 7.7 5.2 5.7 8 2.5z";
+
 const readHudMinimized = (): boolean => {
   try {
     return localStorage.getItem(HUD_MINIMIZED_KEY) === "1";
@@ -52,84 +55,250 @@ const formatDelta = (delta: number): string => (delta > 0 ? `+${delta}` : `${del
 const meterPct = (value: number, capacity: number): number =>
   capacity > 0 ? Math.min(100, Math.max(0, (value / capacity) * 100)) : 0;
 
+/** Liquid drop with layered gradients for depth, highlight, and refraction. */
+const DropIcon = ({
+  bodyId,
+  rimId,
+  highlightId,
+  clipId,
+  stops,
+  rimStops,
+}: {
+  readonly bodyId: string;
+  readonly rimId: string;
+  readonly highlightId: string;
+  readonly clipId: string;
+  readonly stops: readonly { readonly offset: string; readonly color: string }[];
+  readonly rimStops: readonly {
+    readonly offset: string;
+    readonly color: string;
+    readonly opacity?: string;
+  }[];
+}) => (
+  <svg viewBox="0 0 16 16" width="14" height="14">
+    <defs>
+      <clipPath id={clipId}>
+        <path d={DROP_PATH} />
+      </clipPath>
+      <radialGradient id={bodyId} cx="32%" cy="26%" r="78%">
+        {stops.map((s) => (
+          <stop key={s.offset} offset={s.offset} stopColor={s.color} />
+        ))}
+      </radialGradient>
+      <linearGradient id={rimId} x1="15%" y1="5%" x2="90%" y2="95%">
+        {rimStops.map((s) => (
+          <stop
+            key={s.offset}
+            offset={s.offset}
+            stopColor={s.color}
+            stopOpacity={s.opacity ?? "1"}
+          />
+        ))}
+      </linearGradient>
+      <radialGradient id={highlightId} cx="50%" cy="30%" r="60%">
+        <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" />
+        <stop offset="40%" stopColor="#ffffff" stopOpacity="0.35" />
+        <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+      </radialGradient>
+    </defs>
+    {/* Soft contact shadow for lift */}
+    <ellipse cx="8" cy="14.15" rx="3.4" ry="0.9" fill="#000000" opacity="0.28" />
+    {/* Deep underside offset for thickness */}
+    <path
+      d={DROP_PATH}
+      fill={stops[stops.length - 1]?.color ?? "#000"}
+      opacity="0.65"
+      transform="translate(0 0.55)"
+    />
+    {/* Main body */}
+    <path d={DROP_PATH} fill={`url(#${bodyId})`} />
+    {/* Inner refraction / glass rim */}
+    <path
+      d={DROP_PATH}
+      fill="none"
+      stroke={`url(#${rimId})`}
+      strokeWidth="1.25"
+      strokeLinejoin="round"
+    />
+    <g clipPath={`url(#${clipId})`}>
+      {/* Specular highlight (upper-left) */}
+      <ellipse
+        cx="5.9"
+        cy="6.2"
+        rx="2.05"
+        ry="2.85"
+        fill={`url(#${highlightId})`}
+        transform="rotate(-24 5.9 6.2)"
+      />
+      {/* Bottom-right caustic */}
+      <circle cx="9.7" cy="11" r="1.05" fill="#ffffff" opacity="0.32" />
+      {/* Edge light streak */}
+      <path
+        d="M9.9 4.4c1.15 0.95 1.85 2.05 2.05 3.15"
+        fill="none"
+        stroke="#ffffff"
+        strokeWidth="0.85"
+        strokeLinecap="round"
+        opacity="0.42"
+      />
+    </g>
+  </svg>
+);
+
 export const HudIcon = ({
   kind,
   label,
 }: {
   readonly kind: HudIconKind;
   readonly label: string;
-}) => (
-  <span className={`hud-icon hud-icon--${kind}`} aria-hidden title={label}>
-    {kind === "workers" ? (
-      <svg viewBox="0 0 16 16" width="14" height="14">
-        <ellipse cx="8" cy="9" rx="3.2" ry="4" fill="currentColor" opacity="0.9" />
-        <circle cx="8" cy="4.2" r="2" fill="currentColor" />
-        <path
-          d="M3.5 7.5c1.2-1 2.4-.6 2.4-.6M12.5 7.5c-1.2-1-2.4-.6-2.4-.6"
-          stroke="currentColor"
-          strokeWidth="1.2"
-          fill="none"
-          strokeLinecap="round"
+}) => {
+  const uid = useId().replace(/:/g, "");
+  return (
+    <span className={`hud-icon hud-icon--${kind}`} aria-hidden title={label}>
+      {kind === "workers" ? (
+        <svg viewBox="0 0 16 16" width="14" height="14">
+          <ellipse cx="8" cy="9" rx="3.2" ry="4" fill="currentColor" opacity="0.9" />
+          <circle cx="8" cy="4.2" r="2" fill="currentColor" />
+          <path
+            d="M3.5 7.5c1.2-1 2.4-.6 2.4-.6M12.5 7.5c-1.2-1-2.4-.6-2.4-.6"
+            stroke="currentColor"
+            strokeWidth="1.2"
+            fill="none"
+            strokeLinecap="round"
+          />
+        </svg>
+      ) : null}
+      {kind === "pollen" ? (
+        <svg viewBox="0 0 16 16" width="14" height="14">
+          {/* Three grains in a triangle; slight overlap + hue shift */}
+          <circle cx="8" cy="5" r="3.25" fill="#f4d03f" />
+          <circle cx="5.2" cy="9.9" r="3.25" fill="#f5b041" />
+          <circle cx="10.8" cy="9.9" r="3.25" fill="#f9e79f" />
+          {/* Soft edge rings so grains separate at 14px */}
+          <circle
+            cx="8"
+            cy="5"
+            r="3.25"
+            fill="none"
+            stroke="#d4ac0d"
+            strokeWidth="0.4"
+            opacity="0.5"
+          />
+          <circle
+            cx="5.2"
+            cy="9.9"
+            r="3.25"
+            fill="none"
+            stroke="#d68910"
+            strokeWidth="0.4"
+            opacity="0.45"
+          />
+          <circle
+            cx="10.8"
+            cy="9.9"
+            r="3.25"
+            fill="none"
+            stroke="#b7950b"
+            strokeWidth="0.4"
+            opacity="0.4"
+          />
+          {/* Soft grain highlights */}
+          <circle cx="7.2" cy="4.1" r="0.95" fill="#fdebd0" opacity="0.7" />
+          <circle cx="4.4" cy="9.05" r="0.85" fill="#fdebd0" opacity="0.5" />
+          <circle cx="10" cy="9.05" r="0.9" fill="#ffffff" opacity="0.5" />
+        </svg>
+      ) : null}
+      {kind === "honey" ? (
+        <DropIcon
+          bodyId={`honey-body-${uid}`}
+          rimId={`honey-rim-${uid}`}
+          highlightId={`honey-hl-${uid}`}
+          clipId={`honey-clip-${uid}`}
+          stops={[
+            { offset: "0%", color: "#ffe9a8" },
+            { offset: "35%", color: "#e8a317" },
+            { offset: "100%", color: "#7d5608" },
+          ]}
+          rimStops={[
+            { offset: "0%", color: "#fff8e1", opacity: "0.85" },
+            { offset: "40%", color: "#e8a317", opacity: "0.08" },
+            { offset: "100%", color: "#4a3004", opacity: "0.55" },
+          ]}
         />
-      </svg>
-    ) : null}
-    {kind === "pollen" ? (
-      <svg viewBox="0 0 16 16" width="14" height="14">
-        <circle cx="8" cy="8" r="4.5" fill="#f7dc6f" />
-        <circle cx="6.2" cy="6.5" r="1.1" fill="#f4d03f" />
-        <circle cx="9.5" cy="9" r="1.3" fill="#f9e79f" />
-      </svg>
-    ) : null}
-    {kind === "honey" ? (
-      <svg viewBox="0 0 16 16" width="14" height="14">
-        <path
-          d="M8 2.5c2.8 3.2 4.5 5.2 4.5 7.2a4.5 4.5 0 1 1-9 0C3.5 7.7 5.2 5.7 8 2.5z"
-          fill="#e8a317"
+      ) : null}
+      {kind === "nectar" ? (
+        <DropIcon
+          bodyId={`nectar-body-${uid}`}
+          rimId={`nectar-rim-${uid}`}
+          highlightId={`nectar-hl-${uid}`}
+          clipId={`nectar-clip-${uid}`}
+          stops={[
+            { offset: "0%", color: "#ffffff" },
+            { offset: "32%", color: "#fbf3c2" },
+            { offset: "100%", color: "#e6c84a" },
+          ]}
+          rimStops={[
+            { offset: "0%", color: "#ffffff", opacity: "0.9" },
+            { offset: "40%", color: "#f9e79f", opacity: "0.08" },
+            { offset: "100%", color: "#b7950b", opacity: "0.45" },
+          ]}
         />
-      </svg>
-    ) : null}
-    {kind === "nectar" ? (
-      <svg viewBox="0 0 16 16" width="14" height="14">
-        <path
-          d="M8 2.5c2.8 3.2 4.5 5.2 4.5 7.2a4.5 4.5 0 1 1-9 0C3.5 7.7 5.2 5.7 8 2.5z"
-          fill="#82e0aa"
-        />
-      </svg>
-    ) : null}
-    {kind === "beeswax" ? (
-      <svg viewBox="0 0 16 16" width="14" height="14">
-        <rect x="2.5" y="5" width="11" height="7" rx="1.5" fill="#d4a574" />
-        <rect x="4" y="3.5" width="8" height="2.5" rx="1" fill="#c4956a" />
-      </svg>
-    ) : null}
-    {kind === "happiness" ? (
-      <svg viewBox="0 0 16 16" width="14" height="14">
-        <circle cx="8" cy="8" r="5.5" fill="#82e0aa" opacity="0.35" />
-        <circle cx="8" cy="8" r="5.5" fill="none" stroke="#82e0aa" strokeWidth="1.2" />
-        <path
-          d="M5.2 9.2c.8 1.2 1.8 1.8 2.8 1.8s2-.6 2.8-1.8"
-          stroke="#82e0aa"
-          strokeWidth="1.2"
-          fill="none"
-          strokeLinecap="round"
-        />
-        <circle cx="5.8" cy="6.6" r="0.8" fill="#ecf0f1" />
-        <circle cx="10.2" cy="6.6" r="0.8" fill="#ecf0f1" />
-      </svg>
-    ) : null}
-    {kind === "brood" ? (
-      <svg viewBox="0 0 16 16" width="14" height="14">
-        <path
-          d="M8 1.5 13.5 4.5v7L8 14.5 2.5 11.5v-7L8 1.5z"
-          fill="#f8c471"
-          stroke="#d7bde2"
-          strokeWidth="1"
-        />
-        <circle cx="8" cy="8" r="2.2" fill="#d7bde2" />
-      </svg>
-    ) : null}
-  </span>
-);
+      ) : null}
+      {kind === "beeswax" ? (
+        <svg viewBox="0 0 16 16" width="14" height="14">
+          <rect x="2.5" y="5" width="11" height="7" rx="1.5" fill="#d4a574" />
+          <rect x="4" y="3.5" width="8" height="2.5" rx="1" fill="#c4956a" />
+        </svg>
+      ) : null}
+      {kind === "happiness" ? (
+        <svg viewBox="0 0 16 16" width="14" height="14">
+          <circle cx="8" cy="8" r="5.5" fill="#82e0aa" opacity="0.35" />
+          <circle
+            cx="8"
+            cy="8"
+            r="5.5"
+            fill="none"
+            stroke="#82e0aa"
+            strokeWidth="1.2"
+          />
+          <path
+            d="M5.2 9.2c.8 1.2 1.8 1.8 2.8 1.8s2-.6 2.8-1.8"
+            stroke="#82e0aa"
+            strokeWidth="1.2"
+            fill="none"
+            strokeLinecap="round"
+          />
+          <circle cx="5.8" cy="6.6" r="0.8" fill="#ecf0f1" />
+          <circle cx="10.2" cy="6.6" r="0.8" fill="#ecf0f1" />
+        </svg>
+      ) : null}
+      {kind === "brood" ? (
+        <svg viewBox="0 0 16 16" width="14" height="14">
+          {/* One plump grub: thick body nearly matching round tip bulbs */}
+          <path
+            d="M5.2 5.2A4.6 4.6 0 0 1 10.8 10.8"
+            fill="none"
+            stroke="#f5cba7"
+            strokeWidth="5.8"
+            strokeLinecap="round"
+          />
+          <path
+            d="M5.2 5.2A4.6 4.6 0 0 1 10.8 10.8"
+            fill="none"
+            stroke="#fdebd0"
+            strokeWidth="4.4"
+            strokeLinecap="round"
+          />
+          <circle cx="5.2" cy="5.2" r="3.25" fill="#f5cba7" />
+          <circle cx="5.2" cy="5.2" r="2.6" fill="#fef5e7" />
+          <circle cx="10.8" cy="10.8" r="3.15" fill="#f5cba7" />
+          <circle cx="10.8" cy="10.8" r="2.55" fill="#fdebd0" />
+          <circle cx="5.95" cy="4.5" r="0.45" fill="#6e4c2a" opacity="0.45" />
+        </svg>
+      ) : null}
+    </span>
+  );
+};
 
 const DeltaBadge = ({ tick }: { readonly tick: DeltaTick | undefined }) => {
   if (!tick || tick.delta === 0) {

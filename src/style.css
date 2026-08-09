@@ -294,7 +294,7 @@ body:not(.bee-happy-game-started) #game-canvas {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  min-width: 196px;
+  min-width: 220px;
 }
 
 .hud-stat-row {
@@ -309,6 +309,7 @@ body:not(.bee-happy-game-started) #game-canvas {
   align-items: center;
   gap: 6px;
   color: #e2e8f0;
+  min-width: 0;
 }
 
 .hud-icon {
@@ -387,7 +388,8 @@ body:not(.bee-happy-game-started) #game-canvas {
 
 .hud-resource-row {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  /* Fixed label/value columns so every capacity bar is the same length */
+  grid-template-columns: 7.25em 1fr 4.5em;
   align-items: center;
   gap: 8px;
   margin: 2px 0;
@@ -396,7 +398,8 @@ body:not(.bee-happy-game-started) #game-canvas {
 .hud-resource-bar {
   position: relative;
   height: 8px;
-  min-width: 72px;
+  width: 100%;
+  min-width: 0;
   border-radius: 4px;
   background: rgba(15, 23, 42, 0.55);
   overflow: hidden;
@@ -452,7 +455,7 @@ body:not(.bee-happy-game-started) #game-canvas {
 }
 
 .hud-resource-bar-fill--nectar {
-  background: linear-gradient(90deg, #58d68d, #82e0aa);
+  background: linear-gradient(90deg, #e8c547, #f9e79f);
 }
 
 .hud-resource-bar-fill--brood-pupae {
@@ -478,8 +481,9 @@ body:not(.bee-happy-game-started) #game-canvas {
 .hud-resource-value {
   font-size: 12px;
   color: #cbd5e1;
-  min-width: 3.5em;
+  min-width: 0;
   text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .level-strip {
