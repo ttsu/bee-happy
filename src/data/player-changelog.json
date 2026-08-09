@@ -1,7 +1,19 @@
 {
-  "currentReleaseId": "0.21.0",
-  "asOfCommit": "a0cc43b",
+  "currentReleaseId": "0.22.0",
+  "asOfCommit": "72d5476",
   "releases": [
+    {
+      "id": "0.22.0",
+      "date": "2026-08-09",
+      "qualityOfLife": [
+        "Tap the play / fast-forward control on the season banner to run the colony at normal speed or 2×.",
+        "Pollen, nectar, honey, and brood meters use clearer icons; demand bars match Build order (brood, pollen, nectar).",
+        "On phones, Demand stays bottom-left and stays clear of the Build bar."
+      ],
+      "bugFixes": [
+        "If your nectar cells cannot hold a full Winter of honey, Demand pushes nectar harder so you know to expand storage."
+      ]
+    },
     {
       "id": "0.21.0",
       "date": "2026-08-08",
