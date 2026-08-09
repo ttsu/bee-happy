@@ -274,30 +274,23 @@ export const HudIcon = ({
       ) : null}
       {kind === "brood" ? (
         <svg viewBox="0 0 16 16" width="14" height="14">
-          {/* Cream C-shaped larva (matches brood-cell sprite silhouette) */}
+          {/* Plump crescent (C) larva — single arc, no reverse curve */}
           <path
-            d="M11.8 2.6c1.7.4 2.5 2.2 1.9 3.7-.5 1.3-1.7 2.2-3.1 2.9-1.5.7-3.1 1.3-4.3 2.3-1.1.9-1.7 2.1-1.2 3.1.4.8 1.5.9 2.4.4"
+            d="M4.6 3.6A5.9 5.9 0 0 1 4.6 12.7"
             fill="none"
             stroke="#f5cba7"
-            strokeWidth="3.6"
+            strokeWidth="5.2"
             strokeLinecap="round"
-            strokeLinejoin="round"
           />
           <path
-            d="M11.8 2.6c1.7.4 2.5 2.2 1.9 3.7-.5 1.3-1.7 2.2-3.1 2.9-1.5.7-3.1 1.3-4.3 2.3-1.1.9-1.7 2.1-1.2 3.1.4.8 1.5.9 2.4.4"
+            d="M4.6 3.6A5.9 5.9 0 0 1 4.6 12.7"
             fill="none"
             stroke="#fdebd0"
-            strokeWidth="2.6"
+            strokeWidth="3.9"
             strokeLinecap="round"
-            strokeLinejoin="round"
           />
-          {/* Head bulb */}
-          <circle cx="12.1" cy="3.1" r="2.15" fill="#fad7a0" />
-          <circle cx="12.1" cy="3.1" r="1.55" fill="#fef5e7" />
-          <circle cx="12.85" cy="2.55" r="0.4" fill="#6e4c2a" opacity="0.5" />
-          {/* Soft segment hint */}
-          <circle cx="9.4" cy="7.1" r="0.55" fill="#f5b041" opacity="0.35" />
-          <circle cx="6.9" cy="9.3" r="0.5" fill="#f5b041" opacity="0.3" />
+          <circle cx="4.6" cy="3.6" r="2.05" fill="#fef5e7" />
+          <circle cx="5.35" cy="3.05" r="0.35" fill="#6e4c2a" opacity="0.45" />
         </svg>
       ) : null}
     </span>
