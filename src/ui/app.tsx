@@ -16,6 +16,8 @@ import {
   type CellStage,
   type CellTypeKind,
 } from "../colony/ecs/components/colony-components";
+import { eligibleFoundationCoordsForLevel } from "../colony/placement";
+import { hiveKey, type HiveCoord } from "../grid/hive-levels";
 import { useTutorial } from "../tutorial/use-tutorial";
 import { TutorialOverlay } from "./tutorial-overlay";
 import { SuccessionModal } from "./succession-modal";
@@ -29,9 +31,34 @@ import { ColonyHud } from "./colony-hud";
 import { DemandPanel } from "./demand-panel";
 
 const LEVELS = [-2, -1, 0, 1, 2] as const;
-const DRAG_LEVEL_THRESHOLD_PX = 48;
+const DRAG_LEVEL_THRESHOLD_PX = 36;
 const STACK_MID_INDEX = 2;
-const MINI_LEVEL_STEP_PX = 92;
+/** Vertical pitch between floor cards in the compact reel (px). */
+const MINI_LEVEL_STEP_PX = 52;
+const MINI_LEVEL_CARD_HEIGHT_PX = 48;
+const STACK_VIEWPORT_HEIGHT_PX = 132;
+/** Shifts the track so the mid floor sits in the active slot when translateY is 0. */
+const STACK_CENTER_OFFSET_PX =
+  (STACK_VIEWPORT_HEIGHT_PX - MINI_LEVEL_CARD_HEIGHT_PX) / 2 -
+  STACK_MID_INDEX * MINI_LEVEL_STEP_PX;
+
+/**
+ * Axial hex → isometric screen offset for tight honeycomb previews.
+ * Pixel steps are sized to the foreshortened hex so neighbors edge-share
+ * instead of stacking on top of each other.
+ */
+const MINI_ISO_STEP_X_PX = 6;
+/** Half of X so vertical/horizontal edge gaps stay even in the 2:1 iso lattice. */
+const MINI_ISO_STEP_Y_PX = 3;
+
+const miniCellMapPosition = (q: number, r: number): { left: string; top: string } => {
+  const x = (q - r) * MINI_ISO_STEP_X_PX;
+  const y = (q + r) * MINI_ISO_STEP_Y_PX;
+  return {
+    left: `calc(50% + ${x}px)`,
+    top: `calc(54% + ${y}px)`,
+  };
+};
 
 type MiniCell = {
   readonly q: number;
@@ -40,6 +67,8 @@ type MiniCell = {
   readonly stage: CellStage;
   readonly built: boolean;
   readonly pendingCellType: "brood" | "pollen" | "nectar" | null;
+  /** Eligible empty foundation shown as a faint comb outline. */
+  readonly ghost: boolean;
 };
 
 type MiniLevel = {
@@ -47,12 +76,16 @@ type MiniLevel = {
   readonly cells: MiniCell[];
 };
 
+/** Back-to-front paint order for isometric depth. */
+const compareMiniCellsIso = (a: MiniCell, b: MiniCell): number =>
+  a.q + a.r - (b.q + b.r) || a.q - b.q;
+
 const clamp = (n: number, min: number, max: number): number =>
   Math.max(min, Math.min(max, n));
 
 const colorForMiniCell = (cell: MiniCell): string => {
-  if (!cell.built) {
-    return "#95a5a6";
+  if (cell.ghost || !cell.built) {
+    return cell.ghost ? "rgba(148, 163, 184, 0.45)" : "#95a5a6";
   }
   if (cell.type === "brood") {
     switch (cell.stage) {
@@ -85,6 +118,14 @@ const readMiniLevelsFromBridge = (colony: ColonyRuntime | null): MiniLevel[] => 
   if (!colony) {
     return LEVELS.map((level) => ({ level, cells: [] }));
   }
+
+  const occupied = new Set<string>();
+  const builtCoords: HiveCoord[] = [];
+  const lookup = {
+    has: (k: string) => colony.cellsByKey.has(k),
+    getBuilt: (k: string) => colony.cellsByKey.get(k)?.get(CellStateComponent),
+  };
+
   for (const [, cell] of colony.cellsByKey) {
     const coord = cell.get(CellCoordComponent);
     const state = cell.get(CellStateComponent);
@@ -94,6 +135,10 @@ const readMiniLevelsFromBridge = (colony: ColonyRuntime | null): MiniLevel[] => 
     if (!byLevel.has(coord.level)) {
       continue;
     }
+    occupied.add(hiveKey(coord));
+    if (state.built) {
+      builtCoords.push({ q: coord.q, r: coord.r, level: coord.level });
+    }
     byLevel.get(coord.level)!.push({
       q: coord.q,
       r: coord.r,
@@ -101,11 +146,33 @@ const readMiniLevelsFromBridge = (colony: ColonyRuntime | null): MiniLevel[] => 
       stage: state.stage,
       built: state.built,
       pendingCellType: state.pendingCellType,
+      ghost: false,
     });
   }
+
+  for (const level of LEVELS) {
+    const ghosts = eligibleFoundationCoordsForLevel(level, lookup, builtCoords);
+    for (const h of ghosts) {
+      const key = hiveKey(h);
+      if (occupied.has(key)) {
+        continue;
+      }
+      occupied.add(key);
+      byLevel.get(level)!.push({
+        q: h.q,
+        r: h.r,
+        type: "brood",
+        stage: "empty",
+        built: false,
+        pendingCellType: null,
+        ghost: true,
+      });
+    }
+  }
+
   return LEVELS.map((level) => ({
     level,
-    cells: byLevel.get(level) ?? [],
+    cells: (byLevel.get(level) ?? []).slice().sort(compareMiniCellsIso),
   }));
 };
 
@@ -132,6 +199,7 @@ export const App = () => {
     previewActiveLevel as (typeof LEVELS)[number],
   );
   const stackTranslateY =
+    STACK_CENTER_OFFSET_PX +
     (STACK_MID_INDEX - activeLevelIndex + dragLevelOffset) * MINI_LEVEL_STEP_PX;
 
   const autosaveTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -410,26 +478,32 @@ export const App = () => {
               >
                 <span className="mini-level-label">{level.level}</span>
                 <div className="mini-level-map">
-                  {level.cells.map((cell) => (
-                    <span
-                      key={`${level.level}:${cell.q},${cell.r}`}
-                      className="mini-level-cell"
-                      style={{
-                        left: `${50 + (cell.q + cell.r * 0.5) * 10}%`,
-                        top: `${50 + cell.r * 5.5}%`,
-                        background: colorForMiniCell(cell),
-                        boxShadow: cell.pendingCellType
-                          ? "0 0 0 1.5px #e67e22"
-                          : undefined,
-                      }}
-                    />
-                  ))}
+                  {level.cells.map((cell) => {
+                    const pos = miniCellMapPosition(cell.q, cell.r);
+                    return (
+                      <span
+                        key={`${level.level}:${cell.q},${cell.r}`}
+                        className={`mini-level-cell${cell.ghost ? " is-ghost" : ""}`}
+                        style={{
+                          left: pos.left,
+                          top: pos.top,
+                          background: colorForMiniCell(cell),
+                          boxShadow: cell.pendingCellType
+                            ? "0 0 0 1.5px #e67e22"
+                            : undefined,
+                          zIndex: cell.ghost ? 0 : 1,
+                        }}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             ))}
           </div>
         </div>
-        <span className="level-strip-hint">tap or drag ↑↓</span>
+        <span className="level-strip-hint sr-only">
+          Drag up or down, or tap a floor
+        </span>
       </div>
       {colony &&
       !snap.isYearReviewOpen &&
