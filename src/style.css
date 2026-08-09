@@ -649,20 +649,24 @@ body:not(.bee-happy-game-started) #game-canvas {
 .mini-level-map {
   position: absolute;
   left: 50%;
-  top: 56%;
-  width: 48px;
-  height: 34px;
+  top: 58%;
+  width: 50px;
+  height: 36px;
   transform: translate(-50%, -50%);
 }
 
 .mini-level-cell {
   position: absolute;
-  width: 10px;
-  height: 6px;
+  width: 11px;
+  height: 7px;
   transform: translate(-50%, -50%);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.16);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18);
   /* Foreshortened flat-top hex for isometric honeycomb */
   clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+}
+
+.mini-level-cell.is-ghost {
+  box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.35);
 }
 
 .mini-level:nth-child(1) {

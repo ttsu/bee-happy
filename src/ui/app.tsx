@@ -16,6 +16,8 @@ import {
   type CellStage,
   type CellTypeKind,
 } from "../colony/ecs/components/colony-components";
+import { eligibleFoundationCoordsForLevel } from "../colony/placement";
+import { hiveKey, type HiveCoord } from "../grid/hive-levels";
 import { useTutorial } from "../tutorial/use-tutorial";
 import { TutorialOverlay } from "./tutorial-overlay";
 import { SuccessionModal } from "./succession-modal";
@@ -46,8 +48,8 @@ const STACK_CENTER_OFFSET_PX =
  * overflow clipping on the reel would flatten preserve-3d anyway).
  */
 const miniCellMapPosition = (q: number, r: number): { left: string; top: string } => {
-  const left = 50 + (q - r) * 7.2;
-  const top = 52 + (q + r) * 4.1;
+  const left = 50 + (q - r) * 8;
+  const top = 54 + (q + r) * 4.5;
   return { left: `${left}%`, top: `${top}%` };
 };
 
@@ -58,6 +60,8 @@ type MiniCell = {
   readonly stage: CellStage;
   readonly built: boolean;
   readonly pendingCellType: "brood" | "pollen" | "nectar" | null;
+  /** Eligible empty foundation shown as a faint comb outline. */
+  readonly ghost: boolean;
 };
 
 type MiniLevel = {
@@ -69,8 +73,8 @@ const clamp = (n: number, min: number, max: number): number =>
   Math.max(min, Math.min(max, n));
 
 const colorForMiniCell = (cell: MiniCell): string => {
-  if (!cell.built) {
-    return "#95a5a6";
+  if (cell.ghost || !cell.built) {
+    return cell.ghost ? "rgba(148, 163, 184, 0.45)" : "#95a5a6";
   }
   if (cell.type === "brood") {
     switch (cell.stage) {
@@ -103,6 +107,14 @@ const readMiniLevelsFromBridge = (colony: ColonyRuntime | null): MiniLevel[] => 
   if (!colony) {
     return LEVELS.map((level) => ({ level, cells: [] }));
   }
+
+  const occupied = new Set<string>();
+  const builtCoords: HiveCoord[] = [];
+  const lookup = {
+    has: (k: string) => colony.cellsByKey.has(k),
+    getBuilt: (k: string) => colony.cellsByKey.get(k)?.get(CellStateComponent),
+  };
+
   for (const [, cell] of colony.cellsByKey) {
     const coord = cell.get(CellCoordComponent);
     const state = cell.get(CellStateComponent);
@@ -112,6 +124,10 @@ const readMiniLevelsFromBridge = (colony: ColonyRuntime | null): MiniLevel[] => 
     if (!byLevel.has(coord.level)) {
       continue;
     }
+    occupied.add(hiveKey(coord));
+    if (state.built) {
+      builtCoords.push({ q: coord.q, r: coord.r, level: coord.level });
+    }
     byLevel.get(coord.level)!.push({
       q: coord.q,
       r: coord.r,
@@ -119,8 +135,30 @@ const readMiniLevelsFromBridge = (colony: ColonyRuntime | null): MiniLevel[] => 
       stage: state.stage,
       built: state.built,
       pendingCellType: state.pendingCellType,
+      ghost: false,
     });
   }
+
+  for (const level of LEVELS) {
+    const ghosts = eligibleFoundationCoordsForLevel(level, lookup, builtCoords);
+    for (const h of ghosts) {
+      const key = hiveKey(h);
+      if (occupied.has(key)) {
+        continue;
+      }
+      occupied.add(key);
+      byLevel.get(level)!.push({
+        q: h.q,
+        r: h.r,
+        type: "brood",
+        stage: "empty",
+        built: false,
+        pendingCellType: null,
+        ghost: true,
+      });
+    }
+  }
+
   return LEVELS.map((level) => ({
     level,
     cells: byLevel.get(level) ?? [],
@@ -434,7 +472,7 @@ export const App = () => {
                     return (
                       <span
                         key={`${level.level}:${cell.q},${cell.r}`}
-                        className="mini-level-cell"
+                        className={`mini-level-cell${cell.ghost ? " is-ghost" : ""}`}
                         style={{
                           left: pos.left,
                           top: pos.top,
@@ -442,6 +480,7 @@ export const App = () => {
                           boxShadow: cell.pendingCellType
                             ? "0 0 0 1.5px #e67e22"
                             : undefined,
+                          zIndex: cell.ghost ? 0 : 1,
                         }}
                       />
                     );
