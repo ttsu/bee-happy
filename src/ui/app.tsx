@@ -43,14 +43,20 @@ const STACK_CENTER_OFFSET_PX =
   STACK_MID_INDEX * MINI_LEVEL_STEP_PX;
 
 /**
- * Axial hex → isometric screen % for tight honeycomb previews.
- * Projects pointy-top comb into a 2:1 foreshortened lattice (no CSS 3D;
- * overflow clipping on the reel would flatten preserve-3d anyway).
+ * Axial hex → isometric screen offset for tight honeycomb previews.
+ * Pixel steps are sized to the foreshortened hex so neighbors edge-share
+ * instead of stacking on top of each other.
  */
+const MINI_ISO_STEP_X_PX = 5;
+const MINI_ISO_STEP_Y_PX = 3;
+
 const miniCellMapPosition = (q: number, r: number): { left: string; top: string } => {
-  const left = 50 + (q - r) * 8;
-  const top = 54 + (q + r) * 4.5;
-  return { left: `${left}%`, top: `${top}%` };
+  const x = (q - r) * MINI_ISO_STEP_X_PX;
+  const y = (q + r) * MINI_ISO_STEP_Y_PX;
+  return {
+    left: `calc(50% + ${x}px)`,
+    top: `calc(54% + ${y}px)`,
+  };
 };
 
 type MiniCell = {
@@ -68,6 +74,10 @@ type MiniLevel = {
   readonly level: number;
   readonly cells: MiniCell[];
 };
+
+/** Back-to-front paint order for isometric depth. */
+const compareMiniCellsIso = (a: MiniCell, b: MiniCell): number =>
+  a.q + a.r - (b.q + b.r) || a.q - b.q;
 
 const clamp = (n: number, min: number, max: number): number =>
   Math.max(min, Math.min(max, n));
@@ -161,7 +171,7 @@ const readMiniLevelsFromBridge = (colony: ColonyRuntime | null): MiniLevel[] => 
 
   return LEVELS.map((level) => ({
     level,
-    cells: byLevel.get(level) ?? [],
+    cells: (byLevel.get(level) ?? []).slice().sort(compareMiniCellsIso),
   }));
 };
 
