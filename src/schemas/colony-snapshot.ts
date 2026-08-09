@@ -68,6 +68,7 @@ export const colonyUiSnapshotSchema = z.object({
     })
     .nullable(),
   optionalSuccessionAvailable: z.boolean(),
+  simulationSpeed: z.union([z.literal(1), z.literal(2)]),
 });
 
 export type ColonyUiSnapshotZ = z.infer<typeof colonyUiSnapshotSchema>;
@@ -122,4 +123,5 @@ export const createDefaultColonyUiSnapshot = (): ColonyUiSnapshot => ({
   },
   successionModal: null,
   optionalSuccessionAvailable: false,
+  simulationSpeed: 1,
 });

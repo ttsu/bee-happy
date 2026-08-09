@@ -105,6 +105,11 @@ export class ColonyRuntime {
   lastUiEmit = 0;
   /** 0–1 full-screen fade during level transitions (for React overlay). */
   transitionOverlay = 0;
+  /**
+   * Simulation clock multiplier: `1` normal, `2` fast-forward.
+   * Session-only (not persisted in saves); applied via {@link Engine.timescale}.
+   */
+  simulationSpeed: 1 | 2 = 1;
 
   /**
    * When set, the React layer shows the succession modal (pupa pick + honey shop).
@@ -122,6 +127,7 @@ export class ColonyRuntime {
   initialize(scene: Scene, engine: Engine, options?: ColonyInitializeOptions): void {
     this.scene = scene;
     this.engine = engine;
+    this.engine.timescale = this.simulationSpeed;
     const world = scene.world;
     const mode = options?.mode ?? "new";
     this.sessionStartedFromSave = mode === "load";
@@ -776,6 +782,22 @@ export class ColonyRuntime {
   setSelectedPlacementCellType(type: "brood" | "pollen" | "nectar"): void {
     this.selectedPlacementCellType = type;
     this.emitUiSnapshotImmediate();
+  }
+
+  /**
+   * Sets the simulation clock multiplier and syncs {@link Engine.timescale}.
+   */
+  setSimulationSpeed(speed: 1 | 2): void {
+    this.simulationSpeed = speed;
+    if (this.engine) {
+      this.engine.timescale = speed;
+    }
+    this.emitUiSnapshotImmediate();
+  }
+
+  /** Toggles between normal (`1`) and fast-forward (`2`) simulation speed. */
+  toggleSimulationSpeed(): void {
+    this.setSimulationSpeed(this.simulationSpeed === 1 ? 2 : 1);
   }
 
   /** Pushes the latest HUD snapshot to subscribers without waiting for the frame throttle. */

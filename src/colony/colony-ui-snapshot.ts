@@ -175,5 +175,6 @@ export const buildColonyUiSnapshot = (colony: ColonyRuntime): ColonyUiSnapshot =
       colony.successionModal == null &&
       queens > 0 &&
       workers + queens > COLONY.successionOptionalBeeThreshold,
+    simulationSpeed: colony.simulationSpeed,
   };
 };
