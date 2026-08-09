@@ -860,6 +860,7 @@ body:not(.bee-happy-game-started) #game-canvas {
     width: 100%;
     transform: none;
     box-sizing: border-box;
+    align-items: stretch;
     padding: 8px max(10px, env(safe-area-inset-right)) 0
       max(10px, env(safe-area-inset-left));
     padding-bottom: max(10px, env(safe-area-inset-bottom));

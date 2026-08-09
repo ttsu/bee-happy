@@ -21,10 +21,26 @@ export const PlacementCellTypeToolbar = ({ snap, colony }: Props) => {
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 700px)");
-    const apply = () => setSpriteScale(mq.matches ? 0.38 : 0.25);
+    const apply = () => {
+      if (!mq.matches) {
+        setSpriteScale(0.25);
+        return;
+      }
+      const gaps = 8 * 2;
+      const padding = 20;
+      const buttonPadding = 16;
+      const perButton = (window.innerWidth - padding - gaps) / 3 - buttonPadding;
+      setSpriteScale(
+        Math.min(0.45, Math.max(0.32, perButton / CELL_SPRITE_SRC_W)),
+      );
+    };
     apply();
     mq.addEventListener("change", apply);
-    return () => mq.removeEventListener("change", apply);
+    window.addEventListener("resize", apply);
+    return () => {
+      mq.removeEventListener("change", apply);
+      window.removeEventListener("resize", apply);
+    };
   }, []);
 
   const sheetCols = 4;
