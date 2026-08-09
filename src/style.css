@@ -702,7 +702,8 @@ body:not(.bee-happy-game-started) #game-canvas {
 .demand-panel {
   position: fixed;
   left: 12px;
-  bottom: max(96px, calc(72px + env(safe-area-inset-bottom)));
+  right: auto;
+  bottom: max(12px, env(safe-area-inset-bottom));
   z-index: 5;
   pointer-events: none;
   padding: 8px 10px 6px;
@@ -765,19 +766,6 @@ body:not(.bee-happy-game-started) #game-canvas {
   background: #d7bde2;
 }
 
-@media (max-width: 700px) {
-  .demand-panel {
-    left: 8px;
-    bottom: max(108px, calc(84px + env(safe-area-inset-bottom)));
-    padding: 6px 8px 4px;
-  }
-
-  .demand-bar-track {
-    width: 10px;
-    height: 44px;
-  }
-}
-
 .placement-cell-type-toolbar {
   position: fixed;
   z-index: 5;
@@ -797,6 +785,9 @@ body:not(.bee-happy-game-started) #game-canvas {
   border-bottom: none;
   border-radius: 16px 16px 0 0;
   box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.35);
+  /* Leave room for the Demand panel on the left. */
+  max-width: min(420px, calc(100vw - 96px));
+  box-sizing: border-box;
 }
 
 .placement-cell-type-toolbar-label {
@@ -847,6 +838,91 @@ body:not(.bee-happy-game-started) #game-canvas {
 
 .placement-cell-type-option:active {
   transform: scale(0.96);
+}
+
+/* Narrow: shrink Demand + Build so they share the bottom edge without overlap. */
+@media (max-width: 700px) {
+  .demand-panel {
+    left: 6px;
+    bottom: max(8px, env(safe-area-inset-bottom));
+    padding: 4px 5px 3px;
+  }
+
+  .demand-panel-title {
+    font-size: 8px;
+    letter-spacing: 0.08em;
+    margin-bottom: 3px;
+  }
+
+  .demand-panel-bars {
+    gap: 5px;
+  }
+
+  .demand-bar-col {
+    gap: 2px;
+  }
+
+  .demand-bar-track {
+    width: 8px;
+    height: 36px;
+  }
+
+  .demand-panel .hud-icon svg {
+    width: 11px;
+    height: 11px;
+  }
+
+  .placement-cell-type-toolbar {
+    gap: 4px;
+    padding: 6px 8px;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    border-radius: 12px 12px 0 0;
+    max-width: calc(100vw - 72px);
+  }
+
+  .placement-cell-type-toolbar-label {
+    font-size: 9px;
+    letter-spacing: 0.1em;
+  }
+
+  .placement-cell-type-toolbar-options {
+    gap: 6px;
+    transform: scale(0.78);
+    transform-origin: bottom center;
+  }
+}
+
+@media (max-width: 420px) {
+  .demand-panel {
+    left: 4px;
+    padding: 3px 4px 2px;
+  }
+
+  .demand-panel-bars {
+    gap: 3px;
+  }
+
+  .demand-bar-track {
+    width: 6px;
+    height: 30px;
+  }
+
+  .demand-panel .hud-icon svg {
+    width: 10px;
+    height: 10px;
+  }
+
+  .placement-cell-type-toolbar {
+    max-width: calc(100vw - 56px);
+    padding: 5px 6px;
+    padding-bottom: max(6px, env(safe-area-inset-bottom));
+  }
+
+  .placement-cell-type-toolbar-options {
+    gap: 4px;
+    transform: scale(0.68);
+    transform-origin: bottom center;
+  }
 }
 
 .tutorial-overlay {

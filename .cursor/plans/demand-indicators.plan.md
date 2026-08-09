@@ -13,7 +13,8 @@
 - Compact fixed panel: title **Demand**, three vertical (or short horizontal) icon bars — pollen / nectar / brood.
 - Icons only (reuse `HudIcon` SVGs from [`src/ui/colony-hud.tsx`](src/ui/colony-hud.tsx)); no per-bar numbers or sentences.
 - `aria-label`s for accessibility (e.g. “Pollen demand high”).
-- Sit above / clear of the bottom-center Build toolbar; match existing translucent HUD chrome in [`src/style.css`](src/style.css).
+- Bottom-left, clear of the bottom-center Build toolbar; on narrow screens both shrink so they fit.
+- Match existing translucent HUD chrome in [`src/style.css`](src/style.css).
 - Always visible during play (same visibility rules as Colony HUD when a game is active).
 
 ### Winter tick (Colony HUD honey row)
