@@ -13,12 +13,14 @@ import {
   BeeAgeComponent,
   BeeCarryComponent,
   BeeLevelComponent,
+  ColonyTimeComponent,
   JobComponent,
   BeeNeedsComponent,
   BeeRoleComponent,
   BeeWorkComponent,
 } from "../colony/ecs/components/colony-components";
 import { COLONY } from "../colony/constants";
+import { getSeasonForColonyDay, type Season } from "../colony/seasons";
 import { getWorkerVisualScale } from "../colony/worker-lifecycle";
 import { getColonyBridge } from "../colony-bridge";
 import { beeSpriteSheet } from "../resources";
@@ -31,6 +33,12 @@ export class BeeActor extends Actor {
   private static readonly OUTSIDE_HIVE_SCALE_MULTIPLIER = 0.4;
   private static readonly WIGGLE_AMPLITUDE_RADIANS = 0.08;
   private static readonly WIGGLE_CYCLES_PER_SECOND = 8;
+  private static readonly IDLE_WIGGLE_AMPLITUDE_RADIANS = 0.06;
+  private static readonly IDLE_WIGGLE_CYCLES_PER_SECOND = 4;
+  private static readonly IDLE_POSITION_WIGGLE_AMPLITUDE_PX = 1.5;
+  private static readonly WINTER_IDLE_WIGGLE_AMPLITUDE_RADIANS = 0.1;
+  private static readonly WINTER_IDLE_WIGGLE_CYCLES_PER_SECOND = 14;
+  private static readonly WINTER_IDLE_POSITION_WIGGLE_AMPLITUDE_PX = 2.5;
   private static readonly HIVE_ZOOM_BAND_INNER_PX = 40;
   private static readonly HIVE_ZOOM_BAND_OUTER_PX = 220;
   private readonly groundedSprite: Sprite;
@@ -38,6 +46,8 @@ export class BeeActor extends Actor {
   private readonly lastPos: Vector;
   private usingWingFlap = false;
   private wiggleTimeMs = 0;
+  private idleStationaryBaseRotation = 0;
+  private idleStationaryActive = false;
 
   constructor(role: BeeRole, pos: Vector) {
     const workerStartScale =
@@ -66,15 +76,44 @@ export class BeeActor extends Actor {
   override onPreUpdate(_engine: Engine, elapsed: number): void {
     const delta = this.pos.sub(this.lastPos);
     const movingEnough = delta.size > 0.01;
+    const idling = this.isIdling();
+    const winterShiver =
+      idling && this.getCurrentSeason() === "Winter" && this.isInsideHive();
     if (movingEnough) {
+      this.idleStationaryActive = false;
       // Sprite art is oriented upward at rotation 0.
       this.wiggleTimeMs += elapsed;
       const wigglePhase =
         this.wiggleTimeMs * 0.001 * Math.PI * 2 * BeeActor.WIGGLE_CYCLES_PER_SECOND;
       const wiggleOffset = Math.sin(wigglePhase) * BeeActor.WIGGLE_AMPLITUDE_RADIANS;
       this.rotation = Math.atan2(delta.y, delta.x) + Math.PI / 2 + wiggleOffset;
+      this.offset = vec(0, 0);
+    } else if (idling) {
+      if (!this.idleStationaryActive) {
+        this.idleStationaryActive = true;
+        this.idleStationaryBaseRotation = this.rotation;
+      }
+      this.wiggleTimeMs += elapsed;
+      const cyclesPerSecond = winterShiver
+        ? BeeActor.WINTER_IDLE_WIGGLE_CYCLES_PER_SECOND
+        : BeeActor.IDLE_WIGGLE_CYCLES_PER_SECOND;
+      const rotAmplitude = winterShiver
+        ? BeeActor.WINTER_IDLE_WIGGLE_AMPLITUDE_RADIANS
+        : BeeActor.IDLE_WIGGLE_AMPLITUDE_RADIANS;
+      const posAmplitude = winterShiver
+        ? BeeActor.WINTER_IDLE_POSITION_WIGGLE_AMPLITUDE_PX
+        : BeeActor.IDLE_POSITION_WIGGLE_AMPLITUDE_PX;
+      const phase = this.wiggleTimeMs * 0.001 * Math.PI * 2 * cyclesPerSecond;
+      this.rotation = this.idleStationaryBaseRotation + Math.sin(phase) * rotAmplitude;
+      const posPhase = phase * 1.31;
+      this.offset = vec(
+        Math.sin(posPhase) * posAmplitude,
+        Math.cos(posPhase * 0.87) * posAmplitude,
+      );
     } else {
+      this.idleStationaryActive = false;
       this.wiggleTimeMs = 0;
+      this.offset = vec(0, 0);
     }
     this.lastPos.x = this.pos.x;
     this.lastPos.y = this.pos.y;
@@ -123,6 +162,41 @@ export class BeeActor extends Actor {
     const smooth = t * t * (3 - 2 * t); // smoothstep
 
     return 1 - smooth * (1 - BeeActor.OUTSIDE_HIVE_SCALE_MULTIPLIER);
+  }
+
+  private isIdling(): boolean {
+    const work = this.get(BeeWorkComponent);
+    if (!work) {
+      return false;
+    }
+    return work.currentJobEntityId === null && work.availability === "available";
+  }
+
+  private getCurrentSeason(): Season | null {
+    const colony = getColonyBridge();
+    if (!colony) {
+      return null;
+    }
+    const time = colony.controllerEntity.get(ColonyTimeComponent);
+    if (!time) {
+      return null;
+    }
+    const msPerBeeDay = COLONY.workerLifespanMs / 50;
+    const currentColonyDay = Math.floor(time.colonyElapsedMs / msPerBeeDay) + 1;
+    return getSeasonForColonyDay(currentColonyDay, colony.daysPerSeason).season;
+  }
+
+  private isInsideHive(): boolean {
+    const colony = getColonyBridge();
+    if (!colony) {
+      return true;
+    }
+    const beeLevel = this.get(BeeLevelComponent)?.level ?? colony.activeLevel;
+    const combOuter = colony.getBuiltCombOuterRadiusPx(beeLevel);
+    if (combOuter <= 0) {
+      return true;
+    }
+    return this.pos.size <= combOuter + BeeActor.HIVE_ZOOM_BAND_INNER_PX;
   }
 
   private isVerticalLevelTransition(): boolean {
