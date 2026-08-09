@@ -129,4 +129,35 @@ describe("computeColonyDemand", () => {
     assert.ok(fall.winterHoneyNeed > 0);
     assert.equal(fall.winterHoneyNeed, spring.winterHoneyNeed);
   });
+
+  it("raises nectar demand when honey capacity is below winter need", () => {
+    const beesTotal = 10;
+    const daysPerSeason = 15;
+    const winterNeed = computeWinterHoneyNeed(
+      beesTotal,
+      daysPerSeason,
+      baseConstants(),
+    );
+    assert.ok(winterNeed > 1);
+
+    const under = computeColonyDemand(
+      baseInput({
+        beesTotal,
+        daysPerSeason,
+        season: "Spring",
+        honeyCapacity: winterNeed * 0.25,
+      }),
+    );
+    const enough = computeColonyDemand(
+      baseInput({
+        beesTotal,
+        daysPerSeason,
+        season: "Spring",
+        honeyCapacity: winterNeed,
+      }),
+    );
+
+    assert.ok(under.demandNectar > enough.demandNectar);
+    assert.ok(under.demandNectar >= 0.75);
+  });
 });

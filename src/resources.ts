@@ -11,7 +11,9 @@ const publicAsset = (path: string): string =>
 export const beeImage = new ImageSource(publicAsset("/images/bee.png"));
 
 /** 4×4 hive cell art; each sprite is 246×280 px (see `drawHiveCells`). */
-export const cellSpritesImage = new ImageSource(publicAsset("/images/cell_sprites.png"));
+export const cellSpritesImage = new ImageSource(
+  publicAsset("/images/cell_sprites.png"),
+);
 
 /**
  * 4-frame horizontal bee sheet where each frame is 128x128 px.

@@ -92,6 +92,20 @@ const storageStressDemand = (stored: number, capacity: number): number => {
 };
 
 /**
+ * Extra nectar-cell demand when hive honey capacity cannot hold a full Winter feed.
+ * 0 when capacity >= need; approaches 1 as capacity falls toward 0.
+ */
+const winterCapacityShortfallDemand = (
+  winterHoneyNeed: number,
+  honeyCapacity: number,
+): number => {
+  if (winterHoneyNeed <= 0 || honeyCapacity >= winterHoneyNeed) {
+    return 0;
+  }
+  return clamp01(1 - honeyCapacity / winterHoneyNeed);
+};
+
+/**
  * Honey units required to feed every bee through one full Winter at current metabolism.
  */
 export const computeWinterHoneyNeed = (
@@ -148,6 +162,7 @@ export const computeColonyDemand = (input: ColonyDemandInput): ColonyDemandResul
     Math.max(
       capacityDemand(neededNectarUnits, input.honeyCapacity),
       storageStressDemand(nectarUtilStored, input.honeyCapacity),
+      winterCapacityShortfallDemand(winterHoneyNeed, input.honeyCapacity),
     ),
   );
 
