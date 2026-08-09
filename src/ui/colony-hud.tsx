@@ -274,25 +274,25 @@ export const HudIcon = ({
       ) : null}
       {kind === "brood" ? (
         <svg viewBox="0 0 16 16" width="14" height="14">
-          {/* Short thick grub: oversized round tips dominate the silhouette */}
+          {/* One plump grub: thick body nearly matching round tip bulbs */}
           <path
             d="M5.2 5.2A4.6 4.6 0 0 1 10.8 10.8"
             fill="none"
             stroke="#f5cba7"
-            strokeWidth="4"
+            strokeWidth="5.8"
             strokeLinecap="round"
           />
           <path
             d="M5.2 5.2A4.6 4.6 0 0 1 10.8 10.8"
             fill="none"
             stroke="#fdebd0"
-            strokeWidth="2.9"
+            strokeWidth="4.4"
             strokeLinecap="round"
           />
-          <circle cx="5.2" cy="5.2" r="3.35" fill="#f5cba7" />
-          <circle cx="5.2" cy="5.2" r="2.7" fill="#fef5e7" />
-          <circle cx="10.8" cy="10.8" r="3.25" fill="#f5cba7" />
-          <circle cx="10.8" cy="10.8" r="2.65" fill="#fdebd0" />
+          <circle cx="5.2" cy="5.2" r="3.25" fill="#f5cba7" />
+          <circle cx="5.2" cy="5.2" r="2.6" fill="#fef5e7" />
+          <circle cx="10.8" cy="10.8" r="3.15" fill="#f5cba7" />
+          <circle cx="10.8" cy="10.8" r="2.55" fill="#fdebd0" />
           <circle cx="5.95" cy="4.5" r="0.45" fill="#6e4c2a" opacity="0.45" />
         </svg>
       ) : null}
