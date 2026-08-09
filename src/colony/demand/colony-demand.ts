@@ -4,10 +4,26 @@ import type { Season } from "../seasons";
 export const DEMAND = {
   /** Fraction of adult feeds counted toward pollen build need. */
   adultPollenWeight: 0.25,
-  /** Winter honey need weight for nectar build demand in Spring/Summer. */
-  winterPlanWeightMild: 0.35,
-  /** Winter honey need weight for nectar build demand in Fall/Winter. */
-  winterPlanWeightPeak: 1,
+  /**
+   * How hard winter honey need pushes nectar-cell build demand, by season.
+   * Summer/Fall ramp storage for Winter; Spring stays mild; Winter stays urgent.
+   */
+  winterPlanWeightBySeason: {
+    Spring: 0.3,
+    Summer: 0.75,
+    Fall: 1,
+    Winter: 1,
+  },
+  /**
+   * Multiplier on brood slot pressure after the food gate.
+   * Spring/Summer nudge expansion; Fall/Winter stay neutral.
+   */
+  broodSeasonWeightBySeason: {
+    Spring: 1.12,
+    Summer: 1.12,
+    Fall: 1,
+    Winter: 1,
+  },
   /** Need/capacity ratio where demand fill starts rising. */
   capacitySoftStart: 0.75,
   /** Stored/capacity ratio where storage-stress demand starts rising. */
@@ -72,9 +88,10 @@ const feedsPerBeeForSeconds = (
 };
 
 const winterPlanWeight = (season: Season): number =>
-  season === "Fall" || season === "Winter"
-    ? DEMAND.winterPlanWeightPeak
-    : DEMAND.winterPlanWeightMild;
+  DEMAND.winterPlanWeightBySeason[season];
+
+const broodSeasonWeight = (season: Season): number =>
+  DEMAND.broodSeasonWeightBySeason[season];
 
 const capacityDemand = (needed: number, capacity: number): number => {
   const soft = DEMAND.capacitySoftStart;
@@ -177,7 +194,9 @@ export const computeColonyDemand = (input: ColonyDemandInput): ColonyDemandResul
 
   const emptyRatio = input.broodEmpty / Math.max(1, input.broodTotal);
   const slotPressure = clamp01(1 - emptyRatio);
-  const demandBrood = canFeedFullBrood ? slotPressure : 0;
+  const demandBrood = canFeedFullBrood
+    ? clamp01(slotPressure * broodSeasonWeight(input.season))
+    : 0;
 
   return {
     demandPollen,
