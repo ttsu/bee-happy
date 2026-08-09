@@ -657,7 +657,7 @@ body:not(.bee-happy-game-started) #game-canvas {
 
 .mini-level-cell {
   position: absolute;
-  width: 9px;
+  width: 8px;
   height: 5px;
   transform: translate(-50%, -50%);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18);

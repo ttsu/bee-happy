@@ -47,8 +47,8 @@ const STACK_CENTER_OFFSET_PX =
  * Pixel steps are sized to the foreshortened hex so neighbors edge-share
  * instead of stacking on top of each other.
  */
-const MINI_ISO_STEP_X_PX = 5;
-const MINI_ISO_STEP_Y_PX = 3;
+const MINI_ISO_STEP_X_PX = 6;
+const MINI_ISO_STEP_Y_PX = 3.5;
 
 const miniCellMapPosition = (q: number, r: number): { left: string; top: string } => {
   const x = (q - r) * MINI_ISO_STEP_X_PX;
