@@ -321,6 +321,12 @@ body:not(.bee-happy-game-started) #game-canvas {
   flex: 0 0 auto;
 }
 
+.hud-icon--cell-sprite {
+  width: auto;
+  height: auto;
+  color: transparent;
+}
+
 .hud-metric-value {
   position: relative;
   display: inline-flex;
@@ -867,9 +873,9 @@ body:not(.bee-happy-game-started) #game-canvas {
     height: 36px;
   }
 
-  .demand-panel .hud-icon svg {
-    width: 11px;
-    height: 11px;
+  .demand-panel .hud-icon--cell-sprite {
+    transform: scale(0.7);
+    transform-origin: center center;
   }
 
   .placement-cell-type-toolbar {
@@ -907,9 +913,9 @@ body:not(.bee-happy-game-started) #game-canvas {
     height: 30px;
   }
 
-  .demand-panel .hud-icon svg {
-    width: 10px;
-    height: 10px;
+  .demand-panel .hud-icon--cell-sprite {
+    transform: scale(0.62);
+    transform-origin: center center;
   }
 
   .placement-cell-type-toolbar {

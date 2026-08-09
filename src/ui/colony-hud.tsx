@@ -1,13 +1,24 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { ColonyRuntime } from "../colony/colony-runtime";
 import type { ColonyUiSnapshot } from "../colony/events/colony-events";
+import {
+  CELL_SPRITE_SRC_H,
+  CELL_TYPE_PICKER_ICON_FRAMES,
+  cellSpriteIconStyle,
+  type CellSpriteIconKind,
+} from "../render/cell-sprite-frames";
 
 const HUD_MINIMIZED_KEY = "bee-happy-hud-minimized";
 const DELTA_TICK_MS = 1100;
+/** HUD icons sit in a ~16px row; match sprite height to that slot. */
+const HUD_CELL_SPRITE_HEIGHT_PX = 16;
 
 type HudMetricKey = "workers" | "pollen" | "honey" | "nectar" | "beeswax" | "happiness";
 
 export type HudIconKind = HudMetricKey | "brood";
+
+const isCellSpriteIconKind = (kind: HudIconKind): kind is CellSpriteIconKind =>
+  kind === "pollen" || kind === "honey" || kind === "nectar" || kind === "brood";
 
 const HUD_METRIC_KEYS: readonly HudMetricKey[] = [
   "workers",
@@ -58,78 +69,65 @@ export const HudIcon = ({
 }: {
   readonly kind: HudIconKind;
   readonly label: string;
-}) => (
-  <span className={`hud-icon hud-icon--${kind}`} aria-hidden title={label}>
-    {kind === "workers" ? (
-      <svg viewBox="0 0 16 16" width="14" height="14">
-        <ellipse cx="8" cy="9" rx="3.2" ry="4" fill="currentColor" opacity="0.9" />
-        <circle cx="8" cy="4.2" r="2" fill="currentColor" />
-        <path
-          d="M3.5 7.5c1.2-1 2.4-.6 2.4-.6M12.5 7.5c-1.2-1-2.4-.6-2.4-.6"
-          stroke="currentColor"
-          strokeWidth="1.2"
-          fill="none"
-          strokeLinecap="round"
-        />
-      </svg>
-    ) : null}
-    {kind === "pollen" ? (
-      <svg viewBox="0 0 16 16" width="14" height="14">
-        <circle cx="8" cy="8" r="4.5" fill="#f7dc6f" />
-        <circle cx="6.2" cy="6.5" r="1.1" fill="#f4d03f" />
-        <circle cx="9.5" cy="9" r="1.3" fill="#f9e79f" />
-      </svg>
-    ) : null}
-    {kind === "honey" ? (
-      <svg viewBox="0 0 16 16" width="14" height="14">
-        <path
-          d="M8 2.5c2.8 3.2 4.5 5.2 4.5 7.2a4.5 4.5 0 1 1-9 0C3.5 7.7 5.2 5.7 8 2.5z"
-          fill="#e8a317"
-        />
-      </svg>
-    ) : null}
-    {kind === "nectar" ? (
-      <svg viewBox="0 0 16 16" width="14" height="14">
-        <path
-          d="M8 2.5c2.8 3.2 4.5 5.2 4.5 7.2a4.5 4.5 0 1 1-9 0C3.5 7.7 5.2 5.7 8 2.5z"
-          fill="#82e0aa"
-        />
-      </svg>
-    ) : null}
-    {kind === "beeswax" ? (
-      <svg viewBox="0 0 16 16" width="14" height="14">
-        <rect x="2.5" y="5" width="11" height="7" rx="1.5" fill="#d4a574" />
-        <rect x="4" y="3.5" width="8" height="2.5" rx="1" fill="#c4956a" />
-      </svg>
-    ) : null}
-    {kind === "happiness" ? (
-      <svg viewBox="0 0 16 16" width="14" height="14">
-        <circle cx="8" cy="8" r="5.5" fill="#82e0aa" opacity="0.35" />
-        <circle cx="8" cy="8" r="5.5" fill="none" stroke="#82e0aa" strokeWidth="1.2" />
-        <path
-          d="M5.2 9.2c.8 1.2 1.8 1.8 2.8 1.8s2-.6 2.8-1.8"
-          stroke="#82e0aa"
-          strokeWidth="1.2"
-          fill="none"
-          strokeLinecap="round"
-        />
-        <circle cx="5.8" cy="6.6" r="0.8" fill="#ecf0f1" />
-        <circle cx="10.2" cy="6.6" r="0.8" fill="#ecf0f1" />
-      </svg>
-    ) : null}
-    {kind === "brood" ? (
-      <svg viewBox="0 0 16 16" width="14" height="14">
-        <path
-          d="M8 1.5 13.5 4.5v7L8 14.5 2.5 11.5v-7L8 1.5z"
-          fill="#f8c471"
-          stroke="#d7bde2"
-          strokeWidth="1"
-        />
-        <circle cx="8" cy="8" r="2.2" fill="#d7bde2" />
-      </svg>
-    ) : null}
-  </span>
-);
+}) => {
+  if (isCellSpriteIconKind(kind)) {
+    const scale = HUD_CELL_SPRITE_HEIGHT_PX / CELL_SPRITE_SRC_H;
+    return (
+      <span
+        className={`hud-icon hud-icon--${kind} hud-icon--cell-sprite`}
+        aria-hidden
+        title={label}
+        style={cellSpriteIconStyle(CELL_TYPE_PICKER_ICON_FRAMES[kind], { scale })}
+      />
+    );
+  }
+
+  return (
+    <span className={`hud-icon hud-icon--${kind}`} aria-hidden title={label}>
+      {kind === "workers" ? (
+        <svg viewBox="0 0 16 16" width="14" height="14">
+          <ellipse cx="8" cy="9" rx="3.2" ry="4" fill="currentColor" opacity="0.9" />
+          <circle cx="8" cy="4.2" r="2" fill="currentColor" />
+          <path
+            d="M3.5 7.5c1.2-1 2.4-.6 2.4-.6M12.5 7.5c-1.2-1-2.4-.6-2.4-.6"
+            stroke="currentColor"
+            strokeWidth="1.2"
+            fill="none"
+            strokeLinecap="round"
+          />
+        </svg>
+      ) : null}
+      {kind === "beeswax" ? (
+        <svg viewBox="0 0 16 16" width="14" height="14">
+          <rect x="2.5" y="5" width="11" height="7" rx="1.5" fill="#d4a574" />
+          <rect x="4" y="3.5" width="8" height="2.5" rx="1" fill="#c4956a" />
+        </svg>
+      ) : null}
+      {kind === "happiness" ? (
+        <svg viewBox="0 0 16 16" width="14" height="14">
+          <circle cx="8" cy="8" r="5.5" fill="#82e0aa" opacity="0.35" />
+          <circle
+            cx="8"
+            cy="8"
+            r="5.5"
+            fill="none"
+            stroke="#82e0aa"
+            strokeWidth="1.2"
+          />
+          <path
+            d="M5.2 9.2c.8 1.2 1.8 1.8 2.8 1.8s2-.6 2.8-1.8"
+            stroke="#82e0aa"
+            strokeWidth="1.2"
+            fill="none"
+            strokeLinecap="round"
+          />
+          <circle cx="5.8" cy="6.6" r="0.8" fill="#ecf0f1" />
+          <circle cx="10.2" cy="6.6" r="0.8" fill="#ecf0f1" />
+        </svg>
+      ) : null}
+    </span>
+  );
+};
 
 const DeltaBadge = ({ tick }: { readonly tick: DeltaTick | undefined }) => {
   if (!tick || tick.delta === 0) {

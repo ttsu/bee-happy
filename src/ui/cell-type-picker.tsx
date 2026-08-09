@@ -1,17 +1,9 @@
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type CSSProperties,
-} from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ColonyRuntime } from "../colony/colony-runtime";
 import type { ColonyUiSnapshot } from "../colony/events/colony-events";
 import {
-  CELL_SPRITE_SRC_H,
-  CELL_SPRITE_SRC_W,
   CELL_TYPE_PICKER_ICON_FRAMES,
+  cellSpriteIconStyle,
 } from "../render/cell-sprite-frames";
 
 const clamp = (n: number, min: number, max: number): number =>
@@ -111,14 +103,6 @@ export const CellTypePicker = ({ snap, colony }: Props) => {
     };
   }, [colony]);
 
-  const spriteScale = 0.25;
-  const sheetCols = 4;
-  const sheetRows = 4;
-  const bgW = CELL_SPRITE_SRC_W * sheetCols * spriteScale;
-  const bgH = CELL_SPRITE_SRC_H * sheetRows * spriteScale;
-  const iconBoxW = CELL_SPRITE_SRC_W * spriteScale;
-  const iconBoxH = CELL_SPRITE_SRC_H * spriteScale;
-
   const pick = (targetType: "brood" | "pollen" | "nectar"): void => {
     const k = colony?.pendingCellTypeKey;
     if (k) {
@@ -126,22 +110,12 @@ export const CellTypePicker = ({ snap, colony }: Props) => {
     }
   };
 
-  const iconStyle = (frame1Based: number): CSSProperties => {
-    const idx = Math.min(16, Math.max(1, Math.floor(frame1Based))) - 1;
-    const col = idx % 4;
-    const row = (idx / 4) | 0;
-    const posX = col * CELL_SPRITE_SRC_W * spriteScale;
-    const posY = row * CELL_SPRITE_SRC_H * spriteScale;
-    return {
-      width: iconBoxW,
-      height: iconBoxH,
-      backgroundImage: "url(/images/cell_sprites.png)",
-      backgroundSize: `${bgW}px ${bgH}px`,
-      backgroundPosition: `-${posX}px -${posY}px`,
-      backgroundClip: "content-box",
+  const iconStyle = (frame1Based: number) =>
+    cellSpriteIconStyle(frame1Based, {
+      scale: 0.25,
       borderRadius: 8,
-    };
-  };
+      backgroundClipContentBox: true,
+    });
 
   if (!snap.pendingCellTypeKey) {
     return null;
