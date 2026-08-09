@@ -274,23 +274,28 @@ export const HudIcon = ({
       ) : null}
       {kind === "brood" ? (
         <svg viewBox="0 0 16 16" width="14" height="14">
-          {/* Plump crescent (C) larva — single arc, no reverse curve */}
-          <path
-            d="M4.6 3.6A5.9 5.9 0 0 1 4.6 12.7"
-            fill="none"
-            stroke="#f5cba7"
-            strokeWidth="5.2"
-            strokeLinecap="round"
+          <defs>
+            <mask id={`brood-crescent-${uid}`}>
+              <rect width="16" height="16" fill="#fff" />
+              {/* Cutout left + slightly up: open crescent, thicker body */}
+              <circle cx="5.4" cy="7.4" r="4.7" fill="#000" />
+            </mask>
+          </defs>
+          <circle
+            cx="9.2"
+            cy="8.2"
+            r="5.6"
+            fill="#f5cba7"
+            mask={`url(#brood-crescent-${uid})`}
           />
-          <path
-            d="M4.6 3.6A5.9 5.9 0 0 1 4.6 12.7"
-            fill="none"
-            stroke="#fdebd0"
-            strokeWidth="3.9"
-            strokeLinecap="round"
+          <circle
+            cx="9.2"
+            cy="8.2"
+            r="4.7"
+            fill="#fdebd0"
+            mask={`url(#brood-crescent-${uid})`}
           />
-          <circle cx="4.6" cy="3.6" r="2.05" fill="#fef5e7" />
-          <circle cx="5.35" cy="3.05" r="0.35" fill="#6e4c2a" opacity="0.45" />
+          <circle cx="10.5" cy="4.1" r="0.5" fill="#6e4c2a" opacity="0.5" />
         </svg>
       ) : null}
     </span>
