@@ -29,9 +29,26 @@ import { ColonyHud } from "./colony-hud";
 import { DemandPanel } from "./demand-panel";
 
 const LEVELS = [-2, -1, 0, 1, 2] as const;
-const DRAG_LEVEL_THRESHOLD_PX = 48;
+const DRAG_LEVEL_THRESHOLD_PX = 36;
 const STACK_MID_INDEX = 2;
-const MINI_LEVEL_STEP_PX = 92;
+/** Vertical pitch between floor cards in the compact reel (px). */
+const MINI_LEVEL_STEP_PX = 52;
+const MINI_LEVEL_CARD_HEIGHT_PX = 48;
+const STACK_VIEWPORT_HEIGHT_PX = 132;
+/** Shifts the track so the mid floor sits in the active slot when translateY is 0. */
+const STACK_CENTER_OFFSET_PX =
+  (STACK_VIEWPORT_HEIGHT_PX - MINI_LEVEL_CARD_HEIGHT_PX) / 2 -
+  STACK_MID_INDEX * MINI_LEVEL_STEP_PX;
+
+/**
+ * Axial hex → isometric screen % for tight honeycomb previews.
+ * Uses a 2:1 foreshortened lattice so floors read as tilted comb.
+ */
+const miniCellIsoPosition = (q: number, r: number): { left: string; top: string } => {
+  const left = 50 + (q - r) * 4.6;
+  const top = 50 + (q + r) * 2.45;
+  return { left: `${left}%`, top: `${top}%` };
+};
 
 type MiniCell = {
   readonly q: number;
@@ -132,6 +149,7 @@ export const App = () => {
     previewActiveLevel as (typeof LEVELS)[number],
   );
   const stackTranslateY =
+    STACK_CENTER_OFFSET_PX +
     (STACK_MID_INDEX - activeLevelIndex + dragLevelOffset) * MINI_LEVEL_STEP_PX;
 
   const autosaveTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -410,26 +428,31 @@ export const App = () => {
               >
                 <span className="mini-level-label">{level.level}</span>
                 <div className="mini-level-map">
-                  {level.cells.map((cell) => (
-                    <span
-                      key={`${level.level}:${cell.q},${cell.r}`}
-                      className="mini-level-cell"
-                      style={{
-                        left: `${50 + (cell.q + cell.r * 0.5) * 10}%`,
-                        top: `${50 + cell.r * 5.5}%`,
-                        background: colorForMiniCell(cell),
-                        boxShadow: cell.pendingCellType
-                          ? "0 0 0 1.5px #e67e22"
-                          : undefined,
-                      }}
-                    />
-                  ))}
+                  {level.cells.map((cell) => {
+                    const iso = miniCellIsoPosition(cell.q, cell.r);
+                    return (
+                      <span
+                        key={`${level.level}:${cell.q},${cell.r}`}
+                        className="mini-level-cell"
+                        style={{
+                          left: iso.left,
+                          top: iso.top,
+                          background: colorForMiniCell(cell),
+                          boxShadow: cell.pendingCellType
+                            ? "0 0 0 1.5px #e67e22"
+                            : undefined,
+                        }}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             ))}
           </div>
         </div>
-        <span className="level-strip-hint">tap or drag ↑↓</span>
+        <span className="level-strip-hint sr-only">
+          Drag up or down, or tap a floor
+        </span>
       </div>
       {colony &&
       !snap.isYearReviewOpen &&
