@@ -42,11 +42,12 @@ const STACK_CENTER_OFFSET_PX =
 
 /**
  * Axial hex → isometric screen % for tight honeycomb previews.
- * Uses a 2:1 foreshortened lattice so floors read as tilted comb.
+ * Projects pointy-top comb into a 2:1 foreshortened lattice (no CSS 3D;
+ * overflow clipping on the reel would flatten preserve-3d anyway).
  */
-const miniCellIsoPosition = (q: number, r: number): { left: string; top: string } => {
-  const left = 50 + (q - r) * 4.6;
-  const top = 50 + (q + r) * 2.45;
+const miniCellMapPosition = (q: number, r: number): { left: string; top: string } => {
+  const left = 50 + (q - r) * 7.2;
+  const top = 52 + (q + r) * 4.1;
   return { left: `${left}%`, top: `${top}%` };
 };
 
@@ -429,14 +430,14 @@ export const App = () => {
                 <span className="mini-level-label">{level.level}</span>
                 <div className="mini-level-map">
                   {level.cells.map((cell) => {
-                    const iso = miniCellIsoPosition(cell.q, cell.r);
+                    const pos = miniCellMapPosition(cell.q, cell.r);
                     return (
                       <span
                         key={`${level.level}:${cell.q},${cell.r}`}
                         className="mini-level-cell"
                         style={{
-                          left: iso.left,
-                          top: iso.top,
+                          left: pos.left,
+                          top: pos.top,
                           background: colorForMiniCell(cell),
                           boxShadow: cell.pendingCellType
                             ? "0 0 0 1.5px #e67e22"

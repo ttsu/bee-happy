@@ -627,12 +627,12 @@ body:not(.bee-happy-game-started) #game-canvas {
   opacity: 0.45;
   transition:
     opacity 180ms ease,
-    transform 180ms ease;
+    filter 180ms ease;
 }
 
 .mini-level.is-active {
   opacity: 1;
-  transform: scale(1.03);
+  filter: brightness(1.08);
 }
 
 .mini-level-label {
@@ -649,19 +649,19 @@ body:not(.bee-happy-game-started) #game-canvas {
 .mini-level-map {
   position: absolute;
   left: 50%;
-  top: 54%;
+  top: 56%;
   width: 48px;
-  height: 32px;
+  height: 34px;
   transform: translate(-50%, -50%);
 }
 
 .mini-level-cell {
   position: absolute;
-  width: 7px;
-  height: 4px;
+  width: 10px;
+  height: 6px;
   transform: translate(-50%, -50%);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
-  /* Flat-top hex foreshortened for isometric honeycomb */
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.16);
+  /* Foreshortened flat-top hex for isometric honeycomb */
   clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
 }
 
@@ -708,7 +708,7 @@ body:not(.bee-happy-game-started) #game-canvas {
 
   .mini-level-map {
     width: 44px;
-    height: 28px;
+    height: 30px;
   }
 }
 
