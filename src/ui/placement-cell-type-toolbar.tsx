@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import type { ColonyRuntime } from "../colony/colony-runtime";
 import type { ColonyUiSnapshot } from "../colony/events/colony-events";
 import {
@@ -17,8 +17,16 @@ type Props = {
  */
 export const PlacementCellTypeToolbar = ({ snap, colony }: Props) => {
   const selected = snap.selectedPlacementCellType;
+  const [spriteScale, setSpriteScale] = useState(0.25);
 
-  const spriteScale = 0.25;
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 700px)");
+    const apply = () => setSpriteScale(mq.matches ? 0.38 : 0.25);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
   const sheetCols = 4;
   const sheetRows = 4;
   const bgW = CELL_SPRITE_SRC_W * sheetCols * spriteScale;
@@ -54,7 +62,6 @@ export const PlacementCellTypeToolbar = ({ snap, colony }: Props) => {
       aria-checked={selected === type}
       className={`placement-cell-type-option${selected === type ? " is-selected" : ""}`}
       aria-label={label}
-      style={iconStyle(frame)}
       onPointerUp={(e) => {
         e.stopPropagation();
         if (e.button !== 0 && e.button !== -1) {
@@ -70,6 +77,11 @@ export const PlacementCellTypeToolbar = ({ snap, colony }: Props) => {
         colony?.setSelectedPlacementCellType(type);
       }}
     >
+      <span
+        className="placement-cell-type-option-icon"
+        style={iconStyle(frame)}
+        aria-hidden
+      />
       <span className="sr-only">{label}</span>
     </button>
   );

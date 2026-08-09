@@ -834,6 +834,11 @@ body:not(.bee-happy-game-started) #game-canvas {
     transform 0.1s ease;
 }
 
+.placement-cell-type-option-icon {
+  display: block;
+  flex-shrink: 0;
+}
+
 .placement-cell-type-option.is-selected {
   border-color: rgba(130, 224, 170, 0.85);
   background: rgba(130, 224, 170, 0.12);
@@ -846,6 +851,33 @@ body:not(.bee-happy-game-started) #game-canvas {
 
 .placement-cell-type-option:active {
   transform: scale(0.96);
+}
+
+@media (max-width: 700px) {
+  .placement-cell-type-toolbar {
+    left: 0;
+    right: 0;
+    width: 100%;
+    transform: none;
+    box-sizing: border-box;
+    padding: 8px max(10px, env(safe-area-inset-right)) 0
+      max(10px, env(safe-area-inset-left));
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+    border-left: none;
+    border-right: none;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .placement-cell-type-toolbar-options {
+    width: 100%;
+    gap: 8px;
+  }
+
+  .placement-cell-type-option {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 4px;
+  }
 }
 
 .tutorial-overlay {
