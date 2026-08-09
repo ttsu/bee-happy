@@ -111,8 +111,14 @@ neededNectarUnits =
 ```ts
 capacityFactor = neededNectarUnits / max(1, honeyCapacity)
 util = (nectarStored + honeyStored) / max(1, honeyCapacity)
-nectarDemand = clamp01(max(capacityFactor - 0.75, 0) / 0.75, util > 0.9 ? … : 0)
+winterShortfall = honeyCapacity < winterHoneyNeed
+  ? 1 - honeyCapacity / winterHoneyNeed
+  : 0
+nectarDemand = clamp01(max(capacityDemand…, storageStress…, winterShortfall))
 ```
+
+If nectar/honey **capacity** is below the winter feed threshold, nectar demand rises
+by the shortfall fraction (full bar when capacity is 0 vs a positive winter need).
 
 ### Brood — should the player build brood cells?
 
