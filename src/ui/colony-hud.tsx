@@ -274,52 +274,30 @@ export const HudIcon = ({
       ) : null}
       {kind === "brood" ? (
         <svg viewBox="0 0 16 16" width="14" height="14">
-          {/* Curved cream larva: stacked segments + head */}
-          <ellipse
-            cx="4.4"
-            cy="11"
-            rx="2.35"
-            ry="2.05"
-            fill="#f5cba7"
-            transform="rotate(12 4.4 11)"
+          {/* Cream C-shaped larva (matches brood-cell sprite silhouette) */}
+          <path
+            d="M11.8 2.6c1.7.4 2.5 2.2 1.9 3.7-.5 1.3-1.7 2.2-3.1 2.9-1.5.7-3.1 1.3-4.3 2.3-1.1.9-1.7 2.1-1.2 3.1.4.8 1.5.9 2.4.4"
+            fill="none"
+            stroke="#f5cba7"
+            strokeWidth="3.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
-          <ellipse
-            cx="6.6"
-            cy="9.6"
-            rx="2.45"
-            ry="2.15"
-            fill="#f8c471"
-            transform="rotate(-8 6.6 9.6)"
+          <path
+            d="M11.8 2.6c1.7.4 2.5 2.2 1.9 3.7-.5 1.3-1.7 2.2-3.1 2.9-1.5.7-3.1 1.3-4.3 2.3-1.1.9-1.7 2.1-1.2 3.1.4.8 1.5.9 2.4.4"
+            fill="none"
+            stroke="#fdebd0"
+            strokeWidth="2.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
-          <ellipse
-            cx="8.7"
-            cy="7.6"
-            rx="2.5"
-            ry="2.2"
-            fill="#f9e79f"
-            transform="rotate(-28 8.7 7.6)"
-          />
-          <ellipse
-            cx="10.3"
-            cy="5.4"
-            rx="2.35"
-            ry="2.1"
-            fill="#fdebd0"
-            transform="rotate(-42 10.3 5.4)"
-          />
-          {/* Head */}
-          <circle cx="11.5" cy="3.85" r="2.35" fill="#fad7a0" />
-          <circle cx="12.35" cy="3.25" r="0.45" fill="#6e4c2a" opacity="0.55" />
-          {/* Soft highlight along the back */}
-          <ellipse
-            cx="9.4"
-            cy="6.5"
-            rx="1.1"
-            ry="1.6"
-            fill="#ffffff"
-            opacity="0.35"
-            transform="rotate(-30 9.4 6.5)"
-          />
+          {/* Head bulb */}
+          <circle cx="12.1" cy="3.1" r="2.15" fill="#fad7a0" />
+          <circle cx="12.1" cy="3.1" r="1.55" fill="#fef5e7" />
+          <circle cx="12.85" cy="2.55" r="0.4" fill="#6e4c2a" opacity="0.5" />
+          {/* Soft segment hint */}
+          <circle cx="9.4" cy="7.1" r="0.55" fill="#f5b041" opacity="0.35" />
+          <circle cx="6.9" cy="9.3" r="0.5" fill="#f5b041" opacity="0.3" />
         </svg>
       ) : null}
     </span>
