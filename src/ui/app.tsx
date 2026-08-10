@@ -29,6 +29,7 @@ import { registerSaveBeforeReload } from "../pwa/update-policy";
 import { UpdateAvailableBanner } from "./update-available-banner";
 import { ColonyHud } from "./colony-hud";
 import { DemandPanel } from "./demand-panel";
+import { ForageMapPanel } from "./forage-map-panel";
 
 const LEVELS = [-2, -1, 0, 1, 2] as const;
 const DRAG_LEVEL_THRESHOLD_PX = 36;
@@ -510,7 +511,10 @@ export const App = () => {
       !snap.successionModal &&
       !isSettingsOpen &&
       !lineageOpen ? (
-        <PlacementCellTypeToolbar snap={snap} colony={colony} />
+        <>
+          <PlacementCellTypeToolbar snap={snap} colony={colony} />
+          <ForageMapPanel snap={snap} colony={colony} />
+        </>
       ) : null}
       {tutorial.showTutorial && !snap.isYearReviewOpen ? (
         <TutorialOverlay

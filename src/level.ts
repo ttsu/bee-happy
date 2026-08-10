@@ -31,8 +31,8 @@ import { ActiveLevelComponent } from "./colony/ecs/components/colony-components"
 import { setColonyBridge } from "./colony-bridge";
 import { drawBeeJobLabels, drawBeeUnhappyThoughtBubbles } from "./render/bee-job-label";
 import { drawHiveCellOverlays, drawHiveCells } from "./render/cell-renderer-actor";
+import { drawForageHeatmap } from "./render/forage-heatmap";
 import { terrainMapResource } from "./resources";
-import { getFlowerDestinations } from "./tiled/flower-destinations";
 
 /**
  * Main hive scene: camera pan vs tap placement, colony simulation, and UI snapshots.
@@ -68,8 +68,6 @@ export class MyLevel extends Scene {
     this.camera.strategy.limitCameraBounds(
       new BoundingBox(mapPos.x, mapPos.y, mapPos.x + scaledW, mapPos.y + scaledH),
     );
-
-    this.colony.setFlowerDestinations(getFlowerDestinations(terrainMapResource));
   }
 
   override onInitialize(engine: Engine): void {
@@ -231,6 +229,7 @@ export class MyLevel extends Scene {
     ctx.save();
     ctx.resetTransform();
     this.camera.draw(ctx);
+    drawForageHeatmap(ctx, this.colony);
     drawHiveCells(ctx, this.colony);
     ctx.restore();
   }

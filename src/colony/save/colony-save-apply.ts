@@ -20,6 +20,7 @@ import {
 import { gameSettingsFromSave } from "../game-settings";
 import { refreshActiveColonyConstantsFromMeta } from "../colony-active-constants";
 import { beeswaxCapacity } from "../beeswax";
+import { randomSeed } from "../rng";
 import { applyCellStateJson, newJobFromJson } from "./colony-save-codec";
 import type { LoadPayload } from "./colony-save-types";
 
@@ -43,6 +44,10 @@ export function applyColonySave(colony: ColonyRuntime, payload: LoadPayload): vo
   const gs = gameSettingsFromSave(data.gameSettings);
   colony.applyRuntimeGameSettings(gs);
   refreshActiveColonyConstantsFromMeta(colony.lineageSystemEnabled);
+
+  // Saves predating the forage fields get a fresh world; later generator versions are handled
+  // here too, once more than one exists.
+  colony.setForageSeed(data.world?.seed ?? randomSeed());
 
   const C = getActiveColonyConstants();
   const waxStored = data.beeswax?.stored ?? C.initialBeeswax;

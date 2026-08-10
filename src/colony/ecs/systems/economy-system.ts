@@ -27,6 +27,7 @@ import {
   releaseJob,
 } from "../../economy/job-queries";
 import { cancelWinterForageJobs } from "../../economy/winter-forage";
+import { yieldMultiplierForFieldValue } from "../../foraging/forage-field";
 import { hiveKey, type HiveCoord } from "../../../grid/hive-levels";
 import { hexToWorld } from "../../../grid/hex-grid";
 import { findHexPathWorldPointsWithLevels } from "../../pathfinding/hex-path";
@@ -63,14 +64,6 @@ export class EconomySystem extends System {
     private readonly colony: ColonyRuntime,
   ) {
     super();
-  }
-
-  private pickRandomFlowerDestination(): { x: number; y: number } | null {
-    const flowers = this.colony.flowerDestinations;
-    if (flowers.length === 0) {
-      return null;
-    }
-    return flowers[Math.floor(Math.random() * flowers.length)] ?? null;
   }
 
   override update(elapsed: number): void {
@@ -130,14 +123,16 @@ export class EconomySystem extends System {
           1,
         );
         j.foragePhase = "outbound";
-        const flower = this.pickRandomFlowerDestination();
+        const spot = this.colony.pickForageDestination(
+          kind === "foragePollen" ? "pollen" : "nectar",
+        );
+        j.scratchX = spot.x;
+        j.scratchY = spot.y;
+        // Captured at dispatch so the payload reflects the ground the bee actually worked.
+        j.forageYieldMultiplier = yieldMultiplierForFieldValue(spot.value);
         if (kind === "foragePollen") {
-          j.scratchX = flower?.x ?? 200;
-          j.scratchY = flower?.y ?? -180;
           openPollen += 1;
         } else {
-          j.scratchX = flower?.x ?? -220;
-          j.scratchY = flower?.y ?? 160;
           openNectar += 1;
         }
         this.colony.createJob(j);
@@ -313,14 +308,17 @@ export class EconomySystem extends System {
       const to = dest.sub(bee.pos);
       if (to.size < 18) {
         const yearlyStats = this.colony.controllerEntity.get(YearlyStatsComponent);
+        // Richer ground pays more per trip; an average cell matches the old flat amount.
+        const yieldMul = job.forageYieldMultiplier;
         if (job.carryPayload === "pollen") {
           const st = cellEnt.get(CellStateComponent)!;
+          const before = st.pollenStored;
           st.pollenStored = Math.min(
             C.pollenCellCapacity,
-            st.pollenStored + C.foragePollenDepositAmount,
+            st.pollenStored + C.foragePollenDepositAmount * yieldMul,
           );
           if (yearlyStats) {
-            yearlyStats.pollenCollectedTotal += C.foragePollenDepositAmount;
+            yearlyStats.pollenCollectedTotal += st.pollenStored - before;
           }
         } else if (job.carryPayload === "nectar") {
           const st = cellEnt.get(CellStateComponent)!;
@@ -328,7 +326,7 @@ export class EconomySystem extends System {
             const before = st.nectarStored;
             st.nectarStored = Math.min(
               C.nectarCellCapacity,
-              st.nectarStored + C.forageNectarDepositAmount,
+              st.nectarStored + C.forageNectarDepositAmount * yieldMul,
             );
             if (yearlyStats) {
               yearlyStats.nectarCollectedTotal += st.nectarStored - before;

@@ -110,3 +110,69 @@ test("Tutorial appears on first new game", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Tutorial" })).toBeVisible();
   await expect(page.getByText(/Welcome to Bee Happy/i)).toBeVisible();
 });
+
+test("Forage heat map toggles and the world seed survives reload", async ({ page }) => {
+  await page.addInitScript(
+    (opts: { lastKey: string; tutKey: string; lastVal: string }) => {
+      localStorage.setItem(opts.lastKey, opts.lastVal);
+      localStorage.setItem(opts.tutKey, "done");
+      localStorage.setItem("bee-happy-hud-minimized", "0");
+    },
+    {
+      lastKey: LAST_SEEN_RELEASE_KEY,
+      tutKey: TUTORIAL_STORAGE_KEY,
+      lastVal: CURRENT_RELEASE_ID,
+    },
+  );
+  await page.goto("http://localhost:4173/");
+  await page.getByRole("button", { name: /Casual Mode/i }).click();
+
+  const group = page.getByRole("radiogroup", { name: "Forage heat map" });
+  await expect(group).toBeVisible();
+
+  const off = group.getByRole("radio", { name: "Off" });
+  const pollen = group.getByRole("radio", { name: "Pollen heat map" });
+  const nectar = group.getByRole("radio", { name: "Nectar heat map" });
+
+  await expect(off).toHaveAttribute("aria-checked", "true");
+
+  await pollen.click();
+  await expect(pollen).toHaveAttribute("aria-checked", "true");
+  await expect(off).toHaveAttribute("aria-checked", "false");
+
+  await nectar.click();
+  await expect(nectar).toHaveAttribute("aria-checked", "true");
+  await expect(pollen).toHaveAttribute("aria-checked", "false");
+
+  // Tapping the active layer turns the overlay back off.
+  await nectar.click();
+  await expect(off).toHaveAttribute("aria-checked", "true");
+
+  // The generated world is rebuilt from a persisted seed, so it must be stable across reloads.
+  const seedOf = async (): Promise<number | null> => {
+    return page.evaluate(() => {
+      const index = localStorage.getItem("bee-happy-save-index-v1");
+      if (!index) {
+        return null;
+      }
+      const slots = (JSON.parse(index) as { slots: { slotId: string }[] }).slots;
+      const slotId = slots[slots.length - 1]?.slotId;
+      if (!slotId) {
+        return null;
+      }
+      const raw = localStorage.getItem(`bee-happy-save-slot-v1-${slotId}`);
+      if (!raw) {
+        return null;
+      }
+      return (JSON.parse(raw) as { world?: { seed: number } }).world?.seed ?? null;
+    });
+  };
+
+  await expect.poll(seedOf).not.toBeNull();
+  const before = await seedOf();
+
+  await page.reload();
+  await page.locator(".launch-save-resume").first().click();
+  await expect(page.getByRole("radiogroup", { name: "Forage heat map" })).toBeVisible();
+  await expect.poll(seedOf).toBe(before);
+});

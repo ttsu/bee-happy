@@ -100,6 +100,7 @@ function jobToJson(job: JobComponent): JobComponentJson {
     forageWaitMs: job.forageWaitMs,
     forageCapacityPollMs: job.forageCapacityPollMs,
     carryPayload: job.carryPayload,
+    forageYieldMultiplier: job.forageYieldMultiplier,
     depositTargetKey: job.depositTargetKey,
     adultFeedTargetBeeId: job.adultFeedTargetBeeId,
     selfFeedCellKey: job.selfFeedCellKey,
@@ -132,6 +133,7 @@ function applyJobJson(job: JobComponent, j: JobComponentJson): void {
   job.forageWaitMs = j.forageWaitMs;
   job.forageCapacityPollMs = j.forageCapacityPollMs;
   job.carryPayload = j.carryPayload;
+  job.forageYieldMultiplier = j.forageYieldMultiplier ?? 1;
   job.depositTargetKey = j.depositTargetKey;
   job.adultFeedTargetBeeId = j.adultFeedTargetBeeId;
   job.selfFeedCellKey = j.selfFeedCellKey;
@@ -269,6 +271,10 @@ export function serializeColonySave(colony: ColonyRuntime): ColonySaveV1 {
       lineageSystemEnabled: colony.lineageSystemEnabled,
       daysPerSeason: colony.daysPerSeason,
       startingWorkers: colony.startingWorkers,
+    },
+    world: {
+      seed: colony.forageWorld.seed,
+      generatorVersion: colony.forageWorld.generatorVersion,
     },
   };
 }
