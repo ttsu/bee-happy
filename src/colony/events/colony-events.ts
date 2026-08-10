@@ -81,6 +81,8 @@ export interface ColonyUiSnapshot {
   readonly cellTypeChangeDiscardTarget: "brood" | "pollen" | "nectar" | null;
   /** Cell type used for new foundation placements (bottom toolbar). */
   readonly selectedPlacementCellType: "brood" | "pollen" | "nectar";
+  /** Forage heat map layer the player is viewing; `null` when the overlay is off. */
+  readonly forageHeatmapLayer: "pollen" | "nectar" | null;
   /** 1-based colony calendar day (same scale as worker bee-days). */
   readonly currentColonyDay: number;
   /** Current season within the colony calendar year. */

@@ -150,6 +150,7 @@ export const buildColonyUiSnapshot = (colony: ColonyRuntime): ColonyUiSnapshot =
     cellTypeChangeError: colony.cellTypeChangeError,
     cellTypeChangeDiscardTarget: colony.cellTypeChangeDiscardTarget,
     selectedPlacementCellType: colony.selectedPlacementCellType,
+    forageHeatmapLayer: colony.forageHeatmapLayer,
     currentColonyDay,
     currentColonySeason,
     daysPerSeason,

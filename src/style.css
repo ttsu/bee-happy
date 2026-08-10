@@ -2178,3 +2178,93 @@ body:not(.bee-happy-game-started) #game-canvas {
   background: #34495e;
   color: #fff;
 }
+
+/* Forage heat map toggle: right edge, above the level reel. */
+.forage-map-panel {
+  position: fixed;
+  right: 12px;
+  bottom: calc(max(12px, env(safe-area-inset-bottom)) + 196px);
+  z-index: 5;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 8px;
+  background: rgba(20, 28, 36, 0.88);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.32);
+}
+
+.forage-map-panel-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(236, 240, 241, 0.75);
+  user-select: none;
+}
+
+.forage-map-panel-options {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.forage-map-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 32px;
+  padding: 3px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(236, 240, 241, 0.8);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease,
+    transform 90ms ease;
+}
+
+.forage-map-option:active {
+  transform: scale(0.96);
+}
+
+.forage-map-option.is-selected {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.42);
+  color: #ecf0f1;
+}
+
+@media (max-width: 700px) {
+  .forage-map-panel {
+    right: 6px;
+    bottom: calc(max(8px, env(safe-area-inset-bottom)) + 172px);
+    padding: 5px 6px;
+    gap: 3px;
+  }
+
+  .forage-map-panel-label {
+    font-size: 8px;
+    letter-spacing: 0.08em;
+  }
+
+  .forage-map-option {
+    min-width: 34px;
+    min-height: 28px;
+    padding: 2px 4px;
+    font-size: 10px;
+  }
+
+  .forage-map-panel .hud-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+}

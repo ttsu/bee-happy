@@ -15,6 +15,18 @@ import type { SeasonSystemSave } from "../ecs/systems/season-system";
 import type { HiveCoord } from "../../grid/hive-levels";
 import type { GameSettings } from "../game-settings";
 import type { MetaProgressV1 } from "../meta/meta-progress";
+import type { FORAGE_GENERATOR_VERSION } from "../foraging/forage-field";
+
+/**
+ * Generated-world payload.
+ *
+ * `generatorVersion` is not optional: retuning the generator would otherwise make an existing
+ * seed resolve to a different map, silently moving the world under a live colony.
+ */
+export type ForageWorldSaveJson = {
+  seed: number;
+  generatorVersion: typeof FORAGE_GENERATOR_VERSION;
+};
 
 /** @deprecated Legacy single-save key; migrated into slots on first read of the index. */
 export const SAVE_STORAGE_KEY = "bee-happy-save-v1";
@@ -83,6 +95,8 @@ export type JobComponentJson = {
   forageWaitMs: number;
   forageCapacityPollMs: number;
   carryPayload: JobComponent["carryPayload"];
+  /** Added in a later format; omitted in older saves (defaults to 1). */
+  forageYieldMultiplier?: number;
   depositTargetKey: string | null;
   adultFeedTargetBeeId: number | null;
   selfFeedCellKey: string | null;
@@ -166,6 +180,11 @@ export type ColonySaveV1 = {
   meta?: MetaProgressV1;
   /** Rules chosen at new game or carried from prior format; omitted in older saves. */
   gameSettings?: GameSettings;
+  /**
+   * Generated world state. Only the seed is stored; both forage fields are rebuilt from it.
+   * Omitted in older saves; load assigns a fresh seed.
+   */
+  world?: ForageWorldSaveJson;
 };
 
 export type LoadPayload = {

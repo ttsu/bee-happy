@@ -82,6 +82,11 @@ export class JobComponent extends Component {
   /** In `capacityWait`, ms until next deposit-capacity check. */
   forageCapacityPollMs = 0;
   carryPayload: "none" | "pollen" | "nectar" | "honey" | "water" = "none";
+  /**
+   * Forage deposit scaling from the forage field value where this trip was dispatched.
+   * Captured at dispatch (not at deposit) so the payload reflects the ground actually worked.
+   */
+  forageYieldMultiplier = 1;
   depositTargetKey: string | null = null;
   /**
    * `adultFeed` / `waterDeliver`: thirsty/hungry target bee.

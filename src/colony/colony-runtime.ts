@@ -1,5 +1,5 @@
 import type { Engine } from "excalibur";
-import { Entity, vec, type Scene, type Vector } from "excalibur";
+import { Entity, vec, type Scene } from "excalibur";
 import { hexToWorld, worldToHex } from "../grid/hex-grid";
 import type { HexCoord } from "../grid/hex-grid";
 import { hiveKey, parseHiveKey } from "../grid/hive-levels";
@@ -37,6 +37,14 @@ import {
   triggerMandatorySuccession as triggerMandatorySuccessionImpl,
 } from "./colony-succession";
 import { canRelocateCellContentsForRetype } from "./cell-retype-capacity";
+import { mulberry32, randomSeed } from "./rng";
+import {
+  generateForageWorld,
+  sampleForagePoint,
+  type ForageLayer,
+  type ForagePoint,
+  type ForageWorld,
+} from "./foraging/forage-field";
 import { CellRetypeSystem } from "./ecs/systems/cell-retype-system";
 import { canPlaceFoundation, eligibleFoundationCoordsForLevel } from "./placement";
 import { JobPriority } from "./job-priority";
@@ -70,10 +78,15 @@ export class ColonyRuntime {
   readonly events = new ColonyEventBus();
   readonly cellsByKey = new Map<string, Entity>();
   /**
-   * World-space destinations (from the background Tiled map) that represent flowers.
-   * Used by foragers as outbound targets.
+   * Generated pollen / nectar forage fields — the source of truth for where food is in the
+   * world. Rebuilt from {@link ForageWorld.seed} on load, so only the seed is persisted.
+   * Survives succession: the colony keeps its nest, so it keeps its meadow.
    */
-  flowerDestinations: Vector[] = [];
+  forageWorld: ForageWorld = generateForageWorld(0, mulberry32);
+  /** Heat map layer the player is currently viewing, or `null` when the overlay is off. */
+  forageHeatmapLayer: ForageLayer | null = null;
+  /** Shared PRNG for forage target sampling (not seeded — only generation must be reproducible). */
+  private readonly forageRand = mulberry32(randomSeed());
   /**
    * True when this session was initialized from a save (`mode === "load"`).
    * Used by the UI to skip the first-play tutorial on Continue.
@@ -157,6 +170,8 @@ export class ColonyRuntime {
     refreshActiveColonyConstantsFromMeta(this.lineageSystemEnabled);
 
     if (mode === "new") {
+      // Load replaces this from the save's stored seed in `applyColonySave`.
+      this.setForageSeed(randomSeed());
       seedLevelZeroColony(this, this.startingWorkers);
     }
 
@@ -177,8 +192,25 @@ export class ColonyRuntime {
     world.add(new GuardSystem(world, this));
   }
 
-  setFlowerDestinations(destinations: Vector[]): void {
-    this.flowerDestinations = destinations;
+  /** Rebuilds both forage fields from `seed`. Call on new game and when applying a save. */
+  setForageSeed(seed: number): void {
+    this.forageWorld = generateForageWorld(seed, mulberry32);
+  }
+
+  /** Cycles the heat map overlay; `null` turns it off. */
+  setForageHeatmapLayer(layer: ForageLayer | null): void {
+    this.forageHeatmapLayer = layer;
+    this.emitUiSnapshotImmediate();
+  }
+
+  /**
+   * Picks an outbound forage destination weighted by the layer's field value, so foragers
+   * favor rich ground instead of rolling uniformly across the map.
+   */
+  pickForageDestination(layer: ForageLayer): ForagePoint {
+    const field =
+      layer === "pollen" ? this.forageWorld.pollen : this.forageWorld.nectar;
+    return sampleForagePoint(field, this.forageRand);
   }
 
   /**
