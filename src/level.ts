@@ -8,6 +8,7 @@ import {
   vec,
   type DefaultLoader,
   type ExcaliburGraphicsContext,
+  type TileMap,
 } from "excalibur";
 import { worldToHex } from "./grid/hex-grid";
 import { COLONY } from "./colony/constants";
@@ -32,6 +33,7 @@ import { setColonyBridge } from "./colony-bridge";
 import { drawBeeJobLabels, drawBeeUnhappyThoughtBubbles } from "./render/bee-job-label";
 import { drawHiveCellOverlays, drawHiveCells } from "./render/cell-renderer-actor";
 import { drawForageHeatmap } from "./render/forage-heatmap";
+import { setTerrainGreyscale } from "./render/greyscale-material";
 import { terrainMapResource } from "./resources";
 
 /**
@@ -49,6 +51,8 @@ export class MyLevel extends Scene {
    * a tap looks like a huge drag. Skip one frame of pan/drag accumulation after down.
    */
   private reseedPanAfterTouchStart = false;
+  /** Background tile layers; desaturated while a forage heat map is showing. */
+  private terrainTilemaps: TileMap[] = [];
 
   private addTiledBackground(): void {
     // Add the Tiled background behind gameplay actors/overlays and keep it centered on world 0,0.
@@ -60,8 +64,10 @@ export class MyLevel extends Scene {
     const mapPos = vec(-scaledW / 2, -scaledH / 2);
 
     terrainMapResource.addToScene(this, { pos: mapPos });
+    this.terrainTilemaps = [];
     for (const layer of terrainMapResource.getTileLayers()) {
       layer.tilemap.scale = vec(bgScale, bgScale);
+      this.terrainTilemaps.push(layer.tilemap);
     }
 
     // Prevent the player from panning beyond the edges of the tiled background.
@@ -229,6 +235,11 @@ export class MyLevel extends Scene {
     ctx.save();
     ctx.resetTransform();
     this.camera.draw(ctx);
+    setTerrainGreyscale(
+      this.engine,
+      this.terrainTilemaps,
+      this.colony.forageHeatmapLayer !== null,
+    );
     drawForageHeatmap(ctx, this.colony);
     drawHiveCells(ctx, this.colony);
     ctx.restore();
