@@ -16,6 +16,7 @@ import {
   BeeswaxComponent,
   JobComponent,
   QueenTimerComponent,
+  RoyalJellyComponent,
   YearlyStatsComponent,
 } from "../ecs/components/colony-components";
 import { gameSettingsFromSave } from "../game-settings";
@@ -173,6 +174,7 @@ export function serializeColonySave(colony: ColonyRuntime): ColonySaveV1 {
   const time = colony.controllerEntity.get(ColonyTimeComponent)!;
   const yearly = colony.controllerEntity.get(YearlyStatsComponent)!;
   const beeswax = colony.controllerEntity.get(BeeswaxComponent)!;
+  const royalJelly = colony.controllerEntity.get(RoyalJellyComponent)!;
 
   const cells: ColonySaveV1["cells"] = [];
   for (const [key, ent] of colony.cellsByKey) {
@@ -242,6 +244,10 @@ export function serializeColonySave(colony: ColonyRuntime): ColonySaveV1 {
     queenTimer: { layCooldownMs: queen.layCooldownMs },
     colonyTime: { colonyElapsedMs: time.colonyElapsedMs },
     beeswax: { stored: beeswax.stored },
+    royalJelly: {
+      stored: royalJelly.stored,
+      lastAccruedColonyDay: royalJelly.lastAccruedColonyDay,
+    },
     yearly: {
       yearNumber: yearly.yearNumber,
       isYearReviewOpen: yearly.isYearReviewOpen,

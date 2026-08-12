@@ -2,6 +2,7 @@ import { System, SystemPriority, SystemType, type World } from "excalibur";
 import { asActor } from "../../actor-utils";
 import {
   BeeLevelComponent,
+  BeeNeedsComponent,
   BeeWorkComponent,
   CellCoordComponent,
   CellStateComponent,
@@ -10,6 +11,7 @@ import {
 } from "../components/colony-components";
 import { getActiveColonyConstants } from "../../colony-active-constants";
 import type { ColonyRuntime } from "../../colony-runtime";
+import { scaledWorkElapsed } from "../../bee-efficiency";
 import { hiveKey } from "../../../grid/hive-levels";
 import { hexToWorld } from "../../../grid/hex-grid";
 import { JobPriority } from "../../job-priority";
@@ -258,7 +260,10 @@ export class BroodSystem extends System {
               bl &&
               bl.level === coord.level
             ) {
-              st.cleaningTimerMs -= elapsed;
+              st.cleaningTimerMs -= scaledWorkElapsed(
+                elapsed,
+                bee.get(BeeNeedsComponent),
+              );
             }
           }
         }

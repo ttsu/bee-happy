@@ -5,11 +5,11 @@ import {
   ActiveLevelComponent,
   BeeRoleComponent,
   BeeswaxComponent,
-  CellStateComponent,
   ColonyTimeComponent,
   HoneyRunComponent,
   JobComponent,
   QueenTimerComponent,
+  RoyalJellyComponent,
   YearlyStatsComponent,
 } from "./ecs/components/colony-components";
 import { releaseJobBees } from "./ecs/job-release";
@@ -26,31 +26,6 @@ import { getActiveColonyConstants } from "./colony-active-constants";
 import { buildColonyUiSnapshot } from "./colony-ui-snapshot";
 import type { ColonyRuntime } from "./colony-runtime";
 
-/**
- * Removes stored honey from built nectar cells (succession shop spend). No-op if amount ≤ 0.
- */
-export const deductHoneyFromNectarCells = (
-  colony: ColonyRuntime,
-  honeyToSpend: number,
-): void => {
-  if (honeyToSpend <= 0) {
-    return;
-  }
-  let remaining = honeyToSpend;
-  for (const [, ent] of colony.cellsByKey) {
-    if (remaining <= 0) {
-      break;
-    }
-    const st = ent.get(CellStateComponent)!;
-    if (!st.built || st.cellType !== "nectar" || st.honeyStored <= 0) {
-      continue;
-    }
-    const take = Math.min(remaining, st.honeyStored);
-    st.honeyStored -= take;
-    remaining -= take;
-  }
-};
-
 const copyYearlyStats = (
   from: YearlyStatsComponent,
   to: YearlyStatsComponent,
@@ -66,16 +41,16 @@ const copyYearlyStats = (
 };
 
 /**
- * Keeps comb and colony timeline; kills jobs and bees; applies shop honey; spawns new queen and remaining workers.
+ * Keeps comb and colony timeline; kills jobs and bees; clears royal jelly; spawns new queen and remaining workers.
  *
  * @param workersToKeep - From `Math.floor((workers + queens) / 2)` before any bees are removed.
  */
 const applySuccessionKeepNestInColony = (
   colony: ColonyRuntime,
-  honeySpentInShop: number,
+  royalJellySpentInShop: number,
   workersToKeep: number,
 ): void => {
-  deductHoneyFromNectarCells(colony, honeySpentInShop);
+  colony.deductRoyalJellyAfterSuccession(royalJellySpentInShop);
 
   const world = colony.scene.world;
   const old = colony.controllerEntity;
@@ -116,6 +91,8 @@ const applySuccessionKeepNestInColony = (
     wax.stored = waxSrc.stored;
   }
 
+  const jelly = new RoyalJellyComponent();
+
   colony.controllerEntity = new Entity({
     name: "colony-controller",
     components: [
@@ -125,6 +102,7 @@ const applySuccessionKeepNestInColony = (
       yearly,
       new HoneyRunComponent(),
       wax,
+      jelly,
     ],
   });
   colony.controllerEntity.addTag("colonyController");
@@ -155,11 +133,10 @@ export const debugOpenSuccessionOptional = (colony: ColonyRuntime): void => {
     return;
   }
   const snap = buildColonyUiSnapshot(colony);
-  const honey = colony.sumHoneyStored();
   colony.successionModal = {
     mandatory: false,
     reason: "hiveExpanded",
-    honeyBudget: honey,
+    royalJellyBudget: colony.getRoyalJellyStored(),
     beesTotal: snap.beesTotal,
     colonyDay: snap.currentColonyDay,
   };
@@ -177,11 +154,10 @@ export const requestOptionalSuccession = (colony: ColonyRuntime): void => {
   if (snap.queens < 1 || snap.beesTotal <= COLONY.successionOptionalBeeThreshold) {
     return;
   }
-  const honey = colony.sumHoneyStored();
   colony.successionModal = {
     mandatory: false,
     reason: "hiveExpanded",
-    honeyBudget: honey,
+    royalJellyBudget: colony.getRoyalJellyStored(),
     beesTotal: snap.beesTotal,
     colonyDay: snap.currentColonyDay,
   };
@@ -199,11 +175,10 @@ export const triggerMandatorySuccession = (
     return;
   }
   const snap = buildColonyUiSnapshot(colony);
-  const honey = colony.sumHoneyStored();
   colony.successionModal = {
     mandatory: true,
     reason,
-    honeyBudget: honey,
+    royalJellyBudget: colony.getRoyalJellyStored(),
     beesTotal: snap.beesTotal,
     colonyDay: snap.currentColonyDay,
   };
@@ -225,14 +200,14 @@ export const dismissSuccessionModal = (colony: ColonyRuntime): void => {
 };
 
 /**
- * Persists lineage meta, spends succession-shop honey from cells, and keeps the nest with half the bees (new queen).
+ * Persists lineage meta, clears royal jelly after shop spend, and keeps the nest with half the bees (new queen).
  *
- * @param honeySpentInShop - Honey deducted from nectar cells (`honeyBudget - honeyLeft` from the modal).
+ * @param royalJellySpentInShop - Royal jelly spent in the succession shop UI.
  */
 export const applySuccessionChoice = (
   colony: ColonyRuntime,
   entry: Omit<LineageEntry, "generationIndex">,
-  honeySpentInShop: number,
+  royalJellySpentInShop: number,
 ): void => {
   const meta = readMetaProgressFromStorage();
   const snap = buildColonyUiSnapshot(colony);
@@ -251,7 +226,7 @@ export const applySuccessionChoice = (
   };
   writeMetaProgressToStorage(next);
   colony.successionModal = null;
-  applySuccessionKeepNestInColony(colony, honeySpentInShop, workersToKeep);
+  applySuccessionKeepNestInColony(colony, royalJellySpentInShop, workersToKeep);
 };
 
 /**
@@ -282,6 +257,7 @@ export const resetWorldAfterSuccession = (colony: ColonyRuntime): void => {
       new YearlyStatsComponent(),
       new HoneyRunComponent(),
       new BeeswaxComponent(),
+      new RoyalJellyComponent(),
     ],
   });
   colony.controllerEntity.addTag("colonyController");

@@ -7,7 +7,7 @@ const DELTA_TICK_MS = 1100;
 
 type HudMetricKey = "workers" | "pollen" | "honey" | "nectar" | "beeswax" | "happiness";
 
-export type HudIconKind = HudMetricKey | "brood";
+export type HudIconKind = HudMetricKey | "brood" | "royalJelly";
 
 const HUD_METRIC_KEYS: readonly HudMetricKey[] = [
   "workers",
@@ -249,6 +249,24 @@ export const HudIcon = ({
           <rect x="2.5" y="5" width="11" height="7" rx="1.5" fill="#d4a574" />
           <rect x="4" y="3.5" width="8" height="2.5" rx="1" fill="#c4956a" />
         </svg>
+      ) : null}
+      {kind === "royalJelly" ? (
+        <DropIcon
+          bodyId={`rj-body-${uid}`}
+          rimId={`rj-rim-${uid}`}
+          highlightId={`rj-hl-${uid}`}
+          clipId={`rj-clip-${uid}`}
+          stops={[
+            { offset: "0%", color: "#fff4c2" },
+            { offset: "40%", color: "#f1c40f" },
+            { offset: "100%", color: "#9a7b0a" },
+          ]}
+          rimStops={[
+            { offset: "0%", color: "#fff9e6", opacity: "0.9" },
+            { offset: "40%", color: "#f1c40f", opacity: "0.1" },
+            { offset: "100%", color: "#6c4f00", opacity: "0.5" },
+          ]}
+        />
       ) : null}
       {kind === "happiness" ? (
         <svg viewBox="0 0 16 16" width="14" height="14">
@@ -649,6 +667,16 @@ export const ColonyHud = ({ snap, colony }: Props) => {
                 displayValue={`${beeswax}/${beeswaxCap}`}
                 tick={deltas.beeswax}
               />
+              {snap.lineageSystemEnabled ? (
+                <HudResourceMeter
+                  label="Royal jelly"
+                  icon="royalJelly"
+                  value={snap.royalJelly}
+                  capacity={Math.max(1, snap.royalJelly)}
+                  fillClass="hud-resource-bar-fill--royal-jelly"
+                  displayValue={`${Math.round(snap.royalJelly)}`}
+                />
+              ) : null}
               <HudResourceMeter
                 label="Happiness"
                 icon="happiness"

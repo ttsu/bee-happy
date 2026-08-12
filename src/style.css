@@ -536,6 +536,10 @@ body:not(.bee-happy-game-started) #game-canvas {
   background: linear-gradient(90deg, #c4956a, #d4a574);
 }
 
+.hud-resource-bar-fill--royal-jelly {
+  background: linear-gradient(90deg, #d4ac0d, #f4d03f);
+}
+
 .hud-resource-bar-fill--happiness {
   background: linear-gradient(90deg, #f5b041, #82e0aa);
 }
@@ -1959,6 +1963,28 @@ body:not(.bee-happy-game-started) #game-canvas {
 .succession-pupa.is-selected {
   border-color: #9b59b6;
   box-shadow: 0 0 0 1px #9b59b6;
+}
+
+.succession-pupa.is-locked {
+  border-style: dashed;
+  opacity: 0.85;
+}
+
+.succession-unlock {
+  width: 100%;
+  min-height: 120px;
+  padding: 14px 10px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(155, 89, 182, 0.15);
+  color: #e8d4f8;
+  cursor: pointer;
+  font: inherit;
+}
+
+.succession-unlock:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .succession-pupa-select {

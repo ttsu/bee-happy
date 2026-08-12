@@ -13,6 +13,7 @@ import {
 } from "../components/colony-components";
 import { getActiveColonyConstants } from "../../colony-active-constants";
 import type { ColonyRuntime } from "../../colony-runtime";
+import { scaledWorkElapsed } from "../../bee-efficiency";
 import {
   anyNectarDepositCapacity,
   anyPollenDepositCapacity,
@@ -368,7 +369,9 @@ export class EconomySystem extends System {
     if (!bee || bee.pos.sub(center).size > 50 || !bl || bl.level !== job.targetLevel) {
       return;
     }
-    const rate = C.honeyProcessRatePerSec * (elapsed / 1000);
+    const rate =
+      C.honeyProcessRatePerSec *
+      (scaledWorkElapsed(elapsed, bee.get(BeeNeedsComponent)) / 1000);
     st.honeyProcessingProgress += rate;
     if (st.honeyProcessingProgress >= 1) {
       const convert = Math.min(st.nectarStored, C.nectarCellCapacity);

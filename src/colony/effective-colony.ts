@@ -71,6 +71,8 @@ export type EffectiveColonyConstants = {
   readonly panTapThresholdPx: number;
   readonly successionOptionalBeeThreshold: number;
   readonly queenAgeOutYearNumber: number;
+  readonly royalJellyPercentOfHappiness: number;
+  readonly workerMinEfficiencyMul: number;
 };
 
 /**
