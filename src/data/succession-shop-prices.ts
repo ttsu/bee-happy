@@ -9,12 +9,12 @@ export type SuccessionShopPrices = z.infer<typeof successionShopPricesSchema>;
 
 /** Default prices (royal jelly units); tune in data. */
 export const DEFAULT_SUCCESSION_SHOP_PRICES: SuccessionShopPrices = {
-  unlockSlot: 6,
+  unlockSlot: 12,
   upgradeRarityByTier: {
-    "1": 5,
-    "2": 8,
-    "3": 12,
-    "4": 18,
+    "1": 6,
+    "2": 10,
+    "3": 15,
+    "4": 22,
     "5": 0,
   },
 };
