@@ -7,9 +7,11 @@ import { hiveKey } from "../grid/hive-levels";
 import { findHexPathWorldPointsWithLevels } from "./pathfinding/hex-path";
 import { getActiveColonyConstants } from "./colony-active-constants";
 import type { ColonyRuntime } from "./colony-runtime";
+import { scaledWorkElapsed } from "./bee-efficiency";
 import {
   BeeCarryComponent,
   BeeLevelComponent,
+  BeeNeedsComponent,
   BeeWorkComponent,
   CellCoordComponent,
   CellStateComponent,
@@ -432,7 +434,10 @@ export const processFeedLarvaeJobs = (
         refreshPathToPickup(colony, job, bee);
         continue;
       }
-      job.feedLarvaePhaseTimerMs -= elapsed;
+      job.feedLarvaePhaseTimerMs -= scaledWorkElapsed(
+        elapsed,
+        bee.get(BeeNeedsComponent),
+      );
       if (job.feedLarvaePhaseTimerMs > 0) {
         continue;
       }
@@ -501,7 +506,10 @@ export const processFeedLarvaeJobs = (
         planFeedLarvaeDeliverPath(colony, job, bee);
         continue;
       }
-      job.feedLarvaePhaseTimerMs -= elapsed;
+      job.feedLarvaePhaseTimerMs -= scaledWorkElapsed(
+        elapsed,
+        bee.get(BeeNeedsComponent),
+      );
       if (job.feedLarvaePhaseTimerMs > 0) {
         continue;
       }

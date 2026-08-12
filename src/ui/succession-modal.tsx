@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { ColonyUiSnapshot } from "../colony/events/colony-events";
 import { useColonyBridge } from "./colony-bridge-context";
 import { successionShopPrices } from "../data/succession-shop-prices";
@@ -32,53 +32,44 @@ const tierLabel = (t: RarityTier): string => {
   return names[t];
 };
 
+type SuccessionSlot =
+  | { readonly status: "locked" }
+  | { readonly status: "unlocked"; readonly option: RolledPupaOption };
+
 type Props = {
   readonly snap: ColonyUiSnapshot;
   readonly onPersist: () => void;
 };
 
+const SLOT_COUNT = 3;
+
 /**
- * Full-screen succession flow: three pupae, optional honey rerolls / rarity upgrade.
+ * Full-screen succession flow: unlock up to three pupae with royal jelly, then upgrade rarity.
  */
 export const SuccessionModal = ({ snap, onPersist }: Props) => {
   const colony = useColonyBridge();
   const modal = snap.successionModal;
-  const [options, setOptions] = useState<RolledPupaOption[]>([]);
   const [seed, setSeed] = useState(0);
-  const [rerollCount, setRerollCount] = useState(0);
-  const [honeyLeft, setHoneyLeft] = useState(0);
+  const [unlockCount, setUnlockCount] = useState(0);
+  const [royalJellyLeft, setRoyalJellyLeft] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
+  const [slots, setSlots] = useState<SuccessionSlot[]>(
+    Array.from({ length: SLOT_COUNT }, () => ({ status: "locked" as const })),
+  );
 
   useEffect(() => {
     if (!modal) {
       return;
     }
-    const s = Math.floor(modal.honeyBudget * 1000 + modal.colonyDay + Date.now());
+    const s = Math.floor(modal.royalJellyBudget * 1000 + modal.colonyDay + Date.now());
     setSeed(s);
-    setRerollCount(0);
-    setHoneyLeft(modal.honeyBudget);
+    setUnlockCount(0);
+    setRoyalJellyLeft(modal.royalJellyBudget);
     setSelected(null);
-    const rng = mulberry32(s);
-    setOptions(rollPupaOptions(rng, 3));
+    setSlots(Array.from({ length: SLOT_COUNT }, () => ({ status: "locked" })));
   }, [modal]);
 
-  const rerollCost = useMemo(() => {
-    return (
-      successionShopPrices.rerollAllBase +
-      successionShopPrices.rerollAllEscalation * rerollCount
-    );
-  }, [rerollCount]);
-
-  const doReroll = useCallback(() => {
-    if (honeyLeft < rerollCost) {
-      return;
-    }
-    setHoneyLeft((h) => h - rerollCost);
-    setRerollCount((c) => c + 1);
-    const rng = mulberry32(seed + rerollCount + 999);
-    setOptions(rollPupaOptions(rng, 3));
-    setSelected(null);
-  }, [honeyLeft, rerollCost, seed, rerollCount]);
+  const unlockCost = successionShopPrices.unlockSlot;
 
   const upgradeCostForTier = (tier: RarityTier): number => {
     if (tier >= 5) {
@@ -87,48 +78,71 @@ export const SuccessionModal = ({ snap, onPersist }: Props) => {
     return successionShopPrices.upgradeRarityByTier[String(tier)] ?? 8;
   };
 
+  const unlockSlot = useCallback(
+    (index: number) => {
+      if (royalJellyLeft < unlockCost) {
+        return;
+      }
+      setRoyalJellyLeft((j) => j - unlockCost);
+      setUnlockCount((c) => c + 1);
+      const rng = mulberry32(seed + index * 7919 + unlockCount);
+      const rolled = rollPupaOptions(rng, 1)[0];
+      if (!rolled) {
+        return;
+      }
+      setSlots((prev) => {
+        const next = [...prev];
+        next[index] = { status: "unlocked", option: rolled };
+        return next;
+      });
+      setSelected(null);
+    },
+    [royalJellyLeft, unlockCost, seed, unlockCount],
+  );
+
   const upgradeCard = useCallback(
     (index: number) => {
-      const opt = options[index];
-      if (!opt || opt.tier >= 5) {
+      const slot = slots[index];
+      if (slot?.status !== "unlocked" || slot.option.tier >= 5) {
         return;
       }
-      const cost = upgradeCostForTier(opt.tier);
-      if (honeyLeft < cost) {
+      const cost = upgradeCostForTier(slot.option.tier);
+      if (royalJellyLeft < cost) {
         return;
       }
-      setHoneyLeft((h) => h - cost);
-      setOptions((prev) => {
+      setRoyalJellyLeft((j) => j - cost);
+      setSlots((prev) => {
         const next = [...prev];
-        const o = next[index];
-        if (!o || o.tier >= 5) {
+        const current = next[index];
+        if (current?.status !== "unlocked" || current.option.tier >= 5) {
           return prev;
         }
-        const newTier = (o.tier + 1) as RarityTier;
+        const newTier = (current.option.tier + 1) as RarityTier;
         next[index] = {
-          ...o,
-          tier: newTier,
-          magnitude: primaryMagnitudeForTier(o.affix, newTier),
-          tradeoffMagnitude: tradeoffMagnitudeForTier(o.affix, newTier),
+          status: "unlocked",
+          option: {
+            ...current.option,
+            tier: newTier,
+            magnitude: primaryMagnitudeForTier(current.option.affix, newTier),
+            tradeoffMagnitude: tradeoffMagnitudeForTier(current.option.affix, newTier),
+          },
         };
         return next;
       });
     },
-    [honeyLeft, options],
+    [royalJellyLeft, slots],
   );
 
   const confirm = useCallback(() => {
     if (selected == null || !modal) {
       return;
     }
-    const opt = options[selected];
-    if (!opt) {
+    const slot = slots[selected];
+    if (slot?.status !== "unlocked" || !colony) {
       return;
     }
-    if (!colony) {
-      return;
-    }
-    const honeySpent = Math.max(0, modal.honeyBudget - honeyLeft);
+    const opt = slot.option;
+    const royalJellySpent = Math.max(0, modal.royalJellyBudget - royalJellyLeft);
     colony.applySuccessionChoice(
       {
         affixId: opt.affix.id,
@@ -138,10 +152,10 @@ export const SuccessionModal = ({ snap, onPersist }: Props) => {
         successionReason: modal.reason,
         recordedAtIso: new Date().toISOString(),
       },
-      honeySpent,
+      royalJellySpent,
     );
     onPersist();
-  }, [colony, modal, onPersist, options, selected]);
+  }, [colony, modal, onPersist, royalJellyLeft, selected, slots]);
 
   const dismiss = useCallback(() => {
     if (!modal?.mandatory) {
@@ -166,52 +180,68 @@ export const SuccessionModal = ({ snap, onPersist }: Props) => {
         </h2>
         <p className="succession-reason">{successionReasonShortLabel[modal.reason]}</p>
         <p className="succession-honey">
-          Honey to spend: {honeyLeft.toFixed(0)} (stored in nectar cells at succession)
+          Royal jelly to spend: {royalJellyLeft.toFixed(0)} (earned from hive happiness)
         </p>
         <div className="succession-pupa-row">
-          {options.map((opt, i) => (
+          {slots.map((slot, i) => (
             <div
-              key={`${opt.affix.id}-${i}-${seed}`}
-              className={`succession-pupa ${selected === i ? "is-selected" : ""} tier-${opt.tier}`}
+              key={`slot-${i}-${seed}`}
+              className={`succession-pupa ${
+                selected === i ? "is-selected" : ""
+              } ${slot.status === "unlocked" ? `tier-${slot.option.tier}` : "is-locked"}`}
             >
-              <button
-                type="button"
-                className="succession-pupa-select"
-                onClick={() => setSelected(i)}
-              >
-                <span className="succession-tier">{tierLabel(opt.tier)}</span>
-                <span className="succession-name">{opt.affix.displayName}</span>
-                <span className="succession-primary">
-                  {opt.affix.formatPrimaryLine(opt.magnitude)}
-                </span>
-                <span className="succession-trade">
-                  {opt.affix.formatTradeoffLine(opt.tradeoffMagnitude)}
-                </span>
-              </button>
-              <button
-                type="button"
-                className="succession-upgrade"
-                disabled={opt.tier >= 5 || honeyLeft < upgradeCostForTier(opt.tier)}
-                onClick={() => upgradeCard(i)}
-              >
-                Upgrade rarity ({upgradeCostForTier(opt.tier)} 🍯)
-              </button>
+              {slot.status === "locked" ? (
+                <button
+                  type="button"
+                  className="succession-unlock"
+                  disabled={royalJellyLeft < unlockCost}
+                  onClick={() => unlockSlot(i)}
+                >
+                  Unlock pupa ({unlockCost} royal jelly)
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="succession-pupa-select"
+                    onClick={() => setSelected(i)}
+                  >
+                    <span className="succession-tier">
+                      {tierLabel(slot.option.tier)}
+                    </span>
+                    <span className="succession-name">
+                      {slot.option.affix.displayName}
+                    </span>
+                    <span className="succession-primary">
+                      {slot.option.affix.formatPrimaryLine(slot.option.magnitude)}
+                    </span>
+                    <span className="succession-trade">
+                      {slot.option.affix.formatTradeoffLine(
+                        slot.option.tradeoffMagnitude,
+                      )}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className="succession-upgrade"
+                    disabled={
+                      slot.option.tier >= 5 ||
+                      royalJellyLeft < upgradeCostForTier(slot.option.tier)
+                    }
+                    onClick={() => upgradeCard(i)}
+                  >
+                    Upgrade rarity ({upgradeCostForTier(slot.option.tier)} royal jelly)
+                  </button>
+                </>
+              )}
             </div>
           ))}
         </div>
         <div className="succession-actions">
           <button
             type="button"
-            className="succession-reroll"
-            disabled={honeyLeft < rerollCost}
-            onClick={doReroll}
-          >
-            Reroll all ({rerollCost} 🍯)
-          </button>
-          <button
-            type="button"
             className="succession-confirm"
-            disabled={selected == null}
+            disabled={selected == null || slots[selected]?.status !== "unlocked"}
             onClick={confirm}
           >
             Hatch selected pupa

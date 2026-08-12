@@ -3,11 +3,13 @@ import { asActor } from "../../actor-utils";
 import {
   BeeAgeComponent,
   BeeLevelComponent,
+  BeeNeedsComponent,
   BeeRoleComponent,
   JobComponent,
 } from "../components/colony-components";
 import { COLONY } from "../../constants";
 import type { ColonyRuntime } from "../../colony-runtime";
+import { scaledWorkElapsed } from "../../bee-efficiency";
 import { hexToWorld } from "../../../grid/hex-grid";
 import { JobPriority } from "../../job-priority";
 import { getWorkerLifecycleStage } from "../../worker-lifecycle";
@@ -94,7 +96,7 @@ export class GuardSystem extends System {
         job.guardHiveTimerMs = 0;
         continue;
       }
-      job.guardHiveTimerMs += elapsed;
+      job.guardHiveTimerMs += scaledWorkElapsed(elapsed, bee.get(BeeNeedsComponent));
       if (job.guardHiveTimerMs >= COLONY.guardHiveDurationMs) {
         job.status = "done";
         releaseJobBees(this.world, job);

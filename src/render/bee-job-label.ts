@@ -7,8 +7,8 @@ import {
   type ExcaliburGraphicsContext,
   type World,
 } from "excalibur";
-import { COLONY } from "../colony/constants";
 import type { ColonyRuntime } from "../colony/colony-runtime";
+import { beeIsHappy } from "../colony/bee-efficiency";
 import {
   BeeAgeComponent,
   BeeLevelComponent,
@@ -59,9 +59,13 @@ const unhappyThoughtFont = new Font({
 const bubbleFill = Color.fromRGB(255, 252, 245, 0.96);
 const bubbleStroke = Color.fromRGB(30, 41, 59, 0.55);
 
+<<<<<<< HEAD
 /** Matches colony happiness snapshot: unhappy if hunger is above the happy band. */
 const beeIsUnhappy = (needs: BeeNeedsComponent): boolean =>
   needs.hunger > COLONY.happyHungerMax;
+=======
+const beeIsUnhappy = (needs: BeeNeedsComponent): boolean => !beeIsHappy(needs);
+>>>>>>> eaf7520 (feat: royal jelly succession and happiness efficiency)
 
 const drawUnhappyThoughtBubble = (
   ctx: ExcaliburGraphicsContext,

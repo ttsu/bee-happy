@@ -1,9 +1,9 @@
 import { COLONY } from "./constants";
 import { getActiveColonyConstants } from "./colony-active-constants";
+import { computeHappinessPct } from "./happiness";
 import { computeColonyDemand } from "./demand/colony-demand";
 import type { ColonyUiSnapshot } from "./events/colony-events";
 import {
-  BeeNeedsComponent,
   BeeRoleComponent,
   CellStateComponent,
   ColonyTimeComponent,
@@ -30,6 +30,7 @@ export const buildColonyUiSnapshot = (colony: ColonyRuntime): ColonyUiSnapshot =
       workers += 1;
     }
   }
+<<<<<<< HEAD
   let happy = 0;
   let totalNeeds = 0;
   for (const a of colony.scene.actors) {
@@ -42,6 +43,9 @@ export const buildColonyUiSnapshot = (colony: ColonyRuntime): ColonyUiSnapshot =
       happy += 1;
     }
   }
+=======
+  const happinessPct = computeHappinessPct(colony);
+>>>>>>> eaf7520 (feat: royal jelly succession and happiness efficiency)
   let broodOccupied = 0;
   let broodTotal = 0;
   let broodPupae = 0;
@@ -134,10 +138,8 @@ export const buildColonyUiSnapshot = (colony: ColonyRuntime): ColonyUiSnapshot =
     nectarCapacity,
     beeswax: colony.getBeeswaxStored(),
     beeswaxCapacity: colony.getBeeswaxCapacity(),
-    happinessPct: Math.min(
-      100,
-      Math.max(0, totalNeeds > 0 ? Math.round((happy / totalNeeds) * 100) : 100),
-    ),
+    royalJelly: colony.getRoyalJellyStored(),
+    happinessPct,
     broodOccupied,
     broodTotal,
     broodPupae,

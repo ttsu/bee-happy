@@ -22,6 +22,7 @@ import {
   HoneyRunComponent,
   JobComponent,
   QueenTimerComponent,
+  RoyalJellyComponent,
   YearlyStatsComponent,
   type BeeRole,
 } from "./ecs/components/colony-components";
@@ -51,6 +52,7 @@ import { MovementSystem } from "./ecs/systems/movement-system";
 import { WorkerLifecycleSystem } from "./ecs/systems/worker-lifecycle-system";
 import { GuardSystem } from "./ecs/systems/guard-system";
 import { BeeswaxSystem } from "./ecs/systems/beeswax-system";
+import { RoyalJellySystem } from "./ecs/systems/royal-jelly-system";
 import { beeswaxCapacity } from "./beeswax";
 import type { SeasonSystemSave } from "./ecs/systems/season-system";
 import { SeasonSystem } from "./ecs/systems/season-system";
@@ -112,14 +114,14 @@ export class ColonyRuntime {
   simulationSpeed: 1 | 2 = 1;
 
   /**
-   * When set, the React layer shows the succession modal (pupa pick + honey shop).
+   * When set, the React layer shows the succession modal (pupa pick + royal jelly shop).
    * Cleared after the player confirms or defers optional succession.
    */
   successionModal: {
     readonly mandatory: boolean;
     readonly reason: SuccessionReason;
-    /** Honey currency for rerolls / upgrades: total stored in nectar cells at succession. */
-    readonly honeyBudget: number;
+    /** Royal jelly available for unlocking pupae and rarity upgrades. */
+    readonly royalJellyBudget: number;
     readonly beesTotal: number;
     readonly colonyDay: number;
   } | null = null;
@@ -141,6 +143,7 @@ export class ColonyRuntime {
         new YearlyStatsComponent(),
         new HoneyRunComponent(),
         new BeeswaxComponent(),
+        new RoyalJellyComponent(),
       ],
     });
     this.controllerEntity.addTag("colonyController");
@@ -166,6 +169,7 @@ export class ColonyRuntime {
     this.seasonSystem = season;
     world.add(season);
     world.add(new BeeswaxSystem(world, this));
+    world.add(new RoyalJellySystem(world, this));
     world.add(new JobAssignmentSystem(world, this));
     world.add(new MovementSystem(world, this));
     world.add(new IdleWanderSystem(world, this));
@@ -288,6 +292,19 @@ export class ColonyRuntime {
     }
     wax.stored -= amount;
     return true;
+  }
+
+  getRoyalJellyStored(): number {
+    return this.controllerEntity.get(RoyalJellyComponent)?.stored ?? 0;
+  }
+
+  /** Clears the royal jelly pool after succession (shop spend is tracked separately). */
+  deductRoyalJellyAfterSuccession(_spent: number): void {
+    const jelly = this.controllerEntity.get(RoyalJellyComponent);
+    if (!jelly) {
+      return;
+    }
+    jelly.stored = 0;
   }
 
   /** Seeds starting beeswax for a new colony (after workers are spawned). */
@@ -854,15 +871,15 @@ export class ColonyRuntime {
   }
 
   /**
-   * Persists lineage meta, spends shop honey from cells, and keeps the nest with half the bees (new queen).
+   * Persists lineage meta, spends succession-shop royal jelly, and keeps the nest with half the bees (new queen).
    *
-   * @param honeySpentInShop - Honey removed from nectar cells for succession rerolls / upgrades.
+   * @param royalJellySpentInShop - Royal jelly deducted from the colony pool.
    */
   applySuccessionChoice(
     entry: Omit<LineageEntry, "generationIndex">,
-    honeySpentInShop: number,
+    royalJellySpentInShop: number,
   ): void {
-    applySuccessionChoiceToColony(this, entry, honeySpentInShop);
+    applySuccessionChoiceToColony(this, entry, royalJellySpentInShop);
   }
 
   /**

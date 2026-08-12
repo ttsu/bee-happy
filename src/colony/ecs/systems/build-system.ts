@@ -2,12 +2,14 @@ import { System, SystemPriority, SystemType, type World } from "excalibur";
 import { asActor } from "../../actor-utils";
 import {
   BeeLevelComponent,
+  BeeNeedsComponent,
   BeeWorkComponent,
   CellStateComponent,
   JobComponent,
 } from "../components/colony-components";
 import { getActiveColonyConstants } from "../../colony-active-constants";
 import type { ColonyRuntime } from "../../colony-runtime";
+import { scaledWorkElapsed } from "../../bee-efficiency";
 import { hiveKey } from "../../../grid/hive-levels";
 import { hexToWorld } from "../../../grid/hex-grid";
 import { releaseJobBees } from "../job-release";
@@ -50,7 +52,7 @@ export class BuildSystem extends System {
       }
       const cell = cellEnt.get(CellStateComponent)!;
       const center = hexToWorld({ q: job.targetQ, r: job.targetR }, C.hexSize);
-      let builders = 0;
+      let builderEffort = 0;
       for (const id of job.reservedBeeIds) {
         const bee = findEntityById(this.world, id);
         if (!bee) {
@@ -66,11 +68,11 @@ export class BuildSystem extends System {
           !!lvl &&
           lvl.level === job.targetLevel;
         if (atSite) {
-          builders += 1;
+          builderEffort += scaledWorkElapsed(1, bee.get(BeeNeedsComponent));
         }
       }
-      if (builders > 0) {
-        const progressDelta = (elapsed / 1000) * (builders / C.cellBuildTargetSec);
+      if (builderEffort > 0) {
+        const progressDelta = (elapsed / 1000) * (builderEffort / C.cellBuildTargetSec);
         const waxNeeded = progressDelta * C.cellBuildWaxCost;
         const stored = this.colony.getBeeswaxStored();
         if (stored <= 0) {

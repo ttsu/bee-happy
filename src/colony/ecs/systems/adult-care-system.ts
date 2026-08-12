@@ -9,6 +9,7 @@ import {
 } from "../components/colony-components";
 import { getActiveColonyConstants } from "../../colony-active-constants";
 import type { ColonyRuntime } from "../../colony-runtime";
+import { scaledWorkElapsed } from "../../bee-efficiency";
 import { hiveKey } from "../../../grid/hive-levels";
 import { hexToWorld } from "../../../grid/hex-grid";
 import { JobPriority } from "../../job-priority";
@@ -276,7 +277,7 @@ export class AdultCareSystem extends System {
       job.feedQueenTimerMs = 0;
       return;
     }
-    job.feedQueenTimerMs += elapsed;
+    job.feedQueenTimerMs += scaledWorkElapsed(elapsed, worker.get(BeeNeedsComponent));
     if (job.feedQueenTimerMs < C.feedQueenDurationMs) {
       return;
     }

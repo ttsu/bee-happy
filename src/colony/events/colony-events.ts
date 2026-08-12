@@ -47,6 +47,8 @@ export interface ColonyUiSnapshot {
   readonly beeswax: number;
   /** Max beeswax given current worker count. */
   readonly beeswaxCapacity: number;
+  /** Royal jelly pool for succession (earned from happiness while lineage is active). */
+  readonly royalJelly: number;
   readonly happinessPct: number;
   readonly broodOccupied: number;
   readonly broodTotal: number;
@@ -109,8 +111,8 @@ export interface ColonyUiSnapshot {
   readonly successionModal: {
     readonly mandatory: boolean;
     readonly reason: SuccessionReason;
-    /** Honey in nectar cells available for succession rerolls / upgrades. */
-    readonly honeyBudget: number;
+    /** Royal jelly available for unlocking pupae and rarity upgrades. */
+    readonly royalJellyBudget: number;
     readonly beesTotal: number;
     readonly colonyDay: number;
   } | null;

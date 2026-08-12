@@ -15,11 +15,13 @@ import {
   HoneyRunComponent,
   JobComponent,
   QueenTimerComponent,
+  RoyalJellyComponent,
   YearlyStatsComponent,
 } from "../ecs/components/colony-components";
 import { gameSettingsFromSave } from "../game-settings";
 import { refreshActiveColonyConstantsFromMeta } from "../colony-active-constants";
 import { beeswaxCapacity } from "../beeswax";
+import { getMsPerBeeDay } from "../worker-lifecycle";
 import { applyCellStateJson, newJobFromJson } from "./colony-save-codec";
 import type { LoadPayload } from "./colony-save-types";
 
@@ -55,6 +57,15 @@ export function applyColonySave(colony: ColonyRuntime, payload: LoadPayload): vo
   const wax = new BeeswaxComponent();
   wax.stored = waxStored;
 
+  const jelly = new RoyalJellyComponent();
+  jelly.stored = data.royalJelly?.stored ?? 0;
+  if (data.royalJelly) {
+    jelly.lastAccruedColonyDay = data.royalJelly.lastAccruedColonyDay;
+  } else {
+    jelly.lastAccruedColonyDay =
+      Math.floor(data.colonyTime.colonyElapsedMs / getMsPerBeeDay()) + 1;
+  }
+
   colony.controllerEntity = new Entity({
     name: "colony-controller",
     components: [
@@ -64,6 +75,7 @@ export function applyColonySave(colony: ColonyRuntime, payload: LoadPayload): vo
       Object.assign(new YearlyStatsComponent(), data.yearly),
       new HoneyRunComponent(),
       wax,
+      jelly,
     ],
   });
   colony.controllerEntity.addTag("colonyController");

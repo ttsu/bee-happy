@@ -1,6 +1,7 @@
 import type {
   ActiveLevelComponent,
   BeeswaxComponent,
+  RoyalJellyComponent,
   BeeCarryComponent,
   BeeRole,
   CellStage,
@@ -144,6 +145,8 @@ export type ColonySaveV1 = {
   colonyTime: Pick<ColonyTimeComponent, "colonyElapsedMs">;
   /** Omitted in older saves; load defaults to {@link COLONY.initialBeeswax}. */
   beeswax?: Pick<BeeswaxComponent, "stored">;
+  /** Omitted in older saves; load defaults to zero royal jelly. */
+  royalJelly?: Pick<RoyalJellyComponent, "stored" | "lastAccruedColonyDay">;
   yearly: YearlyStatsJson;
   seasonSystem: SeasonSystemSave;
   runtime: {

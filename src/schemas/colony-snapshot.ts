@@ -33,6 +33,7 @@ export const colonyUiSnapshotSchema = z.object({
   nectarCapacity: z.number(),
   beeswax: z.number(),
   beeswaxCapacity: z.number(),
+  royalJelly: z.number(),
   happinessPct: z.number(),
   broodOccupied: z.number(),
   broodTotal: z.number(),
@@ -62,7 +63,7 @@ export const colonyUiSnapshotSchema = z.object({
     .object({
       mandatory: z.boolean(),
       reason: successionReasonSchema,
-      honeyBudget: z.number(),
+      royalJellyBudget: z.number(),
       beesTotal: z.number(),
       colonyDay: z.number(),
     })
@@ -89,6 +90,7 @@ export const createDefaultColonyUiSnapshot = (): ColonyUiSnapshot => ({
   nectarCapacity: 0,
   beeswax: 0,
   beeswaxCapacity: 0,
+  royalJelly: 0,
   happinessPct: 100,
   broodOccupied: 0,
   broodTotal: 0,

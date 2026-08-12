@@ -159,4 +159,11 @@ export const COLONY = {
    * mandatory succession runs (queen aged out) instead of the normal year review.
    */
   queenAgeOutYearNumber: 3,
+  /**
+   * Royal jelly earned per colony day: `round(happinessPct * this / 100)`.
+   * At 80% happiness and 15 here → 12 jelly per day.
+   */
+  royalJellyPercentOfHappiness: 15,
+  /** Minimum work output multiplier when a worker is fully unhappy (hunger/thirst at 100). */
+  workerMinEfficiencyMul: 0.5,
 } as const;
