@@ -23,6 +23,7 @@ import {
   drawResourceDot,
   easeFlight,
   layoutBeeCarryDots,
+  layoutCellDotSlot,
   layoutCellDots,
   type ResourceKind,
 } from "./resource-dots";
@@ -167,8 +168,8 @@ export class ResourceDotVisuals {
     if (count <= 0) {
       return;
     }
-    const fromPos = this.resolveEndpoint(from, colony, kind, 0);
-    const toPos = this.resolveEndpoint(to, colony, kind, 0);
+    const fromPos = this.resolveEndpoint(from, colony, kind, 0, "from");
+    const toPos = this.resolveEndpoint(to, colony, kind, 0, "to");
     if (!fromPos || !toPos) {
       return;
     }
@@ -187,10 +188,9 @@ export class ResourceDotVisuals {
     }
 
     for (let i = 0; i < count; i++) {
-      const slotIndex = i;
       const stagger = i * COLONY.resourceDotStaggerMs;
-      const fFrom = this.resolveEndpoint(from, colony, kind, slotIndex) ?? fromPos;
-      const fTo = this.resolveEndpoint(to, colony, kind, slotIndex) ?? toPos;
+      const fFrom = this.resolveEndpoint(from, colony, kind, i, "from") ?? fromPos;
+      const fTo = this.resolveEndpoint(to, colony, kind, i, "to") ?? toPos;
       this.flying.push({
         kind,
         from: fFrom,
@@ -198,7 +198,7 @@ export class ResourceDotVisuals {
         elapsed: 0,
         delayMs: stagger,
         mode,
-        slotIndex,
+        slotIndex: i,
         sourceCellKey: from.type === "cell" ? from.cellKey : undefined,
         targetCellKey: to.type === "cell" ? to.cellKey : undefined,
         sourceBeeId: from.type === "bee" ? from.beeId : undefined,
@@ -321,7 +321,8 @@ export class ResourceDotVisuals {
     ep: TransferEndpoint,
     colony: ColonyRuntime,
     kind: ResourceKind,
-    slotIndex: number,
+    batchIndex: number,
+    role: "from" | "to",
   ): Vector | null {
     const S = COLONY.hexSize;
     if (ep.type === "world") {
@@ -336,7 +337,7 @@ export class ResourceDotVisuals {
       const logical = resolveLogicalBeeCarry(bee, colony.scene.world, C);
       const layoutCount = logical?.count ?? 1;
       const slots = layoutBeeCarryDots(layoutCount, bee.pos, bee.rotation);
-      return slots[slotIndex] ?? slots[slots.length - 1] ?? bee.pos;
+      return slots[batchIndex] ?? slots[slots.length - 1] ?? bee.pos;
     }
     const ent = colony.getCellAt(ep.cellKey);
     if (!ent) {
@@ -354,7 +355,8 @@ export class ResourceDotVisuals {
       simCount = Math.round(st.honeyStored);
     }
     const visual = this.getCellVisualCount(ep.cellKey, kind, simCount);
-    const slots = layoutCellDots(visual, center);
-    return slots[slotIndex] ?? slots[slots.length - 1] ?? vec(center.x, center.y);
+    const slotIndex =
+      role === "from" ? Math.max(0, visual - 1 - batchIndex) : visual + batchIndex;
+    return layoutCellDotSlot(center, slotIndex);
   }
 }

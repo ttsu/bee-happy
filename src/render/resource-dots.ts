@@ -10,11 +10,51 @@ const HONEY_COLOR = "#e8a317";
 /** Offset from bee center (right, slightly below) — matches job label placement. */
 export const BEE_CARRY_OFFSET = vec(10, 5);
 
-const CELL_DOT_SPREAD = 11;
 const BEE_CARRY_SPREAD = 5;
 
+/** Fixed grid for cell stock dots (3×4 = {@link COLONY.pollenCellCapacity}). */
+export const CELL_DOT_COLS = 3;
+export const CELL_DOT_ROWS = 4;
+export const CELL_DOT_SLOT_COUNT = COLONY.pollenCellCapacity;
+const CELL_DOT_PITCH_X = 7;
+const CELL_DOT_PITCH_Y = 7;
+/** Distance from cell center to the bottom row of dot slots (screen Y down). */
+const CELL_DOT_BOTTOM_OFFSET_Y = 10;
+
 /**
- * Stable slot positions for up to {@link COLONY.pollenCellCapacity} units in a tight cluster.
+ * Fixed slot position in the cell grid. Slot 0 is bottom-left; indices fill
+ * left-to-right along the bottom row, then stack upward.
+ */
+export const layoutCellDotSlot = (
+  center: { x: number; y: number },
+  slotIndex: number,
+): Vector => {
+  const idx = Math.max(0, Math.min(slotIndex, CELL_DOT_SLOT_COUNT - 1));
+  const rowFromBottom = Math.floor(idx / CELL_DOT_COLS);
+  const col = idx % CELL_DOT_COLS;
+  const spanX = (CELL_DOT_COLS - 1) * CELL_DOT_PITCH_X;
+  const x = center.x - spanX / 2 + col * CELL_DOT_PITCH_X;
+  const y = center.y + CELL_DOT_BOTTOM_OFFSET_Y - rowFromBottom * CELL_DOT_PITCH_Y;
+  return vec(x, y);
+};
+
+/**
+ * Positions for `count` filled slots (bottom row first, then upward).
+ */
+export const layoutCellDots = (
+  count: number,
+  center: { x: number; y: number },
+): Vector[] => {
+  const n = Math.max(0, Math.min(count, CELL_DOT_SLOT_COUNT));
+  const out: Vector[] = [];
+  for (let i = 0; i < n; i++) {
+    out.push(layoutCellDotSlot(center, i));
+  }
+  return out;
+};
+
+/**
+ * Stable slot positions for bee carry clusters (density-based spread).
  */
 export const layoutDots = (
   count: number,
@@ -39,11 +79,6 @@ export const layoutDots = (
   }
   return out;
 };
-
-export const layoutCellDots = (
-  count: number,
-  center: { x: number; y: number },
-): Vector[] => layoutDots(count, center, CELL_DOT_SPREAD);
 
 export const layoutBeeCarryDots = (
   count: number,
