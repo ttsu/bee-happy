@@ -44,7 +44,7 @@ export class JobAssignmentSystem extends System {
    * World position used to sort which bee is nearest to the job.
    */
   private resolveJobAnchorWorld(job: JobComponent): import("excalibur").Vector {
-    if (job.kind === "waterDeliver" || job.kind === "feedQueen") {
+    if (job.kind === "feedQueen") {
       const id = job.adultFeedTargetBeeId;
       if (id != null) {
         const t = findActorById(this.colony, id);
@@ -190,8 +190,6 @@ export class JobAssignmentSystem extends System {
         if (
           job.kind === "foragePollen" ||
           job.kind === "forageNectar" ||
-          job.kind === "forageWater" ||
-          job.kind === "waterDeliver" ||
           job.kind === "feedQueen"
         ) {
           job.pathPoints = [];

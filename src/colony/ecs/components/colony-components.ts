@@ -20,14 +20,11 @@ export type JobKind =
   | "cleanBrood"
   | "foragePollen"
   | "forageNectar"
-  | "forageWater"
   | "depositPollen"
   | "depositNectar"
-  | "depositWater"
   | "honeyProcess"
   | "guardHive"
   | "adultFeed"
-  | "waterDeliver"
   | "clearCellForRetype";
 
 /** Axial + level identity for a hive cell entity. */
@@ -81,10 +78,10 @@ export class JobComponent extends Component {
   forageWaitMs = 0;
   /** In `capacityWait`, ms until next deposit-capacity check. */
   forageCapacityPollMs = 0;
-  carryPayload: "none" | "pollen" | "nectar" | "honey" | "water" = "none";
+  carryPayload: "none" | "pollen" | "nectar" | "honey" = "none";
   depositTargetKey: string | null = null;
   /**
-   * `adultFeed` / `waterDeliver`: thirsty/hungry target bee.
+   * `adultFeed`: hungry target bee.
    * `feedQueen`: queen entity id to feed.
    */
   adultFeedTargetBeeId: number | null = null;
@@ -161,12 +158,11 @@ export class BeeWorkComponent extends Component {
 }
 
 export class BeeCarryComponent extends Component {
-  carry: "none" | "pollen" | "nectar" | "honey" | "water" = "none";
+  carry: "none" | "pollen" | "nectar" | "honey" = "none";
 }
 
 export class BeeNeedsComponent extends Component {
   hunger = 18;
-  thirst = 18;
 }
 
 /** Current vertical level for this bee actor. */

@@ -13,7 +13,7 @@ export const tutorialStepBodyHtml: readonly string[] = [
   "<strong>Nectar / honey:</strong> select <strong>Nectar</strong> on the bar, then tap to place. Bees drink nectar; nectar can be processed into <strong>honey</strong>, which stores through winter. To <strong>change an existing cell's type</strong>, tap the built cell and pick a new type in the menu.",
   "<strong>Move the view:</strong> <strong>drag</strong> on the hive (not a tiny tap). The camera pans so you can reach every hex.",
   "<strong>Levels:</strong> the hive has <strong>multiple floors</strong>. Use the compact <strong>Level</strong> control in the bottom right—<strong>drag up/down</strong> or tap a floor—to switch the active level.",
-  "<strong>Keep the loop going:</strong> the queen uses <strong>brood</strong> cells; workers <strong>feed</strong> larvae and <strong>gather</strong>; <strong>happiness</strong> drops if bees go hungry or thirsty. Watch the HUD and seasons.",
+  "<strong>Keep the loop going:</strong> the queen uses <strong>brood</strong> cells; workers <strong>feed</strong> larvae and <strong>gather</strong>; <strong>happiness</strong> drops if bees go hungry. Watch the HUD and seasons.",
   "<strong>Winter planning:</strong> before cold seasons, aim to <strong>process nectar into honey</strong> and <strong>store enough</strong>—when the world is lean, <strong>honey</strong> is what carries you.",
   "<strong>You are set.</strong> Use <strong>Settings</strong> (gear) to save, restart, or leave.",
 ];
