@@ -123,8 +123,15 @@ export const COLONY = {
    * (otherwise any built brood cell).
    */
   queenIdlePreferEmptyBroodChance: 0.85,
-  /** Winter cluster: radius of the idle worker ball around the queen (world px). */
-  winterClusterRadiusPx: 34,
+  /** Winter cluster: tight ball radius when few bees are idle (world px). */
+  winterClusterMinRadiusPx: 11,
+  /** Winter cluster: expanded ball radius for a large idle group (world px). */
+  winterClusterMaxRadiusPx: 54,
+  /**
+   * Idle bee count at which the cluster radius approaches {@link winterClusterMaxRadiusPx}
+   * (sqrt scaling between min and max).
+   */
+  winterClusterRadiusReferenceBees: 20,
   /** Winter cluster: movement speed factor vs {@link beeSpeed}. */
   winterClusterMoveSpeedMultiplier: 0.38,
   /** Winter cluster: queen micro-drift during heat bursts (world px). */

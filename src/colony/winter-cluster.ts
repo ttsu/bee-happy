@@ -71,6 +71,18 @@ export const winterClusterCenter = (colony: ColonyRuntime, level: number): Vecto
 };
 
 /**
+ * Cluster ball radius from idle bee count: tight for small groups, larger for big ones.
+ */
+export const winterClusterRadiusForBeeCount = (idleWorkerCount: number): number => {
+  const n = Math.max(1, idleWorkerCount);
+  const minR = COLONY.winterClusterMinRadiusPx;
+  const maxR = COLONY.winterClusterMaxRadiusPx;
+  const ref = Math.max(2, COLONY.winterClusterRadiusReferenceBees);
+  const t = Math.min(1, Math.sqrt(n) / Math.sqrt(ref));
+  return minR + (maxR - minR) * t;
+};
+
+/**
  * Idle worker slot on a disk around the cluster center (sunflower-style packing).
  */
 export const winterClusterWorkerTarget = (
@@ -80,14 +92,19 @@ export const winterClusterWorkerTarget = (
   workerCountOnLevel: number,
 ): Vector => {
   const burst = winterClusterActivityBurst(colonyElapsedMs);
-  const maxRadius =
-    COLONY.winterClusterRadiusPx *
-    Math.min(1.35, 0.55 + Math.sqrt(Math.max(1, workerCountOnLevel)) * 0.18);
+  const maxRadius = winterClusterRadiusForBeeCount(workerCountOnLevel);
+  const spread =
+    workerCountOnLevel <= 1
+      ? 0.12
+      : Math.min(
+          1,
+          (workerCountOnLevel - 1) / (COLONY.winterClusterRadiusReferenceBees - 1),
+        );
 
   const slotIndex = beeId;
   const thetaBase = (slotIndex * GOLDEN_ANGLE) % (Math.PI * 2);
   const radiusFrac = Math.sqrt(((slotIndex * 0.6180339887) % 1) * 0.92 + 0.08);
-  const radius = maxRadius * radiusFrac;
+  const radius = maxRadius * radiusFrac * (0.2 + 0.8 * spread);
 
   const phase = colonyElapsedMs * 0.0025 + slotIndex * 0.37;
   const wobbleTheta =
