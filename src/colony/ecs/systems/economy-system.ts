@@ -2,7 +2,6 @@ import { System, SystemPriority, SystemType, vec, type World } from "excalibur";
 import {
   BeeCarryComponent,
   BeeLevelComponent,
-  BeeNeedsComponent,
   BeeRoleComponent,
   BeeWorkComponent,
   CellCoordComponent,
@@ -38,10 +37,6 @@ import {
   nectarCellReadyForHoneyProcessing,
 } from "../../nectar-cell-helpers";
 import { getSeasonForColonyDay } from "../../seasons";
-import {
-  advanceBeeVerticalTransition,
-  startLevelTransitionTowardActorIfNeeded,
-} from "../../bee-vertical-move";
 
 /** Resets per-leg easing when the forage move context (phase/target) changes. */
 function syncForageMoveLeg(job: JobComponent, legKey: string, dist: number): void {
@@ -52,7 +47,7 @@ function syncForageMoveLeg(job: JobComponent, legKey: string, dist: number): voi
 }
 
 /**
- * Foraging (pollen/nectar/water), deposit legs, and honey processing.
+ * Foraging (pollen/nectar), deposit legs, and honey processing.
  */
 export class EconomySystem extends System {
   static override priority = SystemPriority.Lower;
@@ -149,11 +144,7 @@ export class EconomySystem extends System {
       if (!job || job.status === "done") {
         continue;
       }
-      if (
-        job.kind === "foragePollen" ||
-        job.kind === "forageNectar" ||
-        job.kind === "forageWater"
-      ) {
+      if (job.kind === "foragePollen" || job.kind === "forageNectar") {
         this.updateForage(ent, job, elapsed);
       } else if (job.kind === "honeyProcess") {
         this.updateHoney(ent, job, elapsed);
@@ -211,11 +202,6 @@ export class EconomySystem extends System {
       return;
     }
     const out = vec(job.scratchX, job.scratchY);
-
-    if (job.kind === "forageWater") {
-      this.updateWaterForage(ent, job, bee, elapsed);
-      return;
-    }
 
     if (job.foragePhase === "outbound") {
       const to = out.sub(bee.pos);
@@ -342,121 +328,6 @@ export class EconomySystem extends System {
       } else {
         const dist = to.size;
         syncForageMoveLeg(job, `dep:${key}`, dist);
-        const ease = pathLegSpeedMultiplier(
-          dist,
-          job.forageMoveLegInitialDist,
-          C.pathLegEasingMinSpeedMultiplier,
-        );
-        const step = C.beeSpeed * 1.2 * C.forageFlightSpeedMultiplier * ease * elapsed;
-        bee.pos = bee.pos.add(to.normalize().scale(step));
-      }
-    }
-  }
-
-  private updateWaterForage(
-    ent: import("excalibur").Entity,
-    job: JobComponent,
-    bee: import("excalibur").Actor,
-    elapsed: number,
-  ): void {
-    const C = getActiveColonyConstants();
-    const out = vec(job.scratchX, job.scratchY);
-    if (job.foragePhase === "outbound") {
-      const to = out.sub(bee.pos);
-      const dist = to.size;
-      if (dist < 12) {
-        job.foragePhase = "wait";
-        job.forageWaitMs = C.waterForageMs;
-      } else {
-        syncForageMoveLeg(job, "w-out", dist);
-        const ease = pathLegSpeedMultiplier(
-          dist,
-          job.forageMoveLegInitialDist,
-          C.pathLegEasingMinSpeedMultiplier,
-        );
-        const step = C.beeSpeed * 1.2 * C.forageFlightSpeedMultiplier * ease * elapsed;
-        bee.pos = bee.pos.add(to.normalize().scale(step));
-      }
-    } else if (job.foragePhase === "wait") {
-      job.forageWaitMs -= elapsed;
-      if (job.forageWaitMs <= 0) {
-        job.foragePhase = "return";
-        job.carryPayload = "water";
-
-        // Pick a thirsty target once per return-leg, then keep flying toward it.
-        const thirstyActors = this.colony.scene.actors.filter((a) => {
-          const needs = a.get(BeeNeedsComponent);
-          return (
-            a.id !== bee.id && (needs ? needs.thirst > C.thirstCareThreshold : false)
-          );
-        });
-        const candidates =
-          thirstyActors.length > 0
-            ? thirstyActors
-            : this.colony.scene.actors.filter(
-                (a) => a.id !== bee.id && a.get(BeeNeedsComponent),
-              );
-
-        let best: import("excalibur").Actor | null = null;
-        if (thirstyActors.length > 0) {
-          // Nearest thirsty wins.
-          let bestD = Infinity;
-          for (const a of candidates) {
-            const d = a.pos.sub(bee.pos).size;
-            if (d < bestD) {
-              bestD = d;
-              best = a;
-            }
-          }
-        } else {
-          // No one is above threshold: highest thirst wins.
-          let bestT = -Infinity;
-          for (const a of candidates) {
-            const n = a.get(BeeNeedsComponent)!;
-            if (n.thirst > bestT) {
-              bestT = n.thirst;
-              best = a;
-            }
-          }
-        }
-        job.adultFeedTargetBeeId = best?.id ?? null;
-      }
-    } else if (job.foragePhase === "return") {
-      const target = job.adultFeedTargetBeeId
-        ? this.colony.scene.actors.find((a) => a.id === job.adultFeedTargetBeeId)
-        : undefined;
-
-      if (!target) {
-        // Nothing to deliver to; finish safely.
-        bee.get(BeeCarryComponent)!.carry = "none";
-        job.status = "done";
-        releaseJob(this.world, job);
-        ent.kill();
-        return;
-      }
-
-      if (advanceBeeVerticalTransition(bee, elapsed)) {
-        bee.pos = target.pos.clone();
-        return;
-      }
-      const to = target.pos.sub(bee.pos);
-      const dist = to.size;
-      if (dist < 18) {
-        const wl = bee.get(BeeLevelComponent)!;
-        const tl = target.get(BeeLevelComponent)?.level;
-        if (tl != null && wl.level !== tl) {
-          bee.pos = target.pos.clone();
-          startLevelTransitionTowardActorIfNeeded(bee, target);
-          return;
-        }
-        const n = target.get(BeeNeedsComponent)!;
-        n.thirst = Math.max(0, n.thirst - C.thirstRelief);
-        bee.get(BeeCarryComponent)!.carry = "none";
-        job.status = "done";
-        releaseJob(this.world, job);
-        ent.kill();
-      } else {
-        syncForageMoveLeg(job, `wret:${job.adultFeedTargetBeeId ?? "?"}`, dist);
         const ease = pathLegSpeedMultiplier(
           dist,
           job.forageMoveLegInitialDist,

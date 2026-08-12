@@ -52,9 +52,6 @@ export class MovementSystem extends System {
       if (job.status === "done") {
         continue;
       }
-      if (job.kind === "forageWater") {
-        continue;
-      }
       const forageDepositPath =
         (job.kind === "foragePollen" || job.kind === "forageNectar") &&
         job.foragePhase === "depositing" &&
@@ -81,26 +78,6 @@ export class MovementSystem extends System {
         job.pathPoints.length > 0;
       if (selfFeedPath) {
         this.followPath(actor, w, job, elapsed);
-        continue;
-      }
-      if (job.kind === "waterDeliver") {
-        const target = job.adultFeedTargetBeeId
-          ? findActorById(this.world, job.adultFeedTargetBeeId)
-          : undefined;
-        if (target) {
-          if (advanceBeeVerticalTransition(actor, elapsed)) {
-            actor.pos = target.pos.clone();
-            continue;
-          }
-          const to = target.pos.sub(actor.pos);
-          const step = COLONY.beeSpeed * elapsed;
-          if (to.size > step + 2) {
-            actor.pos = actor.pos.add(to.normalize().scale(step));
-          } else {
-            actor.pos = target.pos.clone();
-            startLevelTransitionTowardActorIfNeeded(actor, target);
-          }
-        }
         continue;
       }
       if (job.kind === "feedQueen") {

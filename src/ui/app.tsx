@@ -542,7 +542,7 @@ export const App = () => {
               })}
             </p>
             <p className="year-review-kpi-hint">
-              Total time all bees spent fed and hydrated this year.
+              Total time all bees spent well fed this year.
             </p>
             <ul className="year-review-stats">
               <li>

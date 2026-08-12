@@ -2,7 +2,6 @@
 export const JobPriority = {
   adultFeed: 95,
   feedQueen: 94,
-  waterDeliver: 90,
   feedLarvae: 85,
   cleanBrood: 80,
   layEgg: 75,
@@ -12,5 +11,4 @@ export const JobPriority = {
   guardHive: 52,
   foragePollen: 45,
   forageNectar: 44,
-  forageWater: 43,
 } as const;

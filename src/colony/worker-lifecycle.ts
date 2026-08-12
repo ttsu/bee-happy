@@ -75,12 +75,7 @@ export const isWorkerStagePreferredJobKind = (
     case 4:
       return kind === "guardHive";
     case 5:
-      return (
-        kind === "foragePollen" ||
-        kind === "forageNectar" ||
-        kind === "forageWater" ||
-        kind === "waterDeliver"
-      );
+      return kind === "foragePollen" || kind === "forageNectar";
     default:
       return false;
   }

@@ -20,16 +20,11 @@ export type EffectiveColonyConstants = {
   readonly queenLayIntervalMs: number;
   readonly queenLayDurationMs: number;
   readonly hungerPerSec: number;
-  readonly thirstPerSec: number;
   readonly happyHungerMax: number;
-  readonly happyThirstMax: number;
   readonly hungerRelief: number;
-  readonly thirstRelief: number;
   readonly hungerCareThreshold: number;
-  readonly thirstCareThreshold: number;
   readonly forageTravelMs: number;
   readonly forageWaitMs: number;
-  readonly waterForageMs: number;
   readonly pollenCellCapacity: number;
   readonly nectarCellCapacity: number;
   readonly honeyCellCapacity: number;
@@ -90,7 +85,6 @@ export function buildEffectiveColonyConstants(
     nectarCellCapacity: Math.round(COLONY.nectarCellCapacity * m.nectarCellCapacityMul),
     forageTravelMs: COLONY.forageTravelMs * m.forageTimeMul,
     forageWaitMs: COLONY.forageWaitMs * m.forageTimeMul,
-    waterForageMs: COLONY.waterForageMs * m.forageTimeMul,
     eggDurationMs: COLONY.eggDurationMs * m.broodCycleMul,
     sealedDurationMs: COLONY.sealedDurationMs * m.broodCycleMul,
     cleaningDurationMs: COLONY.cleaningDurationMs * m.broodCycleMul,
@@ -104,7 +98,6 @@ export function buildEffectiveColonyConstants(
       Math.round(COLONY.forageNectarDepositAmount * m.depositYieldMul),
     ),
     hungerPerSec: COLONY.hungerPerSec * m.needsDrainMul,
-    thirstPerSec: COLONY.thirstPerSec * m.needsDrainMul,
     cellBuildTargetSec: COLONY.cellBuildTargetSec * m.cellBuildMul,
     queenLayIntervalMs: COLONY.queenLayIntervalMs * (2 - m.broodCycleMul),
   };

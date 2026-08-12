@@ -27,7 +27,7 @@ const releaseJob = (world: World, job: JobComponent): void => {
 
 const hasCareJob = (
   world: World,
-  kind: "adultFeed" | "waterDeliver" | "feedQueen",
+  kind: "adultFeed" | "feedQueen",
   targetBeeId: number,
 ): boolean =>
   world.entities.some((e) => {
@@ -41,7 +41,7 @@ const hasCareJob = (
   });
 
 /**
- * Hunger, thirst, self-feeding workers, queen royal jelly, water delivery, and honey-processing preemption.
+ * Hunger, self-feeding workers, queen royal jelly, and honey-processing preemption.
  */
 export class AdultCareSystem extends System {
   static override priority = SystemPriority.Lower;
@@ -66,7 +66,6 @@ export class AdultCareSystem extends System {
         continue;
       }
       needs.hunger = Math.min(100, needs.hunger + C.hungerPerSec * ms);
-      needs.thirst = Math.min(100, needs.thirst + C.thirstPerSec * ms);
       const roleAfter = actor.get(BeeRoleComponent);
       if (
         roleAfter?.role === "queen" &&
@@ -117,21 +116,6 @@ export class AdultCareSystem extends System {
           this.colony.createJob(j);
         }
       }
-      if (
-        needs.thirst > C.thirstCareThreshold &&
-        !hasCareJob(this.world, "waterDeliver", actor.id)
-      ) {
-        const j = new JobComponent(
-          "waterDeliver",
-          JobPriority.waterDeliver,
-          0,
-          0,
-          0,
-          1,
-        );
-        j.adultFeedTargetBeeId = actor.id;
-        this.colony.createJob(j);
-      }
     }
 
     for (const ent of this.world.entities) {
@@ -141,8 +125,6 @@ export class AdultCareSystem extends System {
       }
       if (job.kind === "adultFeed") {
         this.tryAdultFeed(ent, job);
-      } else if (job.kind === "waterDeliver") {
-        this.tryWater(ent, job);
       } else if (job.kind === "feedQueen") {
         this.tryFeedQueen(ent, job, elapsed);
       }
@@ -300,32 +282,6 @@ export class AdultCareSystem extends System {
     }
     const n = queen.get(BeeNeedsComponent)!;
     n.hunger = Math.max(0, n.hunger - C.hungerRelief);
-    job.status = "done";
-    releaseJob(this.world, job);
-    ent.kill();
-  }
-
-  private tryWater(ent: import("excalibur").Entity, job: JobComponent): void {
-    const C = getActiveColonyConstants();
-    const target = job.adultFeedTargetBeeId
-      ? findEntityById(this.world, job.adultFeedTargetBeeId)
-      : undefined;
-    const worker = job.reservedBeeIds[0]
-      ? findEntityById(this.world, job.reservedBeeIds[0]!)
-      : undefined;
-    if (!target || !worker) {
-      return;
-    }
-    if (worker.pos.sub(target.pos).size > 38) {
-      return;
-    }
-    const wl = worker.get(BeeLevelComponent);
-    const tl = target.get(BeeLevelComponent);
-    if (!wl || !tl || wl.level !== tl.level) {
-      return;
-    }
-    const n = target.get(BeeNeedsComponent)!;
-    n.thirst = Math.max(0, n.thirst - C.thirstRelief);
     job.status = "done";
     releaseJob(this.world, job);
     ent.kill();

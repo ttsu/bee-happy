@@ -40,28 +40,22 @@ export const COLONY = {
   queenLayIntervalMs: 3_000,
   /** Queen must stay on the brood cell this long to complete laying. */
   queenLayDurationMs: 1_000,
-  /** Hunger / thirst per second (0–100 scale). */
+  /** Hunger per second (0–100 scale). */
   hungerPerSec: 0.8,
-  thirstPerSec: 0.5,
-  /** Bee is "happy" when hunger and thirst are at or below these values. */
+  /** Bee is "happy" when hunger is at or below this value. */
   happyHungerMax: 50,
-  happyThirstMax: 50,
-  /** Recovery per feeding/drink. */
+  /** Recovery per feeding. */
   hungerRelief: 50,
-  thirstRelief: 50,
   /**
    * Threshold to open adult care jobs.
    *
-   * These intentionally sit below the {@link happyHungerMax}/{@link happyThirstMax}
-   * cutoffs so bees start prioritizing feeding/hydrating before they are considered
-   * "unhappy" in the UI.
+   * Intentionally sits below {@link happyHungerMax} so bees start prioritizing
+   * feeding before they are considered "unhappy" in the UI.
    */
   hungerCareThreshold: 30,
-  thirstCareThreshold: 30,
   /** Forage timings. */
   forageTravelMs: 2_000,
   forageWaitMs: 1_000,
-  waterForageMs: 2_000,
   /** Max pollen units per pollen storage cell. */
   pollenCellCapacity: 12,
   /** Nectar cell capacity before honey processing can start. */
@@ -89,7 +83,7 @@ export const COLONY = {
   /** Bee movement speed (world units per ms). */
   beeSpeed: 0.09,
   /**
-   * Multiplier on forage legs only (pollen/nectar/water outbound, return, deposit path).
+   * Multiplier on forage legs only (pollen/nectar outbound, return, deposit path).
    * Other movement uses {@link beeSpeed} without this factor.
    */
   forageFlightSpeedMultiplier: 2.5,
