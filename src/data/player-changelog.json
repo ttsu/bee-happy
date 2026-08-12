@@ -1,7 +1,24 @@
 {
-  "currentReleaseId": "0.22.0",
-  "asOfCommit": "72d5476",
+  "currentReleaseId": "0.23.0",
+  "asOfCommit": "23a3b78",
   "releases": [
+    {
+      "id": "0.23.0",
+      "date": "2026-08-12",
+      "newFeatures": [
+        "In lineage mode, royal jelly builds from hive happiness and pays for succession: unlock up to three pupa choices and spend more to raise an heir\u2019s rarity.",
+        "Hive levels show as a compact isometric strip you can drag to preview and switch comb height."
+      ],
+      "balanceChanges": [
+        "Hungry workers work slower; keep bees fed to stay productive.",
+        "Thirst is gone\u2014happiness counts hunger only, and workers no longer fetch water.",
+        "Each pollen or nectar forage trip brings a little more back to the hive.",
+        "Succession no longer spends stored honey; royal jelly replaces the old reroll shop."
+      ],
+      "qualityOfLife": [
+        "Royal jelly balance appears in the expanded HUD when lineage is on."
+      ]
+    },
     {
       "id": "0.22.0",
       "date": "2026-08-09",
