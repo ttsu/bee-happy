@@ -2,10 +2,9 @@ import { COLONY } from "./constants";
 
 export type BeeNeedsLike = {
   hunger: number;
-  thirst: number;
 };
 
-/** Matches HUD happiness: unhappy if hunger is above the happy band (thirst ignored until removed). */
+/** Matches HUD happiness: unhappy if hunger is above the happy band. */
 export const beeIsHappy = (needs: BeeNeedsLike): boolean =>
   needs.hunger <= COLONY.happyHungerMax;
 
