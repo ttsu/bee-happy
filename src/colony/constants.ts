@@ -139,9 +139,9 @@ export const COLONY = {
   /** When foraging has no deposit capacity, re-check interval (ms). */
   forageCapacityPollIntervalMs: 500,
   /** Payload units applied when depositing after pollen forage. */
-  foragePollenDepositAmount: 3,
+  foragePollenDepositAmount: 4,
   /** Payload units applied when depositing after nectar forage. */
-  forageNectarDepositAmount: 3,
+  forageNectarDepositAmount: 4,
   /** `clearCellForRetype`: ms between relocation chunks at the cell. */
   retypeRelocateIntervalMs: 400,
   /** Max pollen units moved per relocation tick. */
