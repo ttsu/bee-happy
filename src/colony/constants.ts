@@ -164,9 +164,9 @@ export const COLONY = {
   /** Radius of per-unit resource dots on the canvas (px). */
   resourceDotRadiusPx: 3,
   /** Duration of a single resource-dot flight animation (ms). */
-  resourceDotFlightMs: 380,
+  resourceDotFlightMs: 220,
   /** Stagger between dots in one transfer batch (ms). */
-  resourceDotStaggerMs: 45,
+  resourceDotStaggerMs: 28,
   /** `clearCellForRetype`: ms between relocation chunks at the cell. */
   retypeRelocateIntervalMs: 400,
   /** Max pollen units moved per relocation tick. */

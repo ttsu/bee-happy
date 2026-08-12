@@ -131,8 +131,9 @@ export const drawResourceDot = (
   ctx.drawCircle(vec(pos.x - r * 0.25, pos.y - r * 0.25), r * 0.35, hl);
 };
 
-/** Smoothstep ease for flying dots. */
+/** Cubic ease-out: quick start, soft settle at the target. */
 export const easeFlight = (t: number): number => {
   const x = Math.min(1, Math.max(0, t));
-  return x * x * (3 - 2 * x);
+  const u = 1 - x;
+  return 1 - u * u * u;
 };
