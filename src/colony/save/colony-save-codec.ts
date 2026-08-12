@@ -246,6 +246,7 @@ export function serializeColonySave(colony: ColonyRuntime): ColonySaveV1 {
     beeswax: { stored: beeswax.stored },
     royalJelly: {
       stored: royalJelly.stored,
+      accrualBuffer: royalJelly.accrualBuffer,
       lastAccruedColonyDay: royalJelly.lastAccruedColonyDay,
     },
     yearly: {

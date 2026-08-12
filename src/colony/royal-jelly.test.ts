@@ -1,16 +1,32 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { royalJellyFromHappiness } from "./royal-jelly.ts";
+import {
+  accrueRoyalJellyFromBuffer,
+  royalJellyPerDayFromHappiness,
+} from "./royal-jelly.ts";
 
-describe("royalJellyFromHappiness", () => {
-  it("rounds happiness percent of the configured rate", () => {
-    assert.equal(royalJellyFromHappiness(80, 2), 2);
-    assert.equal(royalJellyFromHappiness(80, 15), 12);
-    assert.equal(royalJellyFromHappiness(67, 10), 7);
-    assert.equal(royalJellyFromHappiness(100, 15), 15);
+describe("royalJellyPerDayFromHappiness", () => {
+  it("returns a fractional daily rate", () => {
+    assert.equal(royalJellyPerDayFromHappiness(80, 1), 0.8);
+    assert.equal(royalJellyPerDayFromHappiness(100, 1), 1);
+    assert.equal(royalJellyPerDayFromHappiness(0, 1), 0);
+  });
+});
+
+describe("accrueRoyalJellyFromBuffer", () => {
+  it("mints whole jelly when the buffer crosses integers", () => {
+    const first = accrueRoyalJellyFromBuffer(0, 0, 0.8, 1);
+    assert.equal(first.stored, 0);
+    assert.equal(first.buffer, 0.8);
+
+    const second = accrueRoyalJellyFromBuffer(first.stored, first.buffer, 0.8, 1);
+    assert.equal(second.stored, 1);
+    assert.equal(second.buffer, 0.6);
   });
 
-  it("returns zero for zero happiness", () => {
-    assert.equal(royalJellyFromHappiness(0, 15), 0);
+  it("accrues multiple days in one step", () => {
+    const result = accrueRoyalJellyFromBuffer(0, 0, 0.8, 10);
+    assert.equal(result.stored, 8);
+    assert.equal(result.buffer, 0);
   });
 });

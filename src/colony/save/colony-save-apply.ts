@@ -59,6 +59,7 @@ export function applyColonySave(colony: ColonyRuntime, payload: LoadPayload): vo
 
   const jelly = new RoyalJellyComponent();
   jelly.stored = data.royalJelly?.stored ?? 0;
+  jelly.accrualBuffer = data.royalJelly?.accrualBuffer ?? 0;
   if (data.royalJelly) {
     jelly.lastAccruedColonyDay = data.royalJelly.lastAccruedColonyDay;
   } else {
