@@ -13,6 +13,7 @@ import {
   BeeWorkComponent,
   CellCoordComponent,
   CellStateComponent,
+  ColonyTimeComponent,
   JobComponent,
 } from "../components/colony-components";
 import { COLONY } from "../../constants";
@@ -25,6 +26,14 @@ import {
   computeOpenJobAssignmentSlots,
   workerActorHasAssignableOpenJob,
 } from "../job-eligibility";
+import {
+  countIdleWorkersOnLevel,
+  getColonySeason,
+  moveActorToward,
+  winterClusterCenter,
+  winterClusterQueenTarget,
+  winterClusterWorkerTarget,
+} from "../../winter-cluster";
 
 const clearIdleMotion = (w: BeeWorkComponent): void => {
   w.idleWanderTarget = null;
@@ -104,6 +113,9 @@ export class IdleWanderSystem extends System {
     if (this.colony.isSimulationPaused()) {
       return;
     }
+    const isWinter = getColonySeason(this.colony) === "Winter";
+    const colonyElapsedMs =
+      this.colony.controllerEntity.get(ColonyTimeComponent)?.colonyElapsedMs ?? 0;
     const slots = computeOpenJobAssignmentSlots(this.jobs.entities);
     const builtByLevel = this.colony.builtByLevel();
     const jobEntities = this.jobs.entities;
@@ -115,6 +127,7 @@ export class IdleWanderSystem extends System {
       if (!w || !role || !lvl) {
         continue;
       }
+      const isQueen = role.role === "queen";
       if (w.currentJobEntityId) {
         clearIdleMotion(w);
         continue;
@@ -141,7 +154,29 @@ export class IdleWanderSystem extends System {
         continue;
       }
 
-      const isQueen = role.role === "queen";
+      if (isWinter) {
+        clearIdleMotion(w);
+        const center = winterClusterCenter(this.colony, lvl.level);
+        const clusterSpeed = COLONY.beeSpeed * COLONY.winterClusterMoveSpeedMultiplier;
+        if (isQueen) {
+          moveActorToward(
+            actor,
+            winterClusterQueenTarget(center, colonyElapsedMs),
+            clusterSpeed * 0.45,
+            elapsed,
+          );
+        } else {
+          const idleWorkers = countIdleWorkersOnLevel(this.colony, lvl.level);
+          moveActorToward(
+            actor,
+            winterClusterWorkerTarget(center, actor.id, colonyElapsedMs, idleWorkers),
+            clusterSpeed,
+            elapsed,
+          );
+        }
+        continue;
+      }
+
       const idleSpeed =
         COLONY.beeSpeed *
         (isQueen
