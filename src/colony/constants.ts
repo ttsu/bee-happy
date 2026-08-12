@@ -161,9 +161,9 @@ export const COLONY = {
   queenAgeOutYearNumber: 3,
   /**
    * Royal jelly earned per colony day: `round(happinessPct * this / 100)`.
-   * At 80% happiness and 15 here → 12 jelly per day.
+   * At 80% happiness and 2 here → 2 jelly per day.
    */
-  royalJellyPercentOfHappiness: 15,
+  royalJellyPercentOfHappiness: 2,
   /** Minimum work output multiplier when a worker is fully unhappy (hunger at 100). */
   workerMinEfficiencyMul: 0.5,
 } as const;

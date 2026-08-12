@@ -4,6 +4,7 @@ import { royalJellyFromHappiness } from "./royal-jelly.ts";
 
 describe("royalJellyFromHappiness", () => {
   it("rounds happiness percent of the configured rate", () => {
+    assert.equal(royalJellyFromHappiness(80, 2), 2);
     assert.equal(royalJellyFromHappiness(80, 15), 12);
     assert.equal(royalJellyFromHappiness(67, 10), 7);
     assert.equal(royalJellyFromHappiness(100, 15), 15);
