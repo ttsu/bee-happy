@@ -114,7 +114,7 @@ export type BeeJson = {
     idleWanderPauseRemainingMs: number;
   };
   carry: BeeCarryComponent["carry"];
-  needs: { hunger: number; thirst: number };
+  needs: { hunger: number };
   ageMs: number | null;
 };
 

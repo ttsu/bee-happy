@@ -242,10 +242,7 @@ export class BeeActor extends Actor {
     if (!job) {
       return false;
     }
-    const isForageJob =
-      job.kind === "foragePollen" ||
-      job.kind === "forageNectar" ||
-      job.kind === "forageWater";
+    const isForageJob = job.kind === "foragePollen" || job.kind === "forageNectar";
     if (!isForageJob) {
       return false;
     }

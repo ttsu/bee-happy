@@ -38,7 +38,7 @@ export const buildColonyUiSnapshot = (colony: ColonyRuntime): ColonyUiSnapshot =
       continue;
     }
     totalNeeds += 1;
-    if (n.hunger <= COLONY.happyHungerMax && n.thirst <= COLONY.happyThirstMax) {
+    if (n.hunger <= COLONY.happyHungerMax) {
       happy += 1;
     }
   }

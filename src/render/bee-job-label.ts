@@ -59,9 +59,9 @@ const unhappyThoughtFont = new Font({
 const bubbleFill = Color.fromRGB(255, 252, 245, 0.96);
 const bubbleStroke = Color.fromRGB(30, 41, 59, 0.55);
 
-/** Matches colony happiness snapshot: unhappy if either need is above the happy band. */
+/** Matches colony happiness snapshot: unhappy if hunger is above the happy band. */
 const beeIsUnhappy = (needs: BeeNeedsComponent): boolean =>
-  needs.hunger > COLONY.happyHungerMax || needs.thirst > COLONY.happyThirstMax;
+  needs.hunger > COLONY.happyHungerMax;
 
 const drawUnhappyThoughtBubble = (
   ctx: ExcaliburGraphicsContext,
@@ -111,16 +111,10 @@ const shortJobLabel = (job: JobComponent): string => {
     case "cleanBrood":
       return "clean";
     case "foragePollen":
-    case "forageNectar":
-    case "forageWater": {
+    case "forageNectar": {
       // Include what we are foraging so it's easy to read at a glance.
       // (We keep the label short for HUD readability.)
-      let forageLabel: "pollen" | "nectar" | "water" = "water";
-      if (job.kind === "foragePollen") {
-        forageLabel = "pollen";
-      } else if (job.kind === "forageNectar") {
-        forageLabel = "nectar";
-      }
+      const forageLabel = job.kind === "foragePollen" ? "pollen" : "nectar";
 
       switch (job.foragePhase) {
         case "outbound":
@@ -141,16 +135,12 @@ const shortJobLabel = (job: JobComponent): string => {
       return "store pollen";
     case "depositNectar":
       return "store nectar";
-    case "depositWater":
-      return "store water";
     case "honeyProcess":
       return "make honey";
     case "guardHive":
       return "guard";
     case "adultFeed":
       return "eat";
-    case "waterDeliver":
-      return "hydrate";
     default:
       return "busy";
   }
@@ -194,7 +184,7 @@ export const drawBeeJobLabels = (
 };
 
 /**
- * Draws a small thought bubble with "‼️" when a bee is unhappy (hunger or thirst above the happy band).
+ * Draws a small thought bubble with "‼️" when a bee is unhappy (hunger above the happy band).
  */
 export const drawBeeUnhappyThoughtBubbles = (
   ctx: ExcaliburGraphicsContext,

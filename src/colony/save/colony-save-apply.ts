@@ -23,6 +23,12 @@ import { beeswaxCapacity } from "../beeswax";
 import { applyCellStateJson, newJobFromJson } from "./colony-save-codec";
 import type { LoadPayload } from "./colony-save-types";
 
+const REMOVED_WATER_JOB_KINDS = new Set([
+  "forageWater",
+  "depositWater",
+  "waterDeliver",
+]);
+
 /**
  * Clears seeded content and applies a save. Call after {@link ColonyRuntime.initialize}
  * with `{ mode: "load" }` so the world only has the controller + systems.
@@ -72,6 +78,9 @@ export function applyColonySave(colony: ColonyRuntime, payload: LoadPayload): vo
 
   const jobMap = new Map<number, number>();
   for (const { entityId: oldId, job: j } of data.jobs) {
+    if (REMOVED_WATER_JOB_KINDS.has(j.kind as string)) {
+      continue;
+    }
     const ent = colony.createJob(newJobFromJson(j));
     jobMap.set(oldId, ent.id);
   }
@@ -95,7 +104,6 @@ export function applyColonySave(colony: ColonyRuntime, payload: LoadPayload): vo
     actor.get(BeeCarryComponent)!.carry = b.carry;
     const needs = actor.get(BeeNeedsComponent)!;
     needs.hunger = b.needs.hunger;
-    needs.thirst = b.needs.thirst;
     if (b.ageMs != null) {
       const age = actor.get(BeeAgeComponent);
       if (age) {
@@ -108,6 +116,9 @@ export function applyColonySave(colony: ColonyRuntime, payload: LoadPayload): vo
   for (const { actor, oldJobId } of beeWorkOldJobIds) {
     const work = actor.get(BeeWorkComponent)!;
     work.currentJobEntityId = oldJobId != null ? (jobMap.get(oldJobId) ?? null) : null;
+    if (work.currentJobEntityId == null && work.availability === "busy") {
+      work.availability = "available";
+    }
   }
 
   wax.stored = Math.min(wax.stored, beeswaxCapacity(colony.countWorkers(), C));

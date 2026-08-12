@@ -53,7 +53,7 @@ export const LINEAGE_AFFIX_POOL: LineageAffixDef[] = [
     id: "calm_metabolism",
     displayName: "Calm Metabolism",
     baseMagnitude: 0.06,
-    formatPrimaryLine: (f) => `${pct(f)}% slower hunger and thirst`,
+    formatPrimaryLine: (f) => `${pct(f)}% slower hunger`,
     formatTradeoffLine: (f) => `${pct(f)}% slower cell building`,
   },
   {

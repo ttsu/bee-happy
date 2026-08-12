@@ -223,7 +223,7 @@ export function serializeColonySave(colony: ColonyRuntime): ColonySaveV1 {
           idleWanderPauseRemainingMs: work.idleWanderPauseRemainingMs,
         },
         carry: carry.carry,
-        needs: { hunger: needs.hunger, thirst: needs.thirst },
+        needs: { hunger: needs.hunger },
         ageMs: age ? age.ageMs : null,
       },
     });

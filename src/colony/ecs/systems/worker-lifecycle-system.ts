@@ -42,10 +42,7 @@ export class WorkerLifecycleSystem extends System {
         if (!needs) {
           continue;
         }
-        if (
-          needs.hunger <= COLONY.happyHungerMax &&
-          needs.thirst <= COLONY.happyThirstMax
-        ) {
+        if (needs.hunger <= COLONY.happyHungerMax) {
           yearly.happyBeeSecondsTotal += sec;
         }
       }
