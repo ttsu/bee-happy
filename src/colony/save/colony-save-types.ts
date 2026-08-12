@@ -146,7 +146,10 @@ export type ColonySaveV1 = {
   /** Omitted in older saves; load defaults to {@link COLONY.initialBeeswax}. */
   beeswax?: Pick<BeeswaxComponent, "stored">;
   /** Omitted in older saves; load defaults to zero royal jelly. */
-  royalJelly?: Pick<RoyalJellyComponent, "stored" | "lastAccruedColonyDay">;
+  royalJelly?: Pick<
+    RoyalJellyComponent,
+    "stored" | "accrualBuffer" | "lastAccruedColonyDay"
+  >;
   yearly: YearlyStatsJson;
   seasonSystem: SeasonSystemSave;
   runtime: {

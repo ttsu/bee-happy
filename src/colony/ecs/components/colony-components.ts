@@ -217,6 +217,8 @@ export class BeeswaxComponent extends Component {
 /** Royal jelly pool for succession shop spending (earned from happiness while lineage is active). */
 export class RoyalJellyComponent extends Component {
   stored = 0;
+  /** Fractional remainder before the next whole royal jelly is minted. */
+  accrualBuffer = 0;
   /** Last colony day (1-based) when royal jelly was accrued from happiness. */
   lastAccruedColonyDay = 0;
 }

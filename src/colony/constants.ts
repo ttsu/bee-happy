@@ -160,10 +160,11 @@ export const COLONY = {
    */
   queenAgeOutYearNumber: 3,
   /**
-   * Royal jelly earned per colony day: `round(happinessPct * this / 100)`.
-   * At 80% happiness and 2 here → 2 jelly per day.
+   * Royal jelly earned per colony day (fractional): `happinessPct * this / 100`.
+   * Whole units are minted when the accrual buffer crosses integers.
+   * At 80% happiness and 1 here → 0.8 jelly per day.
    */
-  royalJellyPercentOfHappiness: 2,
+  royalJellyPercentOfHappiness: 1,
   /** Minimum work output multiplier when a worker is fully unhappy (hunger at 100). */
   workerMinEfficiencyMul: 0.5,
 } as const;

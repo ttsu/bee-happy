@@ -305,6 +305,7 @@ export class ColonyRuntime {
       return;
     }
     jelly.stored = 0;
+    jelly.accrualBuffer = 0;
   }
 
   /** Seeds starting beeswax for a new colony (after workers are spawned). */

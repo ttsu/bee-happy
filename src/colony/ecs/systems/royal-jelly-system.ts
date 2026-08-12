@@ -6,11 +6,14 @@ import {
 import { getActiveColonyConstants } from "../../colony-active-constants";
 import type { ColonyRuntime } from "../../colony-runtime";
 import { computeHappinessPct } from "../../happiness";
-import { royalJellyFromHappiness } from "../../royal-jelly";
+import {
+  accrueRoyalJellyFromBuffer,
+  royalJellyPerDayFromHappiness,
+} from "../../royal-jelly";
 import { getMsPerBeeDay } from "../../worker-lifecycle";
 
 /**
- * Accrues royal jelly once per colony day from the happiness score (rounded).
+ * Accrues royal jelly once per colony day from happiness into a fractional buffer.
  */
 export class RoyalJellySystem extends System {
   static override priority = SystemPriority.Higher;
@@ -38,12 +41,19 @@ export class RoyalJellySystem extends System {
     }
     const C = getActiveColonyConstants();
     const happinessPct = computeHappinessPct(this.colony);
-    const perDay = royalJellyFromHappiness(
+    const perDay = royalJellyPerDayFromHappiness(
       happinessPct,
       C.royalJellyPercentOfHappiness,
     );
     const daysElapsed = currentDay - jelly.lastAccruedColonyDay;
-    jelly.stored += perDay * daysElapsed;
+    const accrued = accrueRoyalJellyFromBuffer(
+      jelly.stored,
+      jelly.accrualBuffer,
+      perDay,
+      daysElapsed,
+    );
+    jelly.stored = accrued.stored;
+    jelly.accrualBuffer = accrued.buffer;
     jelly.lastAccruedColonyDay = currentDay;
   }
 }
