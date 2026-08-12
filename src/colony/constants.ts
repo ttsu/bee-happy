@@ -123,6 +123,18 @@ export const COLONY = {
    * (otherwise any built brood cell).
    */
   queenIdlePreferEmptyBroodChance: 0.85,
+  /** Winter cluster: radius of the idle worker ball around the queen (world px). */
+  winterClusterRadiusPx: 34,
+  /** Winter cluster: movement speed factor vs {@link beeSpeed}. */
+  winterClusterMoveSpeedMultiplier: 0.38,
+  /** Winter cluster: queen micro-drift during heat bursts (world px). */
+  winterClusterQueenJitterPx: 3.5,
+  /** Winter cluster: angular wobble per worker slot (radians). */
+  winterClusterWobbleAngleRad: 0.22,
+  /** Winter cluster: radial wobble per worker slot (world px). */
+  winterClusterWobbleRadiusPx: 5,
+  /** Winter cluster: period for synchronized shiver / heat bursts (ms). */
+  winterClusterActivityBurstPeriodMs: 2_400,
   /** Pollen consumed per larvae feeding unit (from storage). */
   pollenPerFeedUnit: 1,
   /** Time at the food cell to gather one load for larvae (ms). */
