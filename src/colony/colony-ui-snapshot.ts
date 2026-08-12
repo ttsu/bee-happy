@@ -30,22 +30,7 @@ export const buildColonyUiSnapshot = (colony: ColonyRuntime): ColonyUiSnapshot =
       workers += 1;
     }
   }
-<<<<<<< HEAD
-  let happy = 0;
-  let totalNeeds = 0;
-  for (const a of colony.scene.actors) {
-    const n = a.get(BeeNeedsComponent);
-    if (!n) {
-      continue;
-    }
-    totalNeeds += 1;
-    if (n.hunger <= COLONY.happyHungerMax) {
-      happy += 1;
-    }
-  }
-=======
   const happinessPct = computeHappinessPct(colony);
->>>>>>> eaf7520 (feat: royal jelly succession and happiness efficiency)
   let broodOccupied = 0;
   let broodTotal = 0;
   let broodPupae = 0;
