@@ -21,7 +21,7 @@ describe("accrueRoyalJellyFromBuffer", () => {
 
     const second = accrueRoyalJellyFromBuffer(first.stored, first.buffer, 0.8, 1);
     assert.equal(second.stored, 1);
-    assert.equal(second.buffer, 0.6);
+    assert.ok(Math.abs(second.buffer - 0.6) < 1e-9);
   });
 
   it("accrues multiple days in one step", () => {
