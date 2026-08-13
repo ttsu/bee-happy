@@ -1,4 +1,8 @@
 import type { LineageEntry } from "./meta-progress";
+import {
+  getLineageAffixById,
+  tradeoffMagnitudeForTier,
+} from "../../data/lineage-affixes";
 
 /**
  * Multipliers applied on top of {@link COLONY} (1 = no change).
@@ -112,4 +116,46 @@ export function aggregateLineageMultipliers(
   }
 
   return out;
+}
+
+/** Flat penalties subtracted from per-cell capacities after multipliers (e.g. Mason Wing). */
+export type LineageFlatPenalties = {
+  pollenCellCapacityFlat: number;
+  nectarCellCapacityFlat: number;
+};
+
+const EMPTY_PENALTIES: LineageFlatPenalties = {
+  pollenCellCapacityFlat: 0,
+  nectarCellCapacityFlat: 0,
+};
+
+/** Affixes whose integer tradeoff reduces both pollen and nectar per-cell capacity. */
+const FOOD_CELL_CAPACITY_TRADEOFF_AFFIXES = new Set(["mason_wing"]);
+
+/**
+ * Sums integer tradeoff penalties from lineage picks (stacks additively).
+ */
+export function aggregateLineageFlatPenalties(
+  lineage: LineageEntry[],
+): LineageFlatPenalties {
+  if (lineage.length === 0) {
+    return { ...EMPTY_PENALTIES };
+  }
+
+  let foodCellCapacityFlat = 0;
+  for (const e of lineage) {
+    if (!FOOD_CELL_CAPACITY_TRADEOFF_AFFIXES.has(e.affixId)) {
+      continue;
+    }
+    const def = getLineageAffixById(e.affixId);
+    if (!def?.tradeoffIntegerBase) {
+      continue;
+    }
+    foodCellCapacityFlat += tradeoffMagnitudeForTier(def, e.tier);
+  }
+
+  return {
+    pollenCellCapacityFlat: foodCellCapacityFlat,
+    nectarCellCapacityFlat: foodCellCapacityFlat,
+  };
 }

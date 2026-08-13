@@ -7,8 +7,13 @@ export type LineageAffixDef = {
   baseMagnitude: number;
   /** Full primary stat line; fraction is 0–1 (e.g. 0.08 → "8% more …"). */
   formatPrimaryLine: (primaryFraction: number) => string;
-  /** Full tradeoff line; fraction is 0–1. */
-  formatTradeoffLine: (tradeoffFraction: number) => string;
+  /** Full tradeoff line; value is a fraction (0–1) or whole number when {@link tradeoffIntegerBase} is set. */
+  formatTradeoffLine: (tradeoffValue: number) => string;
+  /**
+   * When set, tradeoff scales as a whole number (e.g. cell capacity) instead of a fraction.
+   * Uses the same tier scaling as fractional tradeoffs.
+   */
+  tradeoffIntegerBase?: number;
 };
 
 const pct = (fraction: number): string => (fraction * 100).toFixed(0);
@@ -60,8 +65,9 @@ export const LINEAGE_AFFIX_POOL: LineageAffixDef[] = [
     id: "mason_wing",
     displayName: "Mason Wing",
     baseMagnitude: 0.07,
+    tradeoffIntegerBase: 2,
     formatPrimaryLine: (f) => `${pct(f)}% faster cell building`,
-    formatTradeoffLine: (f) => `${pct(f)}% less starting pollen`,
+    formatTradeoffLine: (n) => `${n} less food cell capacity`,
   },
   {
     id: "nectar_cell_cap",
@@ -133,6 +139,9 @@ export function tradeoffMagnitudeForTier(
   def: LineageAffixDef,
   tier: RarityTier,
 ): number {
+  if (def.tradeoffIntegerBase != null) {
+    return Math.max(1, Math.round(def.tradeoffIntegerBase * TIER_SCALE_TRADEOFF[tier]));
+  }
   return def.baseMagnitude * TIER_SCALE_TRADEOFF[tier];
 }
 
@@ -141,7 +150,7 @@ export type RolledPupaOption = {
   tier: RarityTier;
   /** Primary axis fractional bonus (same as persisted {@link LineageEntry.magnitude}). */
   magnitude: number;
-  /** Tradeoff fractional penalty for UI (scales down with higher rarity). */
+  /** Tradeoff penalty for UI (fraction or whole number; scales down with higher rarity). */
   tradeoffMagnitude: number;
 };
 

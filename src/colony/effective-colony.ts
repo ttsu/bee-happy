@@ -1,5 +1,8 @@
 import { COLONY } from "./constants";
-import type { LineageMultipliers } from "./meta/lineage-aggregate";
+import type {
+  LineageFlatPenalties,
+  LineageMultipliers,
+} from "./meta/lineage-aggregate";
 
 export type EffectiveColonyConstants = {
   readonly hexSize: number;
@@ -80,11 +83,26 @@ export type EffectiveColonyConstants = {
  */
 export function buildEffectiveColonyConstants(
   m: LineageMultipliers,
+  penalties: LineageFlatPenalties = {
+    pollenCellCapacityFlat: 0,
+    nectarCellCapacityFlat: 0,
+  },
 ): EffectiveColonyConstants {
+  const pollenCellCapacity = Math.max(
+    4,
+    Math.round(COLONY.pollenCellCapacity * m.pollenCellCapacityMul) -
+      penalties.pollenCellCapacityFlat,
+  );
+  const nectarCellCapacity = Math.max(
+    4,
+    Math.round(COLONY.nectarCellCapacity * m.nectarCellCapacityMul) -
+      penalties.nectarCellCapacityFlat,
+  );
+
   return {
     ...COLONY,
-    pollenCellCapacity: Math.round(COLONY.pollenCellCapacity * m.pollenCellCapacityMul),
-    nectarCellCapacity: Math.round(COLONY.nectarCellCapacity * m.nectarCellCapacityMul),
+    pollenCellCapacity,
+    nectarCellCapacity,
     forageTravelMs: COLONY.forageTravelMs * m.forageTimeMul,
     forageWaitMs: COLONY.forageWaitMs * m.forageTimeMul,
     eggDurationMs: COLONY.eggDurationMs * m.broodCycleMul,
