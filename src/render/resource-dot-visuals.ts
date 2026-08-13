@@ -90,6 +90,25 @@ const bumpBeeKind = (
   }
 };
 
+const cellDotCapacityFor = (
+  C: EffectiveColonyConstants,
+  st: InstanceType<typeof CellStateComponent>,
+  kind: ResourceKind,
+): number => {
+  if (st.cellType === "pollen" && kind === "pollen") {
+    return C.pollenCellCapacity;
+  }
+  if (st.cellType === "nectar") {
+    if (kind === "honey") {
+      return C.honeyCellCapacity;
+    }
+    if (kind === "nectar") {
+      return C.nectarCellCapacity;
+    }
+  }
+  return Math.max(C.larvaePollenUnitsNeeded, C.larvaeNectarUnitsNeeded);
+};
+
 export const resolveLogicalBeeCarry = (
   bee: Actor,
   world: World,
@@ -234,6 +253,7 @@ export class ResourceDotVisuals {
   drawCellDots(ctx: ExcaliburGraphicsContext, colony: ColonyRuntime): void {
     const lvl = colony.activeLevel;
     const S = COLONY.hexSize;
+    const C = getActiveColonyConstants();
     for (const [key, ent] of colony.cellsByKey) {
       const coord = ent.get(CellCoordComponent)!;
       if (coord.level !== lvl) {
@@ -245,21 +265,24 @@ export class ResourceDotVisuals {
       }
       const center = hexToWorld({ q: coord.q, r: coord.r }, S);
       if (st.cellType === "pollen") {
+        const cap = C.pollenCellCapacity;
         const n = this.getCellVisualCount(key, "pollen", Math.round(st.pollenStored));
-        const slots = layoutCellDots(n, center);
+        const slots = layoutCellDots(n, center, cap);
         for (let i = 0; i < slots.length; i++) {
           drawResourceDot(ctx, slots[i]!, "pollen", i);
         }
       } else if (st.cellType === "nectar") {
         if (st.honeyStored > 1e-6) {
+          const cap = C.honeyCellCapacity;
           const n = this.getCellVisualCount(key, "honey", Math.round(st.honeyStored));
-          const slots = layoutCellDots(n, center);
+          const slots = layoutCellDots(n, center, cap);
           for (let i = 0; i < slots.length; i++) {
             drawResourceDot(ctx, slots[i]!, "honey", i);
           }
         } else {
+          const cap = C.nectarCellCapacity;
           const n = this.getCellVisualCount(key, "nectar", Math.round(st.nectarStored));
-          const slots = layoutCellDots(n, center);
+          const slots = layoutCellDots(n, center, cap);
           for (let i = 0; i < slots.length; i++) {
             drawResourceDot(ctx, slots[i]!, "nectar", i);
           }
@@ -346,6 +369,7 @@ export class ResourceDotVisuals {
     const coord = ent.get(CellCoordComponent)!;
     const st = ent.get(CellStateComponent)!;
     const center = hexToWorld({ q: coord.q, r: coord.r }, S);
+    const C = getActiveColonyConstants();
     let simCount = 0;
     if (kind === "pollen") {
       simCount = Math.round(st.pollenStored);
@@ -355,8 +379,9 @@ export class ResourceDotVisuals {
       simCount = Math.round(st.honeyStored);
     }
     const visual = this.getCellVisualCount(ep.cellKey, kind, simCount);
+    const cap = cellDotCapacityFor(C, st, kind);
     const slotIndex =
       role === "from" ? Math.max(0, visual - 1 - batchIndex) : visual + batchIndex;
-    return layoutCellDotSlot(center, slotIndex);
+    return layoutCellDotSlot(center, slotIndex, cap);
   }
 }

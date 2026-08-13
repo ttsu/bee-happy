@@ -12,14 +12,15 @@ export const BEE_CARRY_OFFSET = vec(10, 5);
 
 const BEE_CARRY_SPREAD = 5;
 
-/** Fixed grid for cell stock dots (3×4 = {@link COLONY.pollenCellCapacity}). */
+/** Fixed column count; extra capacity adds rows (not denser spacing). */
 export const CELL_DOT_COLS = 3;
-export const CELL_DOT_ROWS = 4;
-export const CELL_DOT_SLOT_COUNT = COLONY.pollenCellCapacity;
 const CELL_DOT_PITCH_X = 7;
 const CELL_DOT_PITCH_Y = 7;
 /** Distance from cell center to the bottom row of dot slots (screen Y down). */
 const CELL_DOT_BOTTOM_OFFSET_Y = 10;
+
+export const cellDotRowsForCapacity = (slotCapacity: number): number =>
+  Math.ceil(Math.max(1, slotCapacity) / CELL_DOT_COLS);
 
 /**
  * Fixed slot position in the cell grid. Slot 0 is bottom-left; indices fill
@@ -28,8 +29,10 @@ const CELL_DOT_BOTTOM_OFFSET_Y = 10;
 export const layoutCellDotSlot = (
   center: { x: number; y: number },
   slotIndex: number,
+  slotCapacity: number,
 ): Vector => {
-  const idx = Math.max(0, Math.min(slotIndex, CELL_DOT_SLOT_COUNT - 1));
+  const cap = Math.max(1, slotCapacity);
+  const idx = Math.max(0, Math.min(slotIndex, cap - 1));
   const rowFromBottom = Math.floor(idx / CELL_DOT_COLS);
   const col = idx % CELL_DOT_COLS;
   const spanX = (CELL_DOT_COLS - 1) * CELL_DOT_PITCH_X;
@@ -44,11 +47,13 @@ export const layoutCellDotSlot = (
 export const layoutCellDots = (
   count: number,
   center: { x: number; y: number },
+  slotCapacity: number,
 ): Vector[] => {
-  const n = Math.max(0, Math.min(count, CELL_DOT_SLOT_COUNT));
+  const cap = Math.max(1, slotCapacity);
+  const n = Math.max(0, Math.min(count, cap));
   const out: Vector[] = [];
   for (let i = 0; i < n; i++) {
-    out.push(layoutCellDotSlot(center, i));
+    out.push(layoutCellDotSlot(center, i, cap));
   }
   return out;
 };
