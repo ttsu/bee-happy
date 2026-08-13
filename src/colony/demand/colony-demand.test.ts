@@ -108,26 +108,44 @@ describe("computeColonyDemand", () => {
     assert.equal(r.demandBrood, 0);
   });
 
-  it("increases nectar demand in Fall via winter plan weight", () => {
+  it("ramps nectar demand from Spring through Summer into Fall", () => {
+    const beesTotal = 10;
+    const daysPerSeason = 15;
+    const winterNeed = computeWinterHoneyNeed(
+      beesTotal,
+      daysPerSeason,
+      baseConstants(),
+    );
+    // Capacity near winter need so plan-weight differences show on the bar.
+    const honeyCapacity = winterNeed * 0.9;
     const spring = computeColonyDemand(
-      baseInput({
-        beesTotal: 10,
-        honeyCapacity: 12,
-        season: "Spring",
-        daysPerSeason: 15,
-      }),
+      baseInput({ beesTotal, daysPerSeason, honeyCapacity, season: "Spring" }),
+    );
+    const summer = computeColonyDemand(
+      baseInput({ beesTotal, daysPerSeason, honeyCapacity, season: "Summer" }),
     );
     const fall = computeColonyDemand(
-      baseInput({
-        beesTotal: 10,
-        honeyCapacity: 12,
-        season: "Fall",
-        daysPerSeason: 15,
-      }),
+      baseInput({ beesTotal, daysPerSeason, honeyCapacity, season: "Fall" }),
     );
-    assert.ok(fall.demandNectar >= spring.demandNectar);
+    assert.ok(summer.demandNectar > spring.demandNectar);
+    assert.ok(fall.demandNectar > summer.demandNectar);
     assert.ok(fall.winterHoneyNeed > 0);
     assert.equal(fall.winterHoneyNeed, spring.winterHoneyNeed);
+  });
+
+  it("nudges brood demand higher in Spring/Summer than Fall when slots are partial", () => {
+    const shared = {
+      broodTotal: 4,
+      broodEmpty: 1,
+      pollenStored: 40,
+      nectarStored: 20,
+    } as const;
+    const spring = computeColonyDemand(baseInput({ ...shared, season: "Spring" }));
+    const summer = computeColonyDemand(baseInput({ ...shared, season: "Summer" }));
+    const fall = computeColonyDemand(baseInput({ ...shared, season: "Fall" }));
+    assert.ok(spring.demandBrood > fall.demandBrood);
+    assert.ok(summer.demandBrood > fall.demandBrood);
+    assert.equal(spring.demandBrood, summer.demandBrood);
   });
 
   it("raises nectar demand when honey capacity is below winter need", () => {
