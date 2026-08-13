@@ -224,11 +224,22 @@ export class EconomySystem extends System {
     } else if (job.foragePhase === "wait") {
       job.forageWaitMs -= elapsed;
       if (job.forageWaitMs <= 0) {
+        const kind = job.kind === "foragePollen" ? "pollen" : "nectar";
         if (job.kind === "foragePollen") {
           job.carryPayload = "pollen";
         } else {
           job.carryPayload = "nectar";
         }
+        const count =
+          kind === "pollen" ? C.foragePollenDepositAmount : C.forageNectarDepositAmount;
+        this.colony.resourceDots.spawnTransfer({
+          kind,
+          count,
+          from: { type: "world", pos: vec(job.scratchX, job.scratchY) },
+          to: { type: "bee", beeId: bee.id },
+          mode: "arrive",
+          colony: this.colony,
+        });
         // Select a deposit cell now, so the bee flies directly there.
         this.beginDepositPhase(job, bee);
       }
@@ -301,6 +312,7 @@ export class EconomySystem extends System {
       const to = dest.sub(bee.pos);
       if (to.size < 18) {
         const yearlyStats = this.colony.controllerEntity.get(YearlyStatsComponent);
+        let deposited = false;
         if (job.carryPayload === "pollen") {
           const st = cellEnt.get(CellStateComponent)!;
           st.pollenStored = Math.min(
@@ -310,6 +322,7 @@ export class EconomySystem extends System {
           if (yearlyStats) {
             yearlyStats.pollenCollectedTotal += C.foragePollenDepositAmount;
           }
+          deposited = true;
         } else if (job.carryPayload === "nectar") {
           const st = cellEnt.get(CellStateComponent)!;
           if (nectarCellCanAcceptNectarDeposit(st)) {
@@ -321,7 +334,23 @@ export class EconomySystem extends System {
             if (yearlyStats) {
               yearlyStats.nectarCollectedTotal += st.nectarStored - before;
             }
+            deposited = true;
           }
+        }
+        if (deposited && job.carryPayload !== "none") {
+          const kind = job.carryPayload === "pollen" ? "pollen" : "nectar";
+          const count =
+            kind === "pollen"
+              ? C.foragePollenDepositAmount
+              : C.forageNectarDepositAmount;
+          this.colony.resourceDots.spawnTransfer({
+            kind,
+            count,
+            from: { type: "bee", beeId: bee.id },
+            to: { type: "cell", cellKey: key },
+            mode: "arrive",
+            colony: this.colony,
+          });
         }
         bee.get(BeeCarryComponent)!.carry = "none";
         job.status = "done";
