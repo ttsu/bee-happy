@@ -1,4 +1,4 @@
-import type { LineageEntry } from "./meta-progress";
+import type { LineageEntry, RarityTier } from "./meta-progress";
 
 /** Base stats used when converting legacy fractional magnitudes to flat bonuses. */
 const LEGACY_FLAT_BASE_BY_AFFIX: Record<string, number> = {
@@ -8,8 +8,8 @@ const LEGACY_FLAT_BASE_BY_AFFIX: Record<string, number> = {
 };
 
 /**
- * Multipliers applied on top of {@link COLONY} (1 = no change).
- * Primary bonuses use values >1 where “more is better”; drain uses <1 for slower drain.
+ * Primary bonuses and tradeoff penalties applied on top of {@link COLONY}.
+ * Multipliers use 1 = no change; fraction penalties are 0 = none.
  */
 export type LineageMultipliers = {
   pollenCellCapacityFlat: number;
@@ -21,6 +21,14 @@ export type LineageMultipliers = {
   honeyProcessRateMul: number;
   needsDrainMul: number;
   cellBuildMul: number;
+  tradeoffHoneyProcessFrac: number;
+  tradeoffNectarCapacityFlat: number;
+  tradeoffNeedsDrainFrac: number;
+  tradeoffQueenLayIntervalFrac: number;
+  tradeoffBeeSpeedFrac: number;
+  tradeoffCellBuildFrac: number;
+  tradeoffInitialPollenFlat: number;
+  tradeoffForageTimeFrac: number;
 };
 
 const IDENTITY: LineageMultipliers = {
@@ -33,6 +41,14 @@ const IDENTITY: LineageMultipliers = {
   honeyProcessRateMul: 1,
   needsDrainMul: 1,
   cellBuildMul: 1,
+  tradeoffHoneyProcessFrac: 0,
+  tradeoffNectarCapacityFlat: 0,
+  tradeoffNeedsDrainFrac: 0,
+  tradeoffQueenLayIntervalFrac: 0,
+  tradeoffBeeSpeedFrac: 0,
+  tradeoffCellBuildFrac: 0,
+  tradeoffInitialPollenFlat: 0,
+  tradeoffForageTimeFrac: 0,
 };
 
 type FractionAxis = Exclude<
@@ -41,6 +57,23 @@ type FractionAxis = Exclude<
   | "nectarCellCapacityFlat"
   | "foragePollenDepositFlat"
   | "forageNectarDepositFlat"
+  | "tradeoffNectarCapacityFlat"
+  | "tradeoffInitialPollenFlat"
+>;
+
+type FractionTradeoffAxis = Extract<
+  keyof LineageMultipliers,
+  | "tradeoffHoneyProcessFrac"
+  | "tradeoffNeedsDrainFrac"
+  | "tradeoffQueenLayIntervalFrac"
+  | "tradeoffBeeSpeedFrac"
+  | "tradeoffCellBuildFrac"
+  | "tradeoffForageTimeFrac"
+>;
+
+type FlatTradeoffAxis = Extract<
+  keyof LineageMultipliers,
+  "tradeoffNectarCapacityFlat" | "tradeoffInitialPollenFlat"
 >;
 
 /** Affix families for diminishing stacking (same key stacks with diminishing returns). */
@@ -64,6 +97,50 @@ const FLAT_AFFIX_AXIS: Record<string, FlatAxis | FlatAxis[]> = {
   heavy_haul: ["foragePollenDepositFlat", "forageNectarDepositFlat"],
 };
 
+const FRACTION_TRADEOFF_AXIS: Record<string, FractionTradeoffAxis> = {
+  food_cell_cap: "tradeoffHoneyProcessFrac",
+  brood_pulse: "tradeoffNeedsDrainFrac",
+  honey_press: "tradeoffQueenLayIntervalFrac",
+  heavy_haul: "tradeoffBeeSpeedFrac",
+  calm_metabolism: "tradeoffCellBuildFrac",
+  nectar_cell_cap: "tradeoffForageTimeFrac",
+};
+
+const FLAT_TRADEOFF_AXIS: Record<string, FlatTradeoffAxis> = {
+  swift_forage: "tradeoffNectarCapacityFlat",
+  mason_wing: "tradeoffInitialPollenFlat",
+};
+
+/** Mirrors {@link TIER_SCALE_TRADEOFF} in lineage-affixes (tradeoff penalty tier scaling). */
+const TRADEOFF_TIER_SCALE: Record<RarityTier, number> = {
+  1: 1.2,
+  2: 1.05,
+  3: 0.9,
+  4: 0.72,
+  5: 0.55,
+};
+
+/** Fractional tradeoff base magnitudes (tier 1), aligned with lineage-affix defs. */
+const FRACTION_TRADEOFF_BASE: Record<string, number> = {
+  food_cell_cap: 0.06,
+  brood_pulse: 0.06,
+  honey_press: 0.06,
+  heavy_haul: 0.05,
+  calm_metabolism: 0.06,
+  nectar_cell_cap: 0.06,
+};
+
+function tradeoffPenaltyForEntry(entry: LineageEntry): number {
+  if (FLAT_TRADEOFF_AXIS[entry.affixId]) {
+    return Math.max(1, Math.round(TRADEOFF_TIER_SCALE[entry.tier]));
+  }
+  const base = FRACTION_TRADEOFF_BASE[entry.affixId];
+  if (!base) {
+    return 0;
+  }
+  return base * TRADEOFF_TIER_SCALE[entry.tier];
+}
+
 /** Per-axis fractional bonus cap after combining picks (e.g. 0.35 = +35% max). */
 const SOFT_CAP_PER_AXIS = 0.35;
 
@@ -73,6 +150,11 @@ const SOFT_CAP_FLAT: Record<FlatAxis, number> = {
   nectarCellCapacityFlat: 4,
   foragePollenDepositFlat: 2,
   forageNectarDepositFlat: 2,
+};
+
+const SOFT_CAP_FLAT_TRADEOFF: Record<FlatTradeoffAxis, number> = {
+  tradeoffNectarCapacityFlat: 4,
+  tradeoffInitialPollenFlat: 6,
 };
 
 /**
@@ -133,6 +215,24 @@ function entryPrimaryFraction(
   return { axis, fraction: Math.max(0, entry.magnitude) };
 }
 
+function entryTradeoffPenalty(
+  entry: LineageEntry,
+):
+  | { axis: FractionTradeoffAxis; fraction: number }
+  | { axis: FlatTradeoffAxis; penalty: number }
+  | null {
+  const penalty = tradeoffPenaltyForEntry(entry);
+  const flatAxis = FLAT_TRADEOFF_AXIS[entry.affixId];
+  if (flatAxis) {
+    return { axis: flatAxis, penalty: Math.max(1, Math.round(penalty)) };
+  }
+  const fractionAxis = FRACTION_TRADEOFF_AXIS[entry.affixId];
+  if (!fractionAxis) {
+    return null;
+  }
+  return { axis: fractionAxis, fraction: Math.max(0, penalty) };
+}
+
 /**
  * For axes where lower multiplier is better (forage time, brood cycle, needs drain), convert bonus fraction f to mul = 1 - combined(f).
  */
@@ -145,6 +245,8 @@ export function aggregateLineageMultipliers(
 
   const flatByAxis = new Map<FlatAxis, number[]>();
   const fractionByAxis = new Map<FractionAxis, number[]>();
+  const flatTradeoffByAxis = new Map<FlatTradeoffAxis, number[]>();
+  const fractionTradeoffByAxis = new Map<FractionTradeoffAxis, number[]>();
 
   for (const entry of lineage) {
     for (const { axis, bonus } of entryPrimaryFlatBonus(entry)) {
@@ -154,12 +256,24 @@ export function aggregateLineageMultipliers(
     }
 
     const mapped = entryPrimaryFraction(entry);
-    if (!mapped) {
-      continue;
+    if (mapped) {
+      const list = fractionByAxis.get(mapped.axis) ?? [];
+      list.push(mapped.fraction);
+      fractionByAxis.set(mapped.axis, list);
     }
-    const list = fractionByAxis.get(mapped.axis) ?? [];
-    list.push(mapped.fraction);
-    fractionByAxis.set(mapped.axis, list);
+
+    const tradeoff = entryTradeoffPenalty(entry);
+    if (tradeoff) {
+      if ("penalty" in tradeoff) {
+        const list = flatTradeoffByAxis.get(tradeoff.axis) ?? [];
+        list.push(tradeoff.penalty);
+        flatTradeoffByAxis.set(tradeoff.axis, list);
+      } else {
+        const list = fractionTradeoffByAxis.get(tradeoff.axis) ?? [];
+        list.push(tradeoff.fraction);
+        fractionTradeoffByAxis.set(tradeoff.axis, list);
+      }
+    }
   }
 
   const out: LineageMultipliers = { ...IDENTITY };
@@ -183,6 +297,14 @@ export function aggregateLineageMultipliers(
 
   for (const [axis, fractions] of fractionByAxis) {
     capMul(axis, fractions);
+  }
+
+  for (const [axis, values] of flatTradeoffByAxis) {
+    out[axis] = combineFlatBonuses(values, SOFT_CAP_FLAT_TRADEOFF[axis]);
+  }
+
+  for (const [axis, fractions] of fractionTradeoffByAxis) {
+    out[axis] = combineFractionalBonuses(fractions);
   }
 
   return out;

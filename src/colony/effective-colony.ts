@@ -81,18 +81,29 @@ export type EffectiveColonyConstants = {
 export function buildEffectiveColonyConstants(
   m: LineageMultipliers,
 ): EffectiveColonyConstants {
-  const nectarCellCapacity = COLONY.nectarCellCapacity + m.nectarCellCapacityFlat;
+  const nectarCellCapacity = Math.max(
+    1,
+    COLONY.nectarCellCapacity + m.nectarCellCapacityFlat - m.tradeoffNectarCapacityFlat,
+  );
+  const forageTimeMul = m.forageTimeMul * (1 + m.tradeoffForageTimeFrac);
   return {
     ...COLONY,
-    pollenCellCapacity: COLONY.pollenCellCapacity + m.pollenCellCapacityFlat,
+    initialPollen: Math.max(0, COLONY.initialPollen - m.tradeoffInitialPollenFlat),
+    pollenCellCapacity: Math.max(
+      1,
+      COLONY.pollenCellCapacity + m.pollenCellCapacityFlat,
+    ),
     nectarCellCapacity,
-    honeyCellCapacity: COLONY.honeyCellCapacity + m.nectarCellCapacityFlat,
-    forageTravelMs: COLONY.forageTravelMs * m.forageTimeMul,
-    forageWaitMs: COLONY.forageWaitMs * m.forageTimeMul,
+    honeyCellCapacity: nectarCellCapacity,
+    forageTravelMs: COLONY.forageTravelMs * forageTimeMul,
+    forageWaitMs: COLONY.forageWaitMs * forageTimeMul,
     eggDurationMs: COLONY.eggDurationMs * m.broodCycleMul,
     sealedDurationMs: COLONY.sealedDurationMs * m.broodCycleMul,
     cleaningDurationMs: COLONY.cleaningDurationMs * m.broodCycleMul,
-    honeyProcessRatePerSec: COLONY.honeyProcessRatePerSec * m.honeyProcessRateMul,
+    honeyProcessRatePerSec:
+      COLONY.honeyProcessRatePerSec *
+      m.honeyProcessRateMul *
+      Math.max(0.5, 1 - m.tradeoffHoneyProcessFrac),
     foragePollenDepositAmount: Math.max(
       1,
       COLONY.foragePollenDepositAmount + m.foragePollenDepositFlat,
@@ -101,8 +112,14 @@ export function buildEffectiveColonyConstants(
       1,
       COLONY.forageNectarDepositAmount + m.forageNectarDepositFlat,
     ),
-    hungerPerSec: COLONY.hungerPerSec * m.needsDrainMul,
-    cellBuildTargetSec: COLONY.cellBuildTargetSec * m.cellBuildMul,
-    queenLayIntervalMs: COLONY.queenLayIntervalMs * (2 - m.broodCycleMul),
+    hungerPerSec:
+      COLONY.hungerPerSec * m.needsDrainMul * (1 + m.tradeoffNeedsDrainFrac),
+    cellBuildTargetSec:
+      COLONY.cellBuildTargetSec * m.cellBuildMul * (1 + m.tradeoffCellBuildFrac),
+    queenLayIntervalMs:
+      COLONY.queenLayIntervalMs *
+      (2 - m.broodCycleMul) *
+      (1 + m.tradeoffQueenLayIntervalFrac),
+    beeSpeed: COLONY.beeSpeed * Math.max(0.5, 1 - m.tradeoffBeeSpeedFrac),
   };
 }

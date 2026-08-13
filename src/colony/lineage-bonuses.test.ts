@@ -44,3 +44,30 @@ describe("aggregateLineageMultipliers flat bonuses", () => {
     assert.equal(m.nectarCellCapacityFlat, 1);
   });
 });
+
+describe("aggregateLineageMultipliers tradeoffs", () => {
+  it("applies honey processing penalty for Deep Pantry", () => {
+    const m = aggregateLineageMultipliers([entry("food_cell_cap", 1)]);
+    assert.ok(m.tradeoffHoneyProcessFrac > 0);
+  });
+
+  it("applies flat nectar capacity penalty for Swift Forager", () => {
+    const m = aggregateLineageMultipliers([entry("swift_forage", 0.07)]);
+    assert.equal(m.tradeoffNectarCapacityFlat, 1);
+  });
+
+  it("applies hunger drain penalty for Brood Pulse", () => {
+    const m = aggregateLineageMultipliers([entry("brood_pulse", 0.06)]);
+    assert.ok(m.tradeoffNeedsDrainFrac > 0);
+  });
+
+  it("applies move speed penalty for Heavy Haul", () => {
+    const m = aggregateLineageMultipliers([entry("heavy_haul", 1)]);
+    assert.ok(m.tradeoffBeeSpeedFrac > 0);
+  });
+
+  it("applies starting pollen penalty for Mason Wing", () => {
+    const m = aggregateLineageMultipliers([entry("mason_wing", 0.07)]);
+    assert.equal(m.tradeoffInitialPollenFlat, 1);
+  });
+});

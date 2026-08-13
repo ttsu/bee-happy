@@ -10,10 +10,14 @@ export type LineageAffixDef = {
   baseMagnitude: number;
   /** Base flat bonus at tier 1 for flat affixes (whole units). */
   baseFlatMagnitude?: number;
+  /** Defaults to fraction when omitted. */
+  tradeoffKind?: LineageAffixBonusKind;
+  /** Base flat tradeoff at tier 1 when tradeoffKind is flat. */
+  baseFlatTradeoff?: number;
   /** Full primary stat line; value is fraction (0–1) or whole units depending on bonusKind. */
   formatPrimaryLine: (primaryValue: number) => string;
-  /** Full tradeoff line; fraction is 0–1. */
-  formatTradeoffLine: (tradeoffFraction: number) => string;
+  /** Full tradeoff line; value is fraction (0–1) or whole units depending on tradeoffKind. */
+  formatTradeoffLine: (tradeoffValue: number) => string;
 };
 
 const pct = (fraction: number): string => (fraction * 100).toFixed(0);
@@ -23,7 +27,7 @@ export const LINEAGE_AFFIX_POOL: LineageAffixDef[] = [
     id: "food_cell_cap",
     displayName: "Deep Pantry",
     bonusKind: "flat",
-    baseMagnitude: 0,
+    baseMagnitude: 0.06,
     baseFlatMagnitude: 1,
     formatPrimaryLine: (n) => `+${n} food cell capacity (pollen & nectar)`,
     formatTradeoffLine: (f) => `${pct(f)}% slower honey processing`,
@@ -33,8 +37,10 @@ export const LINEAGE_AFFIX_POOL: LineageAffixDef[] = [
     displayName: "Swift Forager",
     bonusKind: "fraction",
     baseMagnitude: 0.07,
+    tradeoffKind: "flat",
+    baseFlatTradeoff: 1,
     formatPrimaryLine: (f) => `${pct(f)}% shorter forage trips`,
-    formatTradeoffLine: (f) => `${pct(f)}% less nectar cell capacity`,
+    formatTradeoffLine: (n) => `-${n} nectar cell capacity`,
   },
   {
     id: "brood_pulse",
@@ -56,7 +62,7 @@ export const LINEAGE_AFFIX_POOL: LineageAffixDef[] = [
     id: "heavy_haul",
     displayName: "Heavy Haul",
     bonusKind: "flat",
-    baseMagnitude: 0,
+    baseMagnitude: 0.05,
     baseFlatMagnitude: 1,
     formatPrimaryLine: (n) => `+${n} pollen/nectar per forage deposit`,
     formatTradeoffLine: (f) => `${pct(f)}% slower move speed`,
@@ -74,14 +80,16 @@ export const LINEAGE_AFFIX_POOL: LineageAffixDef[] = [
     displayName: "Mason Wing",
     bonusKind: "fraction",
     baseMagnitude: 0.07,
+    tradeoffKind: "flat",
+    baseFlatTradeoff: 1,
     formatPrimaryLine: (f) => `${pct(f)}% faster cell building`,
-    formatTradeoffLine: (f) => `${pct(f)}% less starting pollen`,
+    formatTradeoffLine: (n) => `-${n} starting pollen`,
   },
   {
     id: "nectar_cell_cap",
     displayName: "Nectar Vault",
     bonusKind: "flat",
-    baseMagnitude: 0,
+    baseMagnitude: 0.06,
     baseFlatMagnitude: 1,
     formatPrimaryLine: (n) => `+${n} nectar cell capacity`,
     formatTradeoffLine: (f) => `${pct(f)}% slower foraging`,
@@ -156,6 +164,15 @@ export function tradeoffMagnitudeForTier(
   return def.baseMagnitude * TIER_SCALE_TRADEOFF[tier];
 }
 
+/** Tradeoff penalty for simulation and UI (fraction 0–1 or whole units). */
+export function tradeoffPenaltyForTier(def: LineageAffixDef, tier: RarityTier): number {
+  if (def.tradeoffKind === "flat") {
+    const base = def.baseFlatTradeoff ?? 1;
+    return Math.max(1, Math.round(base * TIER_SCALE_TRADEOFF[tier]));
+  }
+  return tradeoffMagnitudeForTier(def, tier);
+}
+
 export type RolledPupaOption = {
   affix: LineageAffixDef;
   tier: RarityTier;
@@ -176,7 +193,7 @@ export function rollPupaOptions(rng: () => number, count = 3): RolledPupaOption[
     const affix = pool.splice(idx, 1)[0]!;
     const tier = rollRarityTier(rng);
     const magnitude = primaryMagnitudeForTier(affix, tier);
-    const tradeoffMagnitude = tradeoffMagnitudeForTier(affix, tier);
+    const tradeoffMagnitude = tradeoffPenaltyForTier(affix, tier);
     out.push({ affix, tier, magnitude, tradeoffMagnitude });
   }
   return out;
