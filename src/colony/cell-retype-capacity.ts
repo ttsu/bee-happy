@@ -1,4 +1,4 @@
-import { COLONY } from "./constants";
+import { getActiveColonyConstants } from "./colony-active-constants";
 import {
   CellCoordComponent,
   CellStateComponent,
@@ -30,21 +30,24 @@ const sparePollenCapacityOnCell = (st: CellStateComponent): number => {
   if (!st.built || st.cellType !== "pollen") {
     return 0;
   }
-  return Math.max(0, COLONY.pollenCellCapacity - st.pollenStored);
+  const cap = getActiveColonyConstants().pollenCellCapacity;
+  return Math.max(0, cap - st.pollenStored);
 };
 
 const spareNectarCapacityOnCell = (st: CellStateComponent): number => {
   if (!st.built || st.cellType !== "nectar" || !nectarCellCanAcceptNectarDeposit(st)) {
     return 0;
   }
-  return Math.max(0, COLONY.nectarCellCapacity - st.nectarStored);
+  const cap = getActiveColonyConstants().nectarCellCapacity;
+  return Math.max(0, cap - st.nectarStored);
 };
 
 const spareHoneyCapacityOnCell = (st: CellStateComponent): number => {
   if (!st.built || st.cellType !== "nectar") {
     return 0;
   }
-  return Math.max(0, COLONY.honeyCellCapacity - st.honeyStored);
+  const cap = getActiveColonyConstants().honeyCellCapacity;
+  return Math.max(0, cap - st.honeyStored);
 };
 
 /**

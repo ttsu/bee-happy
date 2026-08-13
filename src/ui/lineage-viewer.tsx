@@ -28,7 +28,7 @@ function LineageAffixStatLines({ entry }: { readonly entry: LineageEntry }) {
   if (!affix) {
     return (
       <span className="lineage-stats lineage-stats--legacy">
-        +{(entry.magnitude * 100).toFixed(0)}% primary
+        +{entry.magnitude} primary
       </span>
     );
   }

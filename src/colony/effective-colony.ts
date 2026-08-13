@@ -81,10 +81,12 @@ export type EffectiveColonyConstants = {
 export function buildEffectiveColonyConstants(
   m: LineageMultipliers,
 ): EffectiveColonyConstants {
+  const nectarCellCapacity = COLONY.nectarCellCapacity + m.nectarCellCapacityFlat;
   return {
     ...COLONY,
-    pollenCellCapacity: Math.round(COLONY.pollenCellCapacity * m.pollenCellCapacityMul),
-    nectarCellCapacity: Math.round(COLONY.nectarCellCapacity * m.nectarCellCapacityMul),
+    pollenCellCapacity: COLONY.pollenCellCapacity + m.pollenCellCapacityFlat,
+    nectarCellCapacity,
+    honeyCellCapacity: COLONY.honeyCellCapacity + m.nectarCellCapacityFlat,
     forageTravelMs: COLONY.forageTravelMs * m.forageTimeMul,
     forageWaitMs: COLONY.forageWaitMs * m.forageTimeMul,
     eggDurationMs: COLONY.eggDurationMs * m.broodCycleMul,
@@ -93,11 +95,11 @@ export function buildEffectiveColonyConstants(
     honeyProcessRatePerSec: COLONY.honeyProcessRatePerSec * m.honeyProcessRateMul,
     foragePollenDepositAmount: Math.max(
       1,
-      Math.round(COLONY.foragePollenDepositAmount * m.depositYieldMul),
+      COLONY.foragePollenDepositAmount + m.foragePollenDepositFlat,
     ),
     forageNectarDepositAmount: Math.max(
       1,
-      Math.round(COLONY.forageNectarDepositAmount * m.depositYieldMul),
+      COLONY.forageNectarDepositAmount + m.forageNectarDepositFlat,
     ),
     hungerPerSec: COLONY.hungerPerSec * m.needsDrainMul,
     cellBuildTargetSec: COLONY.cellBuildTargetSec * m.cellBuildMul,
