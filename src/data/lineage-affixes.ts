@@ -79,11 +79,11 @@ export const LINEAGE_AFFIX_POOL: LineageAffixDef[] = [
     id: "mason_wing",
     displayName: "Mason Wing",
     bonusKind: "fraction",
-    baseMagnitude: 0.07,
+    baseMagnitude: 0.1,
     tradeoffKind: "flat",
-    baseFlatTradeoff: 1,
+    baseFlatTradeoff: 2,
     formatPrimaryLine: (f) => `${pct(f)}% faster cell building`,
-    formatTradeoffLine: (n) => `-${n} starting pollen`,
+    formatTradeoffLine: (n) => `${n} less food cell capacity`,
   },
   {
     id: "nectar_cell_cap",
@@ -178,7 +178,7 @@ export type RolledPupaOption = {
   tier: RarityTier;
   /** Primary bonus value (fraction 0–1 or whole units, depending on affix bonusKind). */
   magnitude: number;
-  /** Tradeoff fractional penalty for UI (scales down with higher rarity). */
+  /** Tradeoff penalty for UI (fraction or whole number; scales down with higher rarity). */
   tradeoffMagnitude: number;
 };
 

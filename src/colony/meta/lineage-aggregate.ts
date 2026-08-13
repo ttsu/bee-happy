@@ -1,4 +1,8 @@
-import type { LineageEntry, RarityTier } from "./meta-progress";
+import {
+  getLineageAffixById,
+  tradeoffPenaltyForTier,
+} from "../../data/lineage-affixes";
+import type { LineageEntry } from "./meta-progress";
 
 /** Base stats used when converting legacy fractional magnitudes to flat bonuses. */
 const LEGACY_FLAT_BASE_BY_AFFIX: Record<string, number> = {
@@ -23,11 +27,11 @@ export type LineageMultipliers = {
   cellBuildMul: number;
   tradeoffHoneyProcessFrac: number;
   tradeoffNectarCapacityFlat: number;
+  tradeoffFoodCellCapacityFlat: number;
   tradeoffNeedsDrainFrac: number;
   tradeoffQueenLayIntervalFrac: number;
   tradeoffBeeSpeedFrac: number;
   tradeoffCellBuildFrac: number;
-  tradeoffInitialPollenFlat: number;
   tradeoffForageTimeFrac: number;
 };
 
@@ -43,11 +47,11 @@ const IDENTITY: LineageMultipliers = {
   cellBuildMul: 1,
   tradeoffHoneyProcessFrac: 0,
   tradeoffNectarCapacityFlat: 0,
+  tradeoffFoodCellCapacityFlat: 0,
   tradeoffNeedsDrainFrac: 0,
   tradeoffQueenLayIntervalFrac: 0,
   tradeoffBeeSpeedFrac: 0,
   tradeoffCellBuildFrac: 0,
-  tradeoffInitialPollenFlat: 0,
   tradeoffForageTimeFrac: 0,
 };
 
@@ -58,7 +62,7 @@ type FractionAxis = Exclude<
   | "foragePollenDepositFlat"
   | "forageNectarDepositFlat"
   | "tradeoffNectarCapacityFlat"
-  | "tradeoffInitialPollenFlat"
+  | "tradeoffFoodCellCapacityFlat"
 >;
 
 type FractionTradeoffAxis = Extract<
@@ -73,7 +77,7 @@ type FractionTradeoffAxis = Extract<
 
 type FlatTradeoffAxis = Extract<
   keyof LineageMultipliers,
-  "tradeoffNectarCapacityFlat" | "tradeoffInitialPollenFlat"
+  "tradeoffNectarCapacityFlat" | "tradeoffFoodCellCapacityFlat"
 >;
 
 /** Affix families for diminishing stacking (same key stacks with diminishing returns). */
@@ -108,37 +112,18 @@ const FRACTION_TRADEOFF_AXIS: Record<string, FractionTradeoffAxis> = {
 
 const FLAT_TRADEOFF_AXIS: Record<string, FlatTradeoffAxis> = {
   swift_forage: "tradeoffNectarCapacityFlat",
-  mason_wing: "tradeoffInitialPollenFlat",
-};
-
-/** Mirrors {@link TIER_SCALE_TRADEOFF} in lineage-affixes (tradeoff penalty tier scaling). */
-const TRADEOFF_TIER_SCALE: Record<RarityTier, number> = {
-  1: 1.2,
-  2: 1.05,
-  3: 0.9,
-  4: 0.72,
-  5: 0.55,
-};
-
-/** Fractional tradeoff base magnitudes (tier 1), aligned with lineage-affix defs. */
-const FRACTION_TRADEOFF_BASE: Record<string, number> = {
-  food_cell_cap: 0.06,
-  brood_pulse: 0.06,
-  honey_press: 0.06,
-  heavy_haul: 0.05,
-  calm_metabolism: 0.06,
-  nectar_cell_cap: 0.06,
+  mason_wing: "tradeoffFoodCellCapacityFlat",
 };
 
 function tradeoffPenaltyForEntry(entry: LineageEntry): number {
-  if (FLAT_TRADEOFF_AXIS[entry.affixId]) {
-    return Math.max(1, Math.round(TRADEOFF_TIER_SCALE[entry.tier]));
-  }
-  const base = FRACTION_TRADEOFF_BASE[entry.affixId];
-  if (!base) {
+  const def = getLineageAffixById(entry.affixId);
+  if (
+    !def ||
+    (!FLAT_TRADEOFF_AXIS[entry.affixId] && !FRACTION_TRADEOFF_AXIS[entry.affixId])
+  ) {
     return 0;
   }
-  return base * TRADEOFF_TIER_SCALE[entry.tier];
+  return tradeoffPenaltyForTier(def, entry.tier);
 }
 
 /** Per-axis fractional bonus cap after combining picks (e.g. 0.35 = +35% max). */
@@ -154,7 +139,7 @@ const SOFT_CAP_FLAT: Record<FlatAxis, number> = {
 
 const SOFT_CAP_FLAT_TRADEOFF: Record<FlatTradeoffAxis, number> = {
   tradeoffNectarCapacityFlat: 4,
-  tradeoffInitialPollenFlat: 6,
+  tradeoffFoodCellCapacityFlat: 6,
 };
 
 /**

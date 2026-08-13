@@ -75,24 +75,31 @@ export type EffectiveColonyConstants = {
   readonly workerMinEfficiencyMul: number;
 };
 
+const MIN_FOOD_CELL_CAPACITY = 4;
+
 /**
  * Builds simulation constants with lineage multipliers applied (read-only snapshot).
  */
 export function buildEffectiveColonyConstants(
   m: LineageMultipliers,
 ): EffectiveColonyConstants {
+  const pollenCellCapacity = Math.max(
+    MIN_FOOD_CELL_CAPACITY,
+    COLONY.pollenCellCapacity +
+      m.pollenCellCapacityFlat -
+      m.tradeoffFoodCellCapacityFlat,
+  );
   const nectarCellCapacity = Math.max(
-    1,
-    COLONY.nectarCellCapacity + m.nectarCellCapacityFlat - m.tradeoffNectarCapacityFlat,
+    MIN_FOOD_CELL_CAPACITY,
+    COLONY.nectarCellCapacity +
+      m.nectarCellCapacityFlat -
+      m.tradeoffNectarCapacityFlat -
+      m.tradeoffFoodCellCapacityFlat,
   );
   const forageTimeMul = m.forageTimeMul * (1 + m.tradeoffForageTimeFrac);
   return {
     ...COLONY,
-    initialPollen: Math.max(0, COLONY.initialPollen - m.tradeoffInitialPollenFlat),
-    pollenCellCapacity: Math.max(
-      1,
-      COLONY.pollenCellCapacity + m.pollenCellCapacityFlat,
-    ),
+    pollenCellCapacity,
     nectarCellCapacity,
     honeyCellCapacity: nectarCellCapacity,
     forageTravelMs: COLONY.forageTravelMs * forageTimeMul,

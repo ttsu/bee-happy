@@ -66,8 +66,8 @@ describe("aggregateLineageMultipliers tradeoffs", () => {
     assert.ok(m.tradeoffBeeSpeedFrac > 0);
   });
 
-  it("applies starting pollen penalty for Mason Wing", () => {
-    const m = aggregateLineageMultipliers([entry("mason_wing", 0.07)]);
-    assert.equal(m.tradeoffInitialPollenFlat, 1);
+  it("applies flat food cell capacity penalty for Mason Wing", () => {
+    const m = aggregateLineageMultipliers([entry("mason_wing", 0.1)]);
+    assert.equal(m.tradeoffFoodCellCapacityFlat, 2);
   });
 });
