@@ -490,6 +490,22 @@ export const processFeedLarvaeJobs = (
       } else {
         continue;
       }
+      const pickupKey = hiveKey({
+        q: job.feedPickupQ,
+        r: job.feedPickupR,
+        level: job.feedPickupLevel,
+      });
+      const pickupKind = job.feedCargoKind;
+      const pickupCount =
+        pickupKind === "honey" ? C.larvaeFeedHoneyCost : C.pollenPerFeedUnit;
+      colony.resourceDots.spawnTransfer({
+        kind: pickupKind,
+        count: pickupCount,
+        from: { type: "cell", cellKey: pickupKey },
+        to: { type: "bee", beeId: bee.id },
+        mode: "arrive",
+        colony,
+      });
       planFeedLarvaeDeliverPath(colony, job, bee);
       continue;
     }
@@ -515,13 +531,37 @@ export const processFeedLarvaeJobs = (
       }
       if (job.feedCargoKind === "pollen") {
         st.larvaePollenRemaining = Math.max(0, st.larvaePollenRemaining - 1);
+        colony.resourceDots.spawnTransfer({
+          kind: "pollen",
+          count: C.pollenPerFeedUnit,
+          from: { type: "bee", beeId: bee.id },
+          to: { type: "cell", cellKey: broodKey },
+          mode: "arrive",
+          colony,
+        });
       } else if (job.feedCargoKind === "nectar") {
         st.larvaeNectarRemaining = Math.max(0, st.larvaeNectarRemaining - 1);
+        colony.resourceDots.spawnTransfer({
+          kind: "nectar",
+          count: C.pollenPerFeedUnit,
+          from: { type: "bee", beeId: bee.id },
+          to: { type: "cell", cellKey: broodKey },
+          mode: "arrive",
+          colony,
+        });
       } else if (job.feedCargoKind === "honey") {
         st.larvaeNectarRemaining = Math.max(
           0,
           st.larvaeNectarRemaining - C.honeyNutrientMultiplier,
         );
+        colony.resourceDots.spawnTransfer({
+          kind: "honey",
+          count: C.larvaeFeedHoneyCost,
+          from: { type: "bee", beeId: bee.id },
+          to: { type: "cell", cellKey: broodKey },
+          mode: "arrive",
+          colony,
+        });
       }
       job.carryPayload = "none";
       bee.get(BeeCarryComponent)!.carry = "none";

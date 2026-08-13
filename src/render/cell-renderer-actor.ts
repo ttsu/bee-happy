@@ -1,11 +1,4 @@
-import {
-  BaseAlign,
-  Color,
-  Font,
-  TextAlign,
-  type ExcaliburGraphicsContext,
-  vec,
-} from "excalibur";
+import { Color, type ExcaliburGraphicsContext, vec } from "excalibur";
 import type { ColonyRuntime } from "../colony/colony-runtime";
 import {
   CellCoordComponent,
@@ -153,23 +146,6 @@ const HOVER_HEX_STROKE_PX = 1.75;
 // Brighter mint outline that contrasts with the green background but matches the game's accents.
 const ELIGIBLE_BUILD_OUTLINE = Color.fromRGB(130, 224, 170, 0.75);
 const ELIGIBLE_BUILD_STROKE_PX = 1.6;
-
-/** Centered labels for storage cells (pollen count, nectar + honey processing). */
-const cellStockFont = new Font({
-  size: 8,
-  family: "sans-serif",
-  color: Color.fromHex("#1e293b"),
-  smoothing: true,
-  textAlign: TextAlign.Center,
-  baseAlign: BaseAlign.Middle,
-  shadow: {
-    blur: 0,
-    offset: vec(0.5, 0.5),
-    color: Color.fromRGB(255, 255, 255, 0.5),
-  },
-});
-
-const CELL_STOCK_LINE_PX = 9;
 
 const HONEY_LABEL_EPS = 1e-6;
 const HONEY_FULL_EPS = 1e-3;
@@ -352,51 +328,6 @@ const drawCellInteriorFromState = (
   drawCellSpriteSheetFrame(ctx, center, 1, 1);
 };
 
-/**
- * Draws pollen in pollen cells; nectar or per-cell honey in nectar cells (mutually exclusive with nectar).
- */
-const drawCellStorageLabels = (
-  ctx: ExcaliburGraphicsContext,
-  center: { x: number; y: number },
-  st: InstanceType<typeof CellStateComponent>,
-): void => {
-  if (!st.built) {
-    return;
-  }
-  if (st.cellType === "pollen") {
-    const text = `P ${Math.round(st.pollenStored)}/${COLONY.pollenCellCapacity}`;
-    ctx.save();
-    ctx.translate(center.x, center.y);
-    cellStockFont.render(ctx, text, cellStockFont.color, 0, 0);
-    ctx.restore();
-    return;
-  }
-  if (st.cellType === "nectar") {
-    const lines: string[] = [];
-    if (st.honeyStored > HONEY_LABEL_EPS) {
-      lines.push(`H ${Math.round(st.honeyStored)}/${COLONY.honeyCellCapacity}`);
-    } else {
-      lines.push(`N ${Math.round(st.nectarStored)}/${COLONY.nectarCellCapacity}`);
-    }
-    if (st.honeyProcessingProgress > 0) {
-      lines.push(`→ ${Math.round(st.honeyProcessingProgress * 100)}%`);
-    }
-    ctx.save();
-    ctx.translate(center.x, center.y);
-    const offsetY = lines.length === 1 ? 0 : -(CELL_STOCK_LINE_PX / 2);
-    for (let i = 0; i < lines.length; i++) {
-      cellStockFont.render(
-        ctx,
-        lines[i]!,
-        cellStockFont.color,
-        0,
-        offsetY + i * CELL_STOCK_LINE_PX,
-      );
-    }
-    ctx.restore();
-  }
-};
-
 const drawHexRing = (
   ctx: ExcaliburGraphicsContext,
   corners: [number, number][],
@@ -467,9 +398,6 @@ export const drawHiveCells = (
     const st = ent.get(CellStateComponent)!;
     const w = hexToWorld({ q: c.q, r: c.r }, S);
     drawCellInteriorFromState(ctx, w, st);
-    if (st.built && (st.cellType === "pollen" || st.cellType === "nectar")) {
-      drawCellStorageLabels(ctx, w, st);
-    }
     if (!st.built) {
       drawBuildProgressRing(ctx, w, S * BUILD_RING_RADIUS_FACTOR, st.buildProgress);
     } else if (st.cellType === "brood") {
@@ -481,6 +409,7 @@ export const drawHiveCells = (
       }
     }
   }
+  colony.resourceDots.drawCellDots(ctx, colony);
 };
 
 /**

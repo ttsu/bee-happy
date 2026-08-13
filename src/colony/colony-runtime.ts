@@ -5,6 +5,7 @@ import type { HexCoord } from "../grid/hex-grid";
 import { hiveKey, parseHiveKey } from "../grid/hive-levels";
 import type { HiveCoord } from "../grid/hive-levels";
 import { BeeActor } from "../render/bee-actor";
+import { ResourceDotVisuals } from "../render/resource-dot-visuals";
 import { DEFAULT_NEW_GAME_SETTINGS, type GameSettings } from "./game-settings";
 import {
   getActiveColonyConstants,
@@ -70,6 +71,7 @@ export type ColonyInitializeOptions = {
 
 export class ColonyRuntime {
   readonly events = new ColonyEventBus();
+  readonly resourceDots = new ResourceDotVisuals();
   readonly cellsByKey = new Map<string, Entity>();
   /**
    * World-space destinations (from the background Tiled map) that represent flowers.
@@ -129,6 +131,7 @@ export class ColonyRuntime {
   initialize(scene: Scene, engine: Engine, options?: ColonyInitializeOptions): void {
     this.scene = scene;
     this.engine = engine;
+    this.resourceDots.clear();
     this.engine.timescale = this.simulationSpeed;
     const world = scene.world;
     const mode = options?.mode ?? "new";

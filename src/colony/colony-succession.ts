@@ -241,6 +241,7 @@ export const resetWorldAfterSuccession = (colony: ColonyRuntime): void => {
     a.kill();
   }
   colony.cellsByKey.clear();
+  colony.resourceDots.clear();
   colony.pendingCellTypeKey = null;
   colony.cellTypeChangeError = null;
   colony.cellTypeChangeDiscardTarget = null;

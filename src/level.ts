@@ -213,6 +213,7 @@ export class MyLevel extends Scene {
 
   override onPostUpdate(engine: Engine, elapsed: number): void {
     void engine;
+    this.colony.resourceDots.update(elapsed);
     this.colony.lastUiEmit += elapsed;
     if (this.colony.lastUiEmit >= COLONY.uiSnapshotMs) {
       this.colony.lastUiEmit = 0;
@@ -241,6 +242,7 @@ export class MyLevel extends Scene {
     ctx.resetTransform();
     this.camera.draw(ctx);
     drawHiveCellOverlays(ctx, this.colony);
+    this.colony.resourceDots.drawOverlays(ctx, this.colony);
     drawBeeJobLabels(ctx, this.colony);
     drawBeeUnhappyThoughtBubbles(ctx, this.colony);
     ctx.restore();
