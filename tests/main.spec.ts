@@ -28,7 +28,7 @@ test("HUD loads with Bee Happy title", async ({ page }) => {
   ).toBeVisible();
   const hud = page.locator(".hud");
   await expect(hud.getByRole("meter", { name: "Pollen", exact: true })).toBeVisible();
-  await expect(hud.getByRole("meter", { name: /Honey and nectar:/ })).toBeVisible();
+  await expect(hud.getByRole("meter", { name: "Honey", exact: true })).toBeVisible();
   await expect(hud.getByRole("meter", { name: /Brood:/ })).toBeVisible();
   await expect(hud.getByRole("meter", { name: "Beeswax", exact: true })).toBeVisible();
   await expect(

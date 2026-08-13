@@ -427,6 +427,8 @@ const HudHoneyNectarMeter = ({
   readonly winterHoneyNeed: number;
 }) => {
   const totalCapacity = honeyCapacity + nectarCapacity;
+  const totalStored = Math.round(honey) + Math.round(nectar);
+  const totalCap = Math.round(totalCapacity);
   const honeyPct = meterPct(honey, totalCapacity);
   const nectarPct = meterPct(nectar, totalCapacity);
   const markerPct =
@@ -441,16 +443,15 @@ const HudHoneyNectarMeter = ({
     <div className="hud-resource-row">
       <span className="hud-stat-label">
         <HudIcon kind="honey" label="Honey" />
-        <HudIcon kind="nectar" label="Nectar" />
-        Honey &amp; Nectar
+        Honey
       </span>
       <div
         className="hud-resource-bar hud-resource-bar--stacked"
         role="meter"
-        aria-valuenow={honey + nectar}
+        aria-valuenow={totalStored}
         aria-valuemin={0}
-        aria-valuemax={totalCapacity}
-        aria-label={`Honey and nectar: ${honey} honey, ${nectar} nectar`}
+        aria-valuemax={totalCap}
+        aria-label="Honey"
         title={markerTitle}
       >
         {honeyPct > 0 ? (
@@ -476,7 +477,7 @@ const HudHoneyNectarMeter = ({
       <span className="hud-resource-value">
         <span className="hud-metric-value">
           <span className="hud-metric-number">
-            {honey}/{Math.round(honeyCapacity)} · {nectar}/{Math.round(nectarCapacity)}
+            {totalStored}/{totalCap}
           </span>
           <DeltaBadge tick={honeyTick} />
           <DeltaBadge tick={nectarTick} />
@@ -628,6 +629,9 @@ export const ColonyHud = ({ snap, colony }: Props) => {
   const pollenCap = Math.round(snap.pollenCapacity);
   const honey = Math.round(snap.honey);
   const nectar = Math.round(snap.nectar);
+  const honeyNectarTotal = honey + nectar;
+  const honeyNectarCap =
+    Math.round(snap.honeyCapacity) + Math.round(snap.nectarCapacity);
   const beeswax = Math.round(snap.beeswax);
   const beeswaxCap = Math.round(snap.beeswaxCapacity);
   const happiness = snap.happinessPct;
@@ -659,15 +663,11 @@ export const ColonyHud = ({ snap, colony }: Props) => {
                 <HudIcon kind="pollen" label="Pollen" />
                 <MetricValue value={String(pollen)} tick={deltas.pollen} />
               </div>
-              <div
-                className="hud-strip-item"
-                title={`Honey ${honey} · Nectar ${nectar}`}
-              >
+              <div className="hud-strip-item" title="Honey">
                 <HudIcon kind="honey" label="Honey" />
-                <HudIcon kind="nectar" label="Nectar" />
                 <span className="hud-metric-value">
                   <span className="hud-metric-number">
-                    {honey} · {nectar}
+                    {honeyNectarTotal}/{honeyNectarCap}
                   </span>
                   <DeltaBadge tick={deltas.honey} />
                   <DeltaBadge tick={deltas.nectar} />
