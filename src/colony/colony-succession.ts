@@ -1,6 +1,5 @@
 import { Entity, vec } from "excalibur";
 import { refreshActiveColonyConstantsFromMeta } from "./colony-active-constants";
-import { COLONY } from "./constants";
 import {
   ActiveLevelComponent,
   BeeRoleComponent,
@@ -25,6 +24,7 @@ import { beeswaxCapacity } from "./beeswax";
 import { getActiveColonyConstants } from "./colony-active-constants";
 import { buildColonyUiSnapshot } from "./colony-ui-snapshot";
 import type { ColonyRuntime } from "./colony-runtime";
+import { maybeAdvanceYearAfterSuccession } from "./yearly-stats";
 
 const copyYearlyStats = (
   from: YearlyStatsComponent,
@@ -144,27 +144,6 @@ export const debugOpenSuccessionOptional = (colony: ColonyRuntime): void => {
 };
 
 /**
- * Opens the optional succession modal (player-initiated while hive is large).
- */
-export const requestOptionalSuccession = (colony: ColonyRuntime): void => {
-  if (!colony.lineageSystemEnabled || colony.successionModal != null) {
-    return;
-  }
-  const snap = buildColonyUiSnapshot(colony);
-  if (snap.queens < 1 || snap.beesTotal <= COLONY.successionOptionalBeeThreshold) {
-    return;
-  }
-  colony.successionModal = {
-    mandatory: false,
-    reason: "hiveExpanded",
-    royalJellyBudget: colony.getRoyalJellyStored(),
-    beesTotal: snap.beesTotal,
-    colonyDay: snap.currentColonyDay,
-  };
-  colony.emitUiSnapshotImmediate();
-};
-
-/**
  * Forces mandatory succession (queen death or end of reign).
  */
 export const triggerMandatorySuccession = (
@@ -226,6 +205,10 @@ export const applySuccessionChoice = (
   };
   writeMetaProgressToStorage(next);
   colony.successionModal = null;
+  const yearly = colony.controllerEntity.get(YearlyStatsComponent);
+  if (yearly) {
+    maybeAdvanceYearAfterSuccession(yearly, entry.successionReason);
+  }
   applySuccessionKeepNestInColony(colony, royalJellySpentInShop, workersToKeep);
 };
 

@@ -10,6 +10,7 @@ import {
 } from "../components/colony-components";
 import { getSeasonForColonyDay } from "../../seasons";
 import { releaseJobBees } from "../job-release";
+import { crossedCalendarYear, resolveYearEndAction } from "../../season-year-boundary";
 
 /** Serialized {@link SeasonSystem} fields that are not derived from colony time. */
 export type SeasonSystemSave = {
@@ -76,18 +77,13 @@ export class SeasonSystem extends System {
       this.lastNectarPurgeCycleIndex = info.cycleIndex;
     }
 
-    if (this.prevColonyDay !== 0) {
-      const crossedYear =
-        this.prevColonyDay % daysPerYear === 0 && currentColonyDay > this.prevColonyDay;
-
-      if (!yearly.isYearReviewOpen && crossedYear) {
-        if (
-          this.colony.lineageSystemEnabled &&
-          yearly.yearNumber === colonyConstants.queenAgeOutYearNumber
-        ) {
-          this.colony.triggerMandatorySuccession("queenAgedOut");
+    if (crossedCalendarYear(this.prevColonyDay, currentColonyDay, daysPerYear)) {
+      if (!yearly.isYearReviewOpen) {
+        yearly.remainingBeesAtYearEnd = this.countBees();
+        const action = resolveYearEndAction(this.colony.lineageSystemEnabled);
+        if (action.type === "mandatorySuccession") {
+          this.colony.triggerMandatorySuccession(action.reason);
         } else {
-          yearly.remainingBeesAtYearEnd = this.countBees();
           yearly.isYearReviewOpen = true;
           this.colony.emitUiSnapshotImmediate();
         }

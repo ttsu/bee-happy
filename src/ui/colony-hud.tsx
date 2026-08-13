@@ -753,20 +753,6 @@ export const ColonyHud = ({ snap, colony }: Props) => {
             </div>
           )}
         </button>
-        {!hudMinimized && snap.optionalSuccessionAvailable ? (
-          <div className="hud-succession-hint">
-            <button
-              type="button"
-              className="hud-ascend-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                colony?.requestOptionalSuccession();
-              }}
-            >
-              Ascend — new queen
-            </button>
-          </div>
-        ) : null}
       </div>
     </div>
   );

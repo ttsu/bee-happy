@@ -116,8 +116,6 @@ export interface ColonyUiSnapshot {
     readonly beesTotal: number;
     readonly colonyDay: number;
   } | null;
-  /** Player may open optional succession (hive above threshold and queen alive). */
-  readonly optionalSuccessionAvailable: boolean;
   /** Simulation clock multiplier: `1` normal, `2` fast-forward. */
   readonly simulationSpeed: 1 | 2;
 }

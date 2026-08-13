@@ -69,8 +69,6 @@ export type EffectiveColonyConstants = {
   readonly retypeRelocateChunkNectar: number;
   readonly retypeRelocateChunkHoney: number;
   readonly panTapThresholdPx: number;
-  readonly successionOptionalBeeThreshold: number;
-  readonly queenAgeOutYearNumber: number;
   readonly royalJellyPercentOfHappiness: number;
   readonly workerMinEfficiencyMul: number;
 };

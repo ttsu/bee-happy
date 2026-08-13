@@ -1881,29 +1881,6 @@ body:not(.bee-happy-game-started) #game-canvas {
   background: rgba(39, 55, 71, 0.95);
 }
 
-.hud-succession-hint {
-  margin-top: 8px;
-  pointer-events: auto;
-}
-
-.hud-succession-hint .hud-ascend-btn {
-  width: 100%;
-}
-
-.hud-ascend-btn {
-  padding: 6px 10px;
-  font-size: 12px;
-  border-radius: 8px;
-  border: 1px solid #9b59b6;
-  background: rgba(155, 89, 182, 0.2);
-  color: #e8daef;
-  cursor: pointer;
-}
-
-.hud-ascend-btn:hover {
-  background: rgba(155, 89, 182, 0.35);
-}
-
 .succession-backdrop {
   position: fixed;
   inset: 0;

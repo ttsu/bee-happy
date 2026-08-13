@@ -157,11 +157,6 @@ export const buildColonyUiSnapshot = (colony: ColonyRuntime): ColonyUiSnapshot =
       happyBeeSecondsTotal: yearly.happyBeeSecondsTotal,
     },
     successionModal: colony.successionModal,
-    optionalSuccessionAvailable:
-      colony.lineageSystemEnabled &&
-      colony.successionModal == null &&
-      queens > 0 &&
-      workers + queens > COLONY.successionOptionalBeeThreshold,
     simulationSpeed: colony.simulationSpeed,
   };
 };

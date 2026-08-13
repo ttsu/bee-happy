@@ -29,12 +29,12 @@ import {
 } from "./ecs/components/colony-components";
 import type { LineageEntry, SuccessionReason } from "./meta/meta-progress";
 import { buildColonyUiSnapshot } from "./colony-ui-snapshot";
+import { advanceColonyYear } from "./yearly-stats";
 import { seedLevelZero as seedLevelZeroColony } from "./colony-seed";
 import {
   applySuccessionChoice as applySuccessionChoiceToColony,
   debugOpenSuccessionOptional as debugOpenSuccessionOptionalImpl,
   dismissSuccessionModal as dismissSuccessionModalImpl,
-  requestOptionalSuccession as requestOptionalSuccessionImpl,
   resetWorldAfterSuccession as resetWorldAfterSuccessionImpl,
   triggerMandatorySuccession as triggerMandatorySuccessionImpl,
 } from "./colony-succession";
@@ -429,13 +429,7 @@ export class ColonyRuntime {
       return;
     }
     yearly.isYearReviewOpen = false;
-    yearly.yearNumber += 1;
-    yearly.honeyProcessedTotal = 0;
-    yearly.nectarCollectedTotal = 0;
-    yearly.pollenCollectedTotal = 0;
-    yearly.beesHatchedTotal = 0;
-    yearly.happyBeeSecondsTotal = 0;
-    yearly.remainingBeesAtYearEnd = 0;
+    advanceColonyYear(yearly);
     this.emitUiSnapshotImmediate();
   }
 
@@ -854,13 +848,6 @@ export class ColonyRuntime {
    */
   debugOpenSuccessionOptional(): void {
     debugOpenSuccessionOptionalImpl(this);
-  }
-
-  /**
-   * Opens the optional succession modal (player-initiated while hive is large).
-   */
-  requestOptionalSuccession(): void {
-    requestOptionalSuccessionImpl(this);
   }
 
   /**
