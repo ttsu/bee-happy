@@ -1,4 +1,4 @@
-import { getLineageAffixById, tradeoffMagnitudeForTier } from "../data/lineage-affixes";
+import { getLineageAffixById, tradeoffPenaltyForTier } from "../data/lineage-affixes";
 import type { LineageEntry } from "../colony/meta/meta-progress";
 import { successionReasonShortLabel } from "../data/succession-reason-copy";
 import { readMetaProgressFromStorage } from "../colony/meta/meta-progress";
@@ -28,11 +28,11 @@ function LineageAffixStatLines({ entry }: { readonly entry: LineageEntry }) {
   if (!affix) {
     return (
       <span className="lineage-stats lineage-stats--legacy">
-        +{(entry.magnitude * 100).toFixed(0)}% primary
+        +{entry.magnitude} primary
       </span>
     );
   }
-  const tradeoff = tradeoffMagnitudeForTier(affix, entry.tier);
+  const tradeoff = tradeoffPenaltyForTier(affix, entry.tier);
   return (
     <span className="lineage-stats">
       <span className="lineage-stat-primary">

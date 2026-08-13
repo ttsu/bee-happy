@@ -6,6 +6,7 @@ import {
   JobComponent,
 } from "../components/colony-components";
 import { COLONY } from "../../constants";
+import { getActiveColonyConstants } from "../../colony-active-constants";
 import { pathLegSpeedMultiplier } from "../../movement-easing";
 import type { ColonyRuntime } from "../../colony-runtime";
 import {
@@ -90,7 +91,8 @@ export class MovementSystem extends System {
             continue;
           }
           const to = target.pos.sub(actor.pos);
-          const step = COLONY.beeSpeed * elapsed;
+          const C = getActiveColonyConstants();
+          const step = C.beeSpeed * elapsed;
           if (to.size > step + 2) {
             actor.pos = actor.pos.add(to.normalize().scale(step));
           } else {
@@ -127,6 +129,7 @@ export class MovementSystem extends System {
       return;
     }
 
+    const C = getActiveColonyConstants();
     const idx = Math.min(w.pathIndex, job.pathPoints.length - 1);
     const target = job.pathPoints[idx]!;
     const to = target.sub(actor.pos);
@@ -142,7 +145,7 @@ export class MovementSystem extends System {
     );
     const forageFlight = job.kind === "foragePollen" || job.kind === "forageNectar";
     const step =
-      COLONY.beeSpeed *
+      C.beeSpeed *
       (forageFlight ? COLONY.forageFlightSpeedMultiplier : 1) *
       ease *
       elapsed;
