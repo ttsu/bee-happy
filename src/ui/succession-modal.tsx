@@ -5,7 +5,7 @@ import { successionShopPrices } from "../data/succession-shop-prices";
 import {
   primaryMagnitudeForTier,
   rollPupaOptions,
-  tradeoffMagnitudeForTier,
+  tradeoffPenaltyForTier,
   type RolledPupaOption,
 } from "../data/lineage-affixes";
 import type { RarityTier } from "../colony/meta/meta-progress";
@@ -124,7 +124,7 @@ export const SuccessionModal = ({ snap, onPersist }: Props) => {
             ...current.option,
             tier: newTier,
             magnitude: primaryMagnitudeForTier(current.option.affix, newTier),
-            tradeoffMagnitude: tradeoffMagnitudeForTier(current.option.affix, newTier),
+            tradeoffMagnitude: tradeoffPenaltyForTier(current.option.affix, newTier),
           },
         };
         return next;

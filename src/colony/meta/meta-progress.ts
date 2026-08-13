@@ -24,7 +24,7 @@ export const lineageEntrySchema = z.object({
   affixId: z.string(),
   displayName: z.string(),
   tier: rarityTierSchema,
-  /** Effective bonus fraction, e.g. 0.08 = +8% primary axis */
+  /** Effective primary bonus: fraction (0–1) for rate/time affixes, whole units for flat affixes. */
   magnitude: z.number(),
   successionReason: successionReasonSchema,
   recordedAtIso: z.string(),
