@@ -161,6 +161,12 @@ export const COLONY = {
   foragePollenDepositAmount: 4,
   /** Payload units applied when depositing after nectar forage. */
   forageNectarDepositAmount: 4,
+  /** Radius of per-unit resource dots on the canvas (px). */
+  resourceDotRadiusPx: 3,
+  /** Duration of a single resource-dot flight animation (ms). */
+  resourceDotFlightMs: 220,
+  /** Stagger between dots in one transfer batch (ms). */
+  resourceDotStaggerMs: 28,
   /** `clearCellForRetype`: ms between relocation chunks at the cell. */
   retypeRelocateIntervalMs: 400,
   /** Max pollen units moved per relocation tick. */

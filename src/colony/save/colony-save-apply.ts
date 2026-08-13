@@ -47,6 +47,7 @@ export function applyColonySave(colony: ColonyRuntime, payload: LoadPayload): vo
     a.kill();
   }
   colony.cellsByKey.clear();
+  colony.resourceDots.clear();
 
   const gs = gameSettingsFromSave(data.gameSettings);
   colony.applyRuntimeGameSettings(gs);

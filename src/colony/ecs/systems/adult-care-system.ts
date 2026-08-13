@@ -18,6 +18,13 @@ import {
   nectarCellHasNectarForFeeding,
 } from "../../nectar-cell-helpers";
 import { releaseJobBees } from "../job-release";
+import type { ResourceKind } from "../../../render/resource-dots";
+
+type AdultFeedConsume = {
+  kind: ResourceKind;
+  count: number;
+  cellKey: string;
+};
 
 const findEntityById = (world: World, id: number) =>
   asActor(world.entities.find((e) => e.id === id));
@@ -149,9 +156,18 @@ export class AdultCareSystem extends System {
     if (!feedLevel || feedLevel.level !== job.targetLevel) {
       return;
     }
-    if (!this.consumeSelfFeed(job)) {
+    const consumed = this.consumeSelfFeed(job);
+    if (!consumed) {
       return;
     }
+    this.colony.resourceDots.spawnTransfer({
+      kind: consumed.kind,
+      count: consumed.count,
+      from: { type: "cell", cellKey: consumed.cellKey },
+      to: { type: "bee", beeId: worker.id },
+      mode: "consume",
+      colony: this.colony,
+    });
     const n = worker.get(BeeNeedsComponent)!;
     n.hunger = Math.max(0, n.hunger - C.hungerRelief);
     job.status = "done";
@@ -162,67 +178,84 @@ export class AdultCareSystem extends System {
   /**
    * Consumes one feeding worth of food from preferred cell, then global fallbacks.
    */
-  private consumeSelfFeed(job: JobComponent): boolean {
-    if (job.selfFeedCellKey && this.tryConsumeCellNectarAtKey(job.selfFeedCellKey)) {
-      return true;
+  private consumeSelfFeed(job: JobComponent): AdultFeedConsume | null {
+    if (job.selfFeedCellKey) {
+      const nectar = this.tryConsumeCellNectarAtKey(job.selfFeedCellKey);
+      if (nectar) {
+        return nectar;
+      }
     }
-    if (job.selfFeedCellKey && this.tryConsumeCellHoneyAtKey(job.selfFeedCellKey)) {
-      return true;
+    if (job.selfFeedCellKey) {
+      const honey = this.tryConsumeCellHoneyAtKey(job.selfFeedCellKey);
+      if (honey) {
+        return honey;
+      }
     }
-    if (this.tryConsumeCellNectar()) {
-      return true;
+    const nectarAny = this.tryConsumeCellNectar();
+    if (nectarAny) {
+      return nectarAny;
     }
-    if (this.tryConsumeCellHoney()) {
-      return true;
+    const honeyAny = this.tryConsumeCellHoney();
+    if (honeyAny) {
+      return honeyAny;
     }
     if (this.interruptHoneyForNectar()) {
-      if (!this.tryConsumeCellNectar()) {
-        return false;
+      const nectarAfter = this.tryConsumeCellNectar();
+      if (!nectarAfter) {
+        return null;
       }
-      return true;
+      return nectarAfter;
     }
-    if (job.selfFeedCellKey && this.tryConsumePollenAtKey(job.selfFeedCellKey)) {
-      return true;
+    if (job.selfFeedCellKey) {
+      const pollen = this.tryConsumePollenAtKey(job.selfFeedCellKey);
+      if (pollen) {
+        return pollen;
+      }
     }
-    if (this.tryConsumePollenAny()) {
-      return true;
-    }
-    return false;
+    return this.tryConsumePollenAny();
   }
 
-  private tryConsumeCellNectarAtKey(key: string): boolean {
+  private tryConsumeCellNectarAtKey(key: string): AdultFeedConsume | null {
     const C = getActiveColonyConstants();
     const cell = this.colony.getCellAt(key);
     if (!cell) {
-      return false;
+      return null;
     }
     const st = cell.get(CellStateComponent)!;
     if (nectarCellHasNectarForFeeding(st, C.adultFeedCellNectarCost)) {
       st.nectarStored -= C.adultFeedCellNectarCost;
-      return true;
+      return {
+        kind: "nectar",
+        count: C.adultFeedCellNectarCost,
+        cellKey: key,
+      };
     }
-    return false;
+    return null;
   }
 
-  private tryConsumeCellHoneyAtKey(key: string): boolean {
+  private tryConsumeCellHoneyAtKey(key: string): AdultFeedConsume | null {
     const C = getActiveColonyConstants();
     const cell = this.colony.getCellAt(key);
     if (!cell) {
-      return false;
+      return null;
     }
     const st = cell.get(CellStateComponent)!;
     if (nectarCellHasHoneyForFeeding(st, C.adultFeedHoneyCost)) {
       st.honeyStored -= C.adultFeedHoneyCost;
-      return true;
+      return {
+        kind: "honey",
+        count: C.adultFeedHoneyCost,
+        cellKey: key,
+      };
     }
-    return false;
+    return null;
   }
 
-  private tryConsumePollenAtKey(key: string): boolean {
+  private tryConsumePollenAtKey(key: string): AdultFeedConsume | null {
     const C = getActiveColonyConstants();
     const cell = this.colony.getCellAt(key);
     if (!cell) {
-      return false;
+      return null;
     }
     const st = cell.get(CellStateComponent)!;
     if (
@@ -231,14 +264,18 @@ export class AdultCareSystem extends System {
       st.pollenStored >= C.adultFeedPollenCost
     ) {
       st.pollenStored -= C.adultFeedPollenCost;
-      return true;
+      return {
+        kind: "pollen",
+        count: C.adultFeedPollenCost,
+        cellKey: key,
+      };
     }
-    return false;
+    return null;
   }
 
-  private tryConsumePollenAny(): boolean {
+  private tryConsumePollenAny(): AdultFeedConsume | null {
     const C = getActiveColonyConstants();
-    for (const [, e] of this.colony.cellsByKey) {
+    for (const [key, e] of this.colony.cellsByKey) {
       const st = e.get(CellStateComponent)!;
       if (
         st.built &&
@@ -246,10 +283,14 @@ export class AdultCareSystem extends System {
         st.pollenStored >= C.adultFeedPollenCost
       ) {
         st.pollenStored -= C.adultFeedPollenCost;
-        return true;
+        return {
+          kind: "pollen",
+          count: C.adultFeedPollenCost,
+          cellKey: key,
+        };
       }
     }
-    return false;
+    return null;
   }
 
   private tryFeedQueen(
@@ -288,28 +329,36 @@ export class AdultCareSystem extends System {
     ent.kill();
   }
 
-  private tryConsumeCellNectar(): boolean {
+  private tryConsumeCellNectar(): AdultFeedConsume | null {
     const C = getActiveColonyConstants();
-    for (const [, e] of this.colony.cellsByKey) {
+    for (const [key, e] of this.colony.cellsByKey) {
       const st = e.get(CellStateComponent)!;
       if (nectarCellHasNectarForFeeding(st, C.adultFeedCellNectarCost)) {
         st.nectarStored -= C.adultFeedCellNectarCost;
-        return true;
+        return {
+          kind: "nectar",
+          count: C.adultFeedCellNectarCost,
+          cellKey: key,
+        };
       }
     }
-    return false;
+    return null;
   }
 
-  private tryConsumeCellHoney(): boolean {
+  private tryConsumeCellHoney(): AdultFeedConsume | null {
     const C = getActiveColonyConstants();
-    for (const [, e] of this.colony.cellsByKey) {
+    for (const [key, e] of this.colony.cellsByKey) {
       const st = e.get(CellStateComponent)!;
       if (nectarCellHasHoneyForFeeding(st, C.adultFeedHoneyCost)) {
         st.honeyStored -= C.adultFeedHoneyCost;
-        return true;
+        return {
+          kind: "honey",
+          count: C.adultFeedHoneyCost,
+          cellKey: key,
+        };
       }
     }
-    return false;
+    return null;
   }
 
   private interruptHoneyForNectar(): boolean {
