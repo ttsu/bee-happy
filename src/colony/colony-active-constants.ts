@@ -2,15 +2,11 @@ import {
   buildEffectiveColonyConstants,
   type EffectiveColonyConstants,
 } from "./effective-colony";
-import {
-  aggregateLineageFlatPenalties,
-  aggregateLineageMultipliers,
-} from "./meta/lineage-aggregate";
+import { aggregateLineageMultipliers } from "./meta/lineage-aggregate";
 import { readMetaProgressFromStorage } from "./meta/meta-progress";
 
 let cached: EffectiveColonyConstants = buildEffectiveColonyConstants(
   aggregateLineageMultipliers([]),
-  aggregateLineageFlatPenalties([]),
 );
 
 /**
@@ -25,8 +21,7 @@ export function refreshActiveColonyConstantsFromMeta(
   const meta = readMetaProgressFromStorage();
   const lineage = applyLineageMultipliers ? meta.lineage : [];
   const m = aggregateLineageMultipliers(lineage);
-  const penalties = aggregateLineageFlatPenalties(lineage);
-  cached = buildEffectiveColonyConstants(m, penalties);
+  cached = buildEffectiveColonyConstants(m);
 }
 
 export function getActiveColonyConstants(): EffectiveColonyConstants {

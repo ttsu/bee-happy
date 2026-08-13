@@ -409,6 +409,83 @@ const HudResourceMeter = ({
   );
 };
 
+const HudHoneyNectarMeter = ({
+  honey,
+  nectar,
+  honeyCapacity,
+  nectarCapacity,
+  honeyTick,
+  nectarTick,
+  winterHoneyNeed,
+}: {
+  readonly honey: number;
+  readonly nectar: number;
+  readonly honeyCapacity: number;
+  readonly nectarCapacity: number;
+  readonly honeyTick?: DeltaTick;
+  readonly nectarTick?: DeltaTick;
+  readonly winterHoneyNeed: number;
+}) => {
+  const totalCapacity = honeyCapacity + nectarCapacity;
+  const honeyPct = meterPct(honey, totalCapacity);
+  const nectarPct = meterPct(nectar, totalCapacity);
+  const markerPct =
+    totalCapacity > 0 && winterHoneyNeed > 0
+      ? Math.min(100, Math.max(0, (winterHoneyNeed / totalCapacity) * 100))
+      : null;
+  const markerTitle =
+    winterHoneyNeed > 0
+      ? `Winter need: ${Math.ceil(winterHoneyNeed)} honey`
+      : undefined;
+  return (
+    <div className="hud-resource-row">
+      <span className="hud-stat-label">
+        <HudIcon kind="honey" label="Honey" />
+        <HudIcon kind="nectar" label="Nectar" />
+        Honey &amp; Nectar
+      </span>
+      <div
+        className="hud-resource-bar hud-resource-bar--stacked"
+        role="meter"
+        aria-valuenow={honey + nectar}
+        aria-valuemin={0}
+        aria-valuemax={totalCapacity}
+        aria-label={`Honey and nectar: ${honey} honey, ${nectar} nectar`}
+        title={markerTitle}
+      >
+        {honeyPct > 0 ? (
+          <div
+            className="hud-resource-bar-fill hud-resource-bar-fill--honey"
+            style={{ width: `${honeyPct}%` }}
+          />
+        ) : null}
+        {nectarPct > 0 ? (
+          <div
+            className="hud-resource-bar-fill hud-resource-bar-fill--nectar"
+            style={{ width: `${nectarPct}%` }}
+          />
+        ) : null}
+        {markerPct != null ? (
+          <div
+            className="hud-resource-bar-marker"
+            style={{ left: `${markerPct}%` }}
+            aria-hidden
+          />
+        ) : null}
+      </div>
+      <span className="hud-resource-value">
+        <span className="hud-metric-value">
+          <span className="hud-metric-number">
+            {honey}/{Math.round(honeyCapacity)} · {nectar}/{Math.round(nectarCapacity)}
+          </span>
+          <DeltaBadge tick={honeyTick} />
+          <DeltaBadge tick={nectarTick} />
+        </span>
+      </span>
+    </div>
+  );
+};
+
 const HudBroodMeter = ({
   pupae,
   larvae,
@@ -550,9 +627,7 @@ export const ColonyHud = ({ snap, colony }: Props) => {
   const pollen = Math.round(snap.pollen);
   const pollenCap = Math.round(snap.pollenCapacity);
   const honey = Math.round(snap.honey);
-  const honeyCap = Math.round(snap.honeyCapacity);
   const nectar = Math.round(snap.nectar);
-  const nectarCap = Math.round(snap.nectarCapacity);
   const beeswax = Math.round(snap.beeswax);
   const beeswaxCap = Math.round(snap.beeswaxCapacity);
   const happiness = snap.happinessPct;
@@ -584,13 +659,19 @@ export const ColonyHud = ({ snap, colony }: Props) => {
                 <HudIcon kind="pollen" label="Pollen" />
                 <MetricValue value={String(pollen)} tick={deltas.pollen} />
               </div>
-              <div className="hud-strip-item" title="Honey">
+              <div
+                className="hud-strip-item"
+                title={`Honey ${honey} · Nectar ${nectar}`}
+              >
                 <HudIcon kind="honey" label="Honey" />
-                <MetricValue value={String(honey)} tick={deltas.honey} />
-              </div>
-              <div className="hud-strip-item" title="Nectar">
                 <HudIcon kind="nectar" label="Nectar" />
-                <MetricValue value={String(nectar)} tick={deltas.nectar} />
+                <span className="hud-metric-value">
+                  <span className="hud-metric-number">
+                    {honey} · {nectar}
+                  </span>
+                  <DeltaBadge tick={deltas.honey} />
+                  <DeltaBadge tick={deltas.nectar} />
+                </span>
               </div>
               <div className="hud-strip-item" title="Beeswax">
                 <HudIcon kind="beeswax" label="Beeswax" />
@@ -623,33 +704,14 @@ export const ColonyHud = ({ snap, colony }: Props) => {
                 displayValue={`${pollen}/${pollenCap}`}
                 tick={deltas.pollen}
               />
-              <HudResourceMeter
-                label="Honey"
-                icon="honey"
-                value={snap.honey}
-                capacity={snap.honeyCapacity}
-                fillClass="hud-resource-bar-fill--honey"
-                displayValue={`${honey}/${honeyCap}`}
-                tick={deltas.honey}
-                markerRatio={
-                  snap.honeyCapacity > 0
-                    ? snap.winterHoneyNeed / snap.honeyCapacity
-                    : undefined
-                }
-                markerTitle={
-                  snap.winterHoneyNeed > 0
-                    ? `Winter need: ${Math.ceil(snap.winterHoneyNeed)} honey`
-                    : undefined
-                }
-              />
-              <HudResourceMeter
-                label="Nectar"
-                icon="nectar"
-                value={snap.nectar}
-                capacity={snap.nectarCapacity}
-                fillClass="hud-resource-bar-fill--nectar"
-                displayValue={`${nectar}/${nectarCap}`}
-                tick={deltas.nectar}
+              <HudHoneyNectarMeter
+                honey={snap.honey}
+                nectar={snap.nectar}
+                honeyCapacity={snap.honeyCapacity}
+                nectarCapacity={snap.nectarCapacity}
+                honeyTick={deltas.honey}
+                nectarTick={deltas.nectar}
+                winterHoneyNeed={snap.winterHoneyNeed}
               />
               <HudBroodMeter
                 pupae={snap.broodPupae}

@@ -1,8 +1,5 @@
 import { COLONY } from "./constants";
-import type {
-  LineageFlatPenalties,
-  LineageMultipliers,
-} from "./meta/lineage-aggregate";
+import type { LineageMultipliers } from "./meta/lineage-aggregate";
 
 export type EffectiveColonyConstants = {
   readonly hexSize: number;
@@ -78,47 +75,58 @@ export type EffectiveColonyConstants = {
   readonly workerMinEfficiencyMul: number;
 };
 
+const MIN_FOOD_CELL_CAPACITY = 4;
+
 /**
  * Builds simulation constants with lineage multipliers applied (read-only snapshot).
  */
 export function buildEffectiveColonyConstants(
   m: LineageMultipliers,
-  penalties: LineageFlatPenalties = {
-    pollenCellCapacityFlat: 0,
-    nectarCellCapacityFlat: 0,
-  },
 ): EffectiveColonyConstants {
   const pollenCellCapacity = Math.max(
-    4,
-    Math.round(COLONY.pollenCellCapacity * m.pollenCellCapacityMul) -
-      penalties.pollenCellCapacityFlat,
+    MIN_FOOD_CELL_CAPACITY,
+    COLONY.pollenCellCapacity +
+      m.pollenCellCapacityFlat -
+      m.tradeoffFoodCellCapacityFlat,
   );
   const nectarCellCapacity = Math.max(
-    4,
-    Math.round(COLONY.nectarCellCapacity * m.nectarCellCapacityMul) -
-      penalties.nectarCellCapacityFlat,
+    MIN_FOOD_CELL_CAPACITY,
+    COLONY.nectarCellCapacity +
+      m.nectarCellCapacityFlat -
+      m.tradeoffNectarCapacityFlat -
+      m.tradeoffFoodCellCapacityFlat,
   );
-
+  const forageTimeMul = m.forageTimeMul * (1 + m.tradeoffForageTimeFrac);
   return {
     ...COLONY,
     pollenCellCapacity,
     nectarCellCapacity,
-    forageTravelMs: COLONY.forageTravelMs * m.forageTimeMul,
-    forageWaitMs: COLONY.forageWaitMs * m.forageTimeMul,
+    honeyCellCapacity: nectarCellCapacity,
+    forageTravelMs: COLONY.forageTravelMs * forageTimeMul,
+    forageWaitMs: COLONY.forageWaitMs * forageTimeMul,
     eggDurationMs: COLONY.eggDurationMs * m.broodCycleMul,
     sealedDurationMs: COLONY.sealedDurationMs * m.broodCycleMul,
     cleaningDurationMs: COLONY.cleaningDurationMs * m.broodCycleMul,
-    honeyProcessRatePerSec: COLONY.honeyProcessRatePerSec * m.honeyProcessRateMul,
+    honeyProcessRatePerSec:
+      COLONY.honeyProcessRatePerSec *
+      m.honeyProcessRateMul *
+      Math.max(0.5, 1 - m.tradeoffHoneyProcessFrac),
     foragePollenDepositAmount: Math.max(
       1,
-      Math.round(COLONY.foragePollenDepositAmount * m.depositYieldMul),
+      COLONY.foragePollenDepositAmount + m.foragePollenDepositFlat,
     ),
     forageNectarDepositAmount: Math.max(
       1,
-      Math.round(COLONY.forageNectarDepositAmount * m.depositYieldMul),
+      COLONY.forageNectarDepositAmount + m.forageNectarDepositFlat,
     ),
-    hungerPerSec: COLONY.hungerPerSec * m.needsDrainMul,
-    cellBuildTargetSec: COLONY.cellBuildTargetSec * m.cellBuildMul,
-    queenLayIntervalMs: COLONY.queenLayIntervalMs * (2 - m.broodCycleMul),
+    hungerPerSec:
+      COLONY.hungerPerSec * m.needsDrainMul * (1 + m.tradeoffNeedsDrainFrac),
+    cellBuildTargetSec:
+      COLONY.cellBuildTargetSec * m.cellBuildMul * (1 + m.tradeoffCellBuildFrac),
+    queenLayIntervalMs:
+      COLONY.queenLayIntervalMs *
+      (2 - m.broodCycleMul) *
+      (1 + m.tradeoffQueenLayIntervalFrac),
+    beeSpeed: COLONY.beeSpeed * Math.max(0.5, 1 - m.tradeoffBeeSpeedFrac),
   };
 }

@@ -17,6 +17,7 @@ import {
   JobComponent,
 } from "../components/colony-components";
 import { COLONY } from "../../constants";
+import { getActiveColonyConstants } from "../../colony-active-constants";
 import type { ColonyRuntime } from "../../colony-runtime";
 import type { HexCoord } from "../../../grid/hex-grid";
 import { hexToWorld } from "../../../grid/hex-grid";
@@ -157,7 +158,8 @@ export class IdleWanderSystem extends System {
       if (isWinter) {
         clearIdleMotion(w);
         const center = winterClusterCenter(this.colony, lvl.level);
-        const clusterSpeed = COLONY.beeSpeed * COLONY.winterClusterMoveSpeedMultiplier;
+        const C = getActiveColonyConstants();
+        const clusterSpeed = C.beeSpeed * COLONY.winterClusterMoveSpeedMultiplier;
         if (isQueen) {
           moveActorToward(
             actor,
@@ -177,8 +179,9 @@ export class IdleWanderSystem extends System {
         continue;
       }
 
+      const C = getActiveColonyConstants();
       const idleSpeed =
-        COLONY.beeSpeed *
+        C.beeSpeed *
         (isQueen
           ? COLONY.queenIdleWanderSpeedMultiplier
           : COLONY.idleWanderSpeedMultiplier);
