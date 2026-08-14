@@ -173,6 +173,7 @@ export const triggerMandatorySuccession = (
 /**
  * Closes the succession modal without hatching a pupa so royal jelly can keep accruing.
  * Mandatory succession respawns a queen if the modal removed her.
+ * Year-end succession ({@link SuccessionReason} `queenAgedOut`) still advances the calendar.
  */
 export const skipSuccessionModal = (colony: ColonyRuntime): void => {
   const modal = colony.successionModal;
@@ -180,6 +181,10 @@ export const skipSuccessionModal = (colony: ColonyRuntime): void => {
     return;
   }
   const mandatory = modal.mandatory;
+  const yearly = colony.controllerEntity.get(YearlyStatsComponent);
+  if (yearly) {
+    maybeAdvanceYearAfterSuccession(yearly, modal.reason);
+  }
   colony.successionModal = null;
   if (mandatory) {
     const snap = buildColonyUiSnapshot(colony);

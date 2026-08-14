@@ -53,7 +53,7 @@ describe("maybeAdvanceYearAfterSuccession", () => {
     assert.equal(yearly.isYearReviewOpen, false);
   });
 
-  it("does not advance the calendar for mid-year starvation", () => {
+  it("does not advance the calendar when skipping mid-year starvation succession", () => {
     const yearly = createYearly({ yearNumber: 1, honeyProcessedTotal: 5 });
 
     maybeAdvanceYearAfterSuccession(yearly, "queenStarved");
