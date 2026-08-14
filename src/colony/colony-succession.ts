@@ -170,11 +170,23 @@ export const triggerMandatorySuccession = (
   colony.emitUiSnapshotImmediate();
 };
 
-export const dismissSuccessionModal = (colony: ColonyRuntime): void => {
-  if (colony.successionModal?.mandatory) {
+/**
+ * Closes the succession modal without hatching a pupa so royal jelly can keep accruing.
+ * Mandatory succession respawns a queen if the modal removed her.
+ */
+export const skipSuccessionModal = (colony: ColonyRuntime): void => {
+  const modal = colony.successionModal;
+  if (!modal) {
     return;
   }
+  const mandatory = modal.mandatory;
   colony.successionModal = null;
+  if (mandatory) {
+    const snap = buildColonyUiSnapshot(colony);
+    if (snap.queens < 1) {
+      colony.spawnBee("queen", 0, { q: 0, r: 0 });
+    }
+  }
   colony.emitUiSnapshotImmediate();
 };
 

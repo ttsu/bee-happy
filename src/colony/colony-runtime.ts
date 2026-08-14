@@ -34,7 +34,7 @@ import { seedLevelZero as seedLevelZeroColony } from "./colony-seed";
 import {
   applySuccessionChoice as applySuccessionChoiceToColony,
   debugOpenSuccessionOptional as debugOpenSuccessionOptionalImpl,
-  dismissSuccessionModal as dismissSuccessionModalImpl,
+  skipSuccessionModal as skipSuccessionModalImpl,
   resetWorldAfterSuccession as resetWorldAfterSuccessionImpl,
   triggerMandatorySuccession as triggerMandatorySuccessionImpl,
 } from "./colony-succession";
@@ -857,8 +857,8 @@ export class ColonyRuntime {
     triggerMandatorySuccessionImpl(this, reason);
   }
 
-  dismissSuccessionModal(): void {
-    dismissSuccessionModalImpl(this);
+  skipSuccessionModal(): void {
+    skipSuccessionModalImpl(this);
   }
 
   /**

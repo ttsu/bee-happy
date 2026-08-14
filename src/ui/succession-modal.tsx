@@ -160,11 +160,9 @@ export const SuccessionModal = ({ snap, onPersist }: Props) => {
     onPersist();
   }, [colony, modal, onPersist, royalJellyLeft, selected, slots]);
 
-  const dismiss = useCallback(() => {
-    if (!modal?.mandatory) {
-      colony?.dismissSuccessionModal();
-    }
-  }, [colony, modal]);
+  const skip = useCallback(() => {
+    colony?.skipSuccessionModal();
+  }, [colony]);
 
   if (!modal) {
     return null;
@@ -249,11 +247,9 @@ export const SuccessionModal = ({ snap, onPersist }: Props) => {
           >
             Hatch selected pupa
           </button>
-          {!modal.mandatory ? (
-            <button type="button" className="succession-dismiss" onClick={dismiss}>
-              Not now
-            </button>
-          ) : null}
+          <button type="button" className="succession-skip" onClick={skip}>
+            Skip for now
+          </button>
         </div>
       </div>
     </div>
