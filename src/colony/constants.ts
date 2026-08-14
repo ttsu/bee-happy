@@ -176,15 +176,6 @@ export const COLONY = {
   /** Max honey units moved per relocation tick. */
   retypeRelocateChunkHoney: 2,
   /**
-   * Optional succession: player may start succession when total bees (workers + queen) exceed this.
-   */
-  successionOptionalBeeThreshold: 50,
-  /**
-   * When a calendar year ends, if the current calendar year number equals this value,
-   * mandatory succession runs (queen aged out) instead of the normal year review.
-   */
-  queenAgeOutYearNumber: 3,
-  /**
    * Royal jelly earned per colony day (fractional): `happinessPct * this / 100`.
    * Whole units are minted when the accrual buffer crosses integers.
    * At 80% happiness and 1 here → 0.8 jelly per day.

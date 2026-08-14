@@ -68,7 +68,6 @@ export const colonyUiSnapshotSchema = z.object({
       colonyDay: z.number(),
     })
     .nullable(),
-  optionalSuccessionAvailable: z.boolean(),
   simulationSpeed: z.union([z.literal(1), z.literal(2)]),
 });
 
@@ -124,6 +123,5 @@ export const createDefaultColonyUiSnapshot = (): ColonyUiSnapshot => ({
     happyBeeSecondsTotal: 0,
   },
   successionModal: null,
-  optionalSuccessionAvailable: false,
   simulationSpeed: 1,
 });
