@@ -9,7 +9,10 @@ import {
   type RolledPupaOption,
 } from "../data/lineage-affixes";
 import type { RarityTier } from "../colony/meta/meta-progress";
-import { successionReasonShortLabel } from "../data/succession-reason-copy";
+import {
+  successionModalContext,
+  successionModalTitle,
+} from "../data/succession-reason-copy";
 
 function mulberry32(seed: number): () => number {
   let a = seed >>> 0;
@@ -176,9 +179,9 @@ export const SuccessionModal = ({ snap, onPersist }: Props) => {
     >
       <div className="succession-card">
         <h2 id="succession-title" className="succession-title">
-          Choose the next queen
+          {successionModalTitle}
         </h2>
-        <p className="succession-reason">{successionReasonShortLabel[modal.reason]}</p>
+        <p className="succession-reason">{successionModalContext[modal.reason]}</p>
         <p className="succession-honey">
           Royal jelly to spend: {royalJellyLeft.toFixed(0)} (earned from hive happiness)
         </p>
